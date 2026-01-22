@@ -1,0 +1,140 @@
+{
+  "common": {
+    "dna": "DNA",
+    "fullName": "Discover Natural Ability",
+    "home": "Home",
+    "about": "About",
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "noData": "No data available"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "roles": "Roles",
+    "academies": "Academies",
+    "healthTests": "Health Tests",
+    "medalRequests": "Medal Requests",
+    "programs": "Programs",
+    "messages": "Messages",
+    "whatsapp": "WhatsApp",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "overview": "Overview",
+    "statistics": "Statistics",
+    "recentActivity": "Recent Activity"
+  },
+  "users": {
+    "title": "Users",
+    "addUser": "Add User",
+    "editUser": "Edit User",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "role": "Role",
+    "status": "Status",
+    "lastLogin": "Last Login",
+    "createdAt": "Created At"
+  },
+  "roles": {
+    "title": "Roles",
+    "admin": "Admin",
+    "coach": "Coach",
+    "player": "Player",
+    "permissions": "Permissions",
+    "managePermissions": "Manage Permissions"
+  },
+  "academies": {
+    "title": "Academies",
+    "addAcademy": "Add Academy",
+    "name": "Name",
+    "description": "Description",
+    "address": "Address",
+    "city": "City",
+    "country": "Country"
+  },
+  "healthTests": {
+    "title": "Health Tests",
+    "addTest": "Add Test",
+    "testDate": "Test Date",
+    "height": "Height (cm)",
+    "weight": "Weight (kg)",
+    "bloodPressure": "Blood Pressure",
+    "heartRate": "Heart Rate",
+    "notes": "Notes"
+  },
+  "medalRequests": {
+    "title": "Medal Requests",
+    "medalType": "Medal Type",
+    "achievement": "Achievement Description",
+    "status": "Status",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "requestDate": "Request Date",
+    "reviewDate": "Review Date"
+  },
+  "programs": {
+    "title": "Programs",
+    "addProgram": "Add Program",
+    "name": "Name",
+    "description": "Description",
+    "academy": "Academy"
+  },
+  "messages": {
+    "title": "Messages",
+    "newMessage": "New Message",
+    "sender": "Sender",
+    "receiver": "Receiver",
+    "subject": "Subject",
+    "content": "Content",
+    "read": "Read",
+    "unread": "Unread"
+  },
+  "whatsapp": {
+    "title": "WhatsApp",
+    "sendMessage": "Send Message",
+    "phoneNumber": "Phone Number",
+    "message": "Message",
+    "sent": "Sent",
+    "delivered": "Delivered",
+    "failed": "Failed"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "language": "Language",
+    "notifications": "Notifications"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "emailPlaceholder": "Enter your email",
+    "passwordPlaceholder": "Enter your password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  }
+}
