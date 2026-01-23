@@ -49,6 +49,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
   const tCommon = useTranslations('common');
   const isRTL = locale === 'ar';
   const osRef = useRef<any>(null);
+  const dragStateRef = useRef({ isDragging: false, startX: 0, startScroll: 0 });
 
   const scrollRail = (direction: 'left' | 'right') => {
     const osInstance = osRef.current?.osInstance?.();
@@ -56,6 +57,34 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
     const viewport = osInstance.elements().viewport;
     const delta = direction === 'left' ? -280 : 280;
     viewport.scrollBy({ left: isRTL ? -delta : delta, behavior: 'smooth' });
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const osInstance = osRef.current?.osInstance?.();
+    if (!osInstance) return;
+    const viewport = osInstance.elements().viewport;
+    dragStateRef.current = {
+      isDragging: true,
+      startX: event.clientX,
+      startScroll: viewport.scrollLeft,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStateRef.current.isDragging) return;
+    const osInstance = osRef.current?.osInstance?.();
+    if (!osInstance) return;
+    const viewport = osInstance.elements().viewport;
+    const deltaX = event.clientX - dragStateRef.current.startX;
+    const targetScroll = dragStateRef.current.startScroll - deltaX;
+    viewport.scrollLeft = targetScroll;
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStateRef.current.isDragging) return;
+    dragStateRef.current.isDragging = false;
+    event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
   return (
@@ -82,11 +111,18 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
 
             <OverlayScrollbarsComponent
               ref={osRef}
-              options={{ scrollbars: { autoHide: 'leave' }, overflow: { x: 'scroll', y: 'hidden' } }}
-              className="flex-1 min-w-0"
+              options={{ scrollbars: { visibility: 'hidden' }, overflow: { x: 'scroll', y: 'hidden' } }}
+              className="flex-1 min-w-0 cursor-grab active:cursor-grabbing"
               defer
             >
-              <div className="flex items-center gap-2">
+              <div
+                className="flex items-center gap-2 select-none"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                style={{ touchAction: 'pan-y' }}
+              >
                 {accessibleMenuItems.map((item) => {
                   const Icon = iconMap[item.icon] || LayoutDashboard;
                   const itemPath = `/${locale}${item.route}`;
