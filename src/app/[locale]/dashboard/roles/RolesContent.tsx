@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
+import ModalPortal from '@/components/ModalPortal';
 import {
   Shield,
   ShieldPlus,
@@ -608,236 +609,237 @@ export default function RolesContent() {
         )}
       </div>
 
-      {/* Role Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-700 p-6 rounded-t-3xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-xl">
-                    {editingRole ? <Edit2 className="w-6 h-6 text-white" /> : <ShieldPlus className="w-6 h-6 text-white" />}
+      <ModalPortal>
+        {/* Role Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-700 p-6 rounded-t-3xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-xl">
+                      {editingRole ? <Edit2 className="w-6 h-6 text-white" /> : <ShieldPlus className="w-6 h-6 text-white" />}
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">{editingRole ? 'Edit Role' : 'Add New Role'}</h2>
                   </div>
-                  <h2 className="text-2xl font-bold text-white">{editingRole ? 'Edit Role' : 'Add New Role'}</h2>
+                  <button
+                    onClick={() => {
+                      setShowModal(false);
+                      resetForm();
+                    }}
+                    className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                  >
+                    <X className="w-6 h-6 text-white" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                  className="p-2 hover:bg-white/20 rounded-xl transition-colors"
-                >
-                  <X className="w-6 h-6 text-white" />
-                </button>
               </div>
-            </div>
-            <OverlayScrollbarsComponent
-              options={{ scrollbars: { autoHide: 'leave' } }}
-              className="max-h-[calc(90vh-168px)]"
-            >
-              <form id="role-modal-form" onSubmit={handleSubmit} className="p-6 space-y-5">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  Role Name (System) <span className="text-orange-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  required
-                  disabled={!!editingRole}
-                  placeholder="admin, coach, player"
-                />
-                {editingRole && (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">System name cannot be changed</p>
-                )}
-              </div>
+              <OverlayScrollbarsComponent
+                options={{ scrollbars: { autoHide: 'leave' } }}
+                className="max-h-[calc(90vh-168px)]"
+              >
+                <form id="role-modal-form" onSubmit={handleSubmit} className="p-6 space-y-5">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                      Role Name (System) <span className="text-orange-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      required
+                      disabled={!!editingRole}
+                      placeholder="admin, coach, player"
+                    />
+                    {editingRole && (
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">System name cannot be changed</p>
+                    )}
+                  </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  Name (English) <span className="text-orange-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.name_en}
-                  onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="Administrator"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                      Name (English) <span className="text-orange-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name_en}
+                      onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
+                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      required
+                      placeholder="Administrator"
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  Name (Arabic) <span className="text-orange-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.name_ar}
-                  onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="مدير النظام"
-                  dir="rtl"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                      Name (Arabic) <span className="text-orange-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name_ar}
+                      onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
+                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      required
+                      placeholder="مدير النظام"
+                      dir="rtl"
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
-                  rows={3}
-                  placeholder="Describe the role and its responsibilities..."
-                />
-              </div>
-
-              </form>
-            </OverlayScrollbarsComponent>
-            <div className="border-t border-zinc-200 dark:border-zinc-700 p-4 rounded-b-3xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur">
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  form="role-modal-form"
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200"
-                >
-                  {editingRole ? 'Update Role' : 'Create Role'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                  className="px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-all duration-200"
-                >
-                  Cancel
-                </button>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Description</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
+                      rows={3}
+                      placeholder="Describe the role and its responsibilities..."
+                    />
+                  </div>
+                </form>
+              </OverlayScrollbarsComponent>
+              <div className="border-t border-zinc-200 dark:border-zinc-700 p-4 rounded-b-3xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur">
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    form="role-modal-form"
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200"
+                  >
+                    {editingRole ? 'Update Role' : 'Create Role'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false);
+                      resetForm();
+                    }}
+                    className="px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-all duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Permission Modal */}
-      {showPermissionModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-700 p-6 rounded-t-3xl z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-xl">
-                    <Key className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">Manage Permissions</h2>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowPermissionModal(false);
-                    setSelectedRole(null);
-                    setSelectedPermissions([]);
-                  }}
-                  className="p-2 hover:bg-white/20 rounded-xl transition-colors"
-                >
-                  <X className="w-6 h-6 text-white" />
-                </button>
-              </div>
-            </div>
-
-            <OverlayScrollbarsComponent
-              options={{ scrollbars: { autoHide: 'leave' } }}
-              className="p-6 space-y-4 max-h-[calc(90vh-200px)]"
-            >
-              {modules.map((module) => {
-                const modulePermissionIds = module.permissions.map((p) => p.id);
-                const allSelected = modulePermissionIds.every((id) => selectedPermissions.includes(id));
-                const someSelected = modulePermissionIds.some((id) => selectedPermissions.includes(id));
-
-                return (
-                  <div key={module.module_id} className="bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-                    <div className="flex items-center gap-4 p-5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        ref={(input) => {
-                          if (input) input.indeterminate = someSelected && !allSelected;
-                        }}
-                        onChange={(e) => toggleModulePermissions(module, e.target.checked)}
-                        className="w-6 h-6 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-orange-500 focus:ring-2 cursor-pointer"
-                      />
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl">
-                          {allSelected ? <Unlock className="w-5 h-5 text-white" /> : <Lock className="w-5 h-5 text-white" />}
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{module.module_name_en}</h3>
-                        </div>
-                      </div>
-                      <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                        {selectedPermissions.filter((id) => modulePermissionIds.includes(id)).length} / {module.permissions.length}
-                      </div>
+        {/* Permission Modal */}
+        {showPermissionModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-700 p-6 rounded-t-3xl z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-xl">
+                      <Key className="w-6 h-6 text-white" />
                     </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">Manage Permissions</h2>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowPermissionModal(false);
+                      setSelectedRole(null);
+                      setSelectedPermissions([]);
+                    }}
+                    className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                  >
+                    <X className="w-6 h-6 text-white" />
+                  </button>
+                </div>
+              </div>
 
-                    <div className="px-5 pb-5 pt-2">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {module.permissions.map((permission) => {
-                          const isSelected = selectedPermissions.includes(permission.id);
-                          return (
-                            <label
-                              key={permission.id}
-                              className={`relative flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                                isSelected
+              <OverlayScrollbarsComponent
+                options={{ scrollbars: { autoHide: 'leave' } }}
+                className="p-6 space-y-4 max-h-[calc(90vh-200px)]"
+              >
+                {modules.map((module) => {
+                  const modulePermissionIds = module.permissions.map((p) => p.id);
+                  const allSelected = modulePermissionIds.every((id) => selectedPermissions.includes(id));
+                  const someSelected = modulePermissionIds.some((id) => selectedPermissions.includes(id));
+
+                  return (
+                    <div key={module.module_id} className="bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                      <div className="flex items-center gap-4 p-5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          ref={(input) => {
+                            if (input) input.indeterminate = someSelected && !allSelected;
+                          }}
+                          onChange={(e) => toggleModulePermissions(module, e.target.checked)}
+                          className="w-6 h-6 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-orange-500 focus:ring-2 cursor-pointer"
+                        />
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl">
+                            {allSelected ? <Unlock className="w-5 h-5 text-white" /> : <Lock className="w-5 h-5 text-white" />}
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{module.module_name_en}</h3>
+                          </div>
+                        </div>
+                        <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                          {selectedPermissions.filter((id) => modulePermissionIds.includes(id)).length} / {module.permissions.length}
+                        </div>
+                      </div>
+
+                      <div className="px-5 pb-5 pt-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {module.permissions.map((permission) => {
+                            const isSelected = selectedPermissions.includes(permission.id);
+                            return (
+                              <label
+                                key={permission.id}
+                                className={`relative flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                                  isSelected
                                     ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                                  : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => togglePermission(permission.id)}
-                                className="w-5 h-5 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
-                              />
-                              <span className="flex-1 text-sm font-semibold text-zinc-700 dark:text-zinc-200 capitalize">
-                                {permission.action}
-                              </span>
-                            </label>
-                          );
-                        })}
+                                    : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => togglePermission(permission.id)}
+                                  className="w-5 h-5 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
+                                />
+                                <span className="flex-1 text-sm font-semibold text-zinc-700 dark:text-zinc-200 capitalize">
+                                  {permission.action}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </OverlayScrollbarsComponent>
+                  );
+                })}
+              </OverlayScrollbarsComponent>
 
-            <div className="sticky bottom-0 bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 p-6 rounded-b-3xl">
-              <div className="flex gap-3">
-                <button
-                  onClick={handlePermissionSubmit}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <Check className="w-5 h-5" />
-                  Save Permissions ({selectedPermissions.length} selected)
-                </button>
-                <button
-                  onClick={() => {
-                    setShowPermissionModal(false);
-                    setSelectedRole(null);
-                    setSelectedPermissions([]);
-                  }}
-                  className="px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-all duration-200"
-                >
-                  Cancel
-                </button>
+              <div className="sticky bottom-0 bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 p-6 rounded-b-3xl">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handlePermissionSubmit}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Check className="w-5 h-5" />
+                    Save Permissions ({selectedPermissions.length} selected)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPermissionModal(false);
+                      setSelectedRole(null);
+                      setSelectedPermissions([]);
+                    }}
+                    className="px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-all duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </ModalPortal>
     </div>
   );
 }

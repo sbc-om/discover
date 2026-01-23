@@ -68,7 +68,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
   return (
     <section
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="shrink-0 px-4 pb-4 pt-2 z-50 relative"
+      className="shrink-0 px-4 pb-4 pt-2 z-40 relative"
       style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
     >
       <div className="relative glass-panel rounded-[28px] border-2 border-zinc-900/15 dark:border-white/10 bg-white/90 dark:bg-zinc-900/70 shadow-lg shadow-zinc-900/5 dark:shadow-none px-3 py-3">
