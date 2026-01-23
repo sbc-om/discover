@@ -36,7 +36,7 @@ export default function DashboardHeader({ locale, userName }: DashboardHeaderPro
             className="hidden dark:block"
           />
         </div>
-        <div>
+        <div className="hidden sm:block">
           <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
             {isAr ? 'اكتشف قدرتك الطبيعية' : 'Discover Natural Ability'}
           </p>

@@ -391,10 +391,10 @@ export default function UsersContent() {
             {/* Desktop Table */}
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                <thead className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
+                  <tr>
                     <th 
-                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
+                      className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
                       onClick={() => handleSort('first_name')}
                     >
                       <div className="flex items-center gap-1.5">
@@ -403,7 +403,7 @@ export default function UsersContent() {
                       </div>
                     </th>
                     <th 
-                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
+                      className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
                       onClick={() => handleSort('email')}
                     >
                       <div className="flex items-center gap-1.5">
@@ -411,9 +411,9 @@ export default function UsersContent() {
                         {getSortIcon('email')}
                       </div>
                     </th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Role</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Role</th>
                     <th 
-                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
+                      className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
                       onClick={() => handleSort('is_active')}
                     >
                       <div className="flex items-center gap-1.5">
@@ -422,7 +422,7 @@ export default function UsersContent() {
                       </div>
                     </th>
                     <th 
-                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
+                      className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
                       onClick={() => handleSort('created_at')}
                     >
                       <div className="flex items-center gap-1.5">
@@ -430,7 +430,7 @@ export default function UsersContent() {
                         {getSortIcon('created_at')}
                       </div>
                     </th>
-                    <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Actions</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
