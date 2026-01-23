@@ -16,7 +16,6 @@ import {
   Mail,
   MessageCircle,
   Settings,
-  ArrowUpRight,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -110,9 +109,6 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
                         <Icon className="h-4 w-4" />
                       </span>
                       <span>{isRTL ? item.name_ar : item.name_en}</span>
-                      <ArrowUpRight className={`h-3.5 w-3.5 transition-transform ${
-                        isActive ? 'text-white/80 dark:text-zinc-900' : 'text-zinc-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5'
-                      }`} />
                     </Link>
                   );
                 })}
