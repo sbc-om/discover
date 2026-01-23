@@ -19,14 +19,16 @@ export default function DashboardLayout({
   const isRTL = locale === 'ar';
   
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 flex flex-col">
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 flex flex-col relative">
       <DashboardHeader locale={locale} userName={userName} />
-      <ScrollArea className="flex-1">
-        <main className="h-full p-6 pb-6">
+      <ScrollArea className="flex-1 pb-24">
+        <main className="h-full p-6">
           {children}
         </main>
       </ScrollArea>
-      <DashboardDock locale={locale} accessibleMenuItems={accessibleMenuItems} />
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <DashboardDock locale={locale} accessibleMenuItems={accessibleMenuItems} />
+      </div>
     </div>
   );
 }

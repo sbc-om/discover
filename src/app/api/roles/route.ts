@@ -7,19 +7,60 @@ export async function GET(request: Request) {
   try {
     await requireRole(['admin']);
 
-    const { rows } = await pool.query(`
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
+    const sortBy = searchParams.get('sortBy') || 'name_en';
+    const sortOrder = searchParams.get('sortOrder') || 'asc';
+    const offset = (page - 1) * limit;
+
+    // Validate sortBy to prevent SQL injection
+    const allowedSortFields = ['name_en', 'name_ar', 'user_count', 'permission_count', 'created_at'];
+    const validSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'name_en';
+    const validSortOrder = sortOrder.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+
+    let query = `
       SELECT 
         r.id, r.name, r.name_ar, r.name_en, r.description, r.created_at,
-        COUNT(DISTINCT u.id) as user_count,
-        COUNT(DISTINCT rp.permission_id) as permission_count
+        COUNT(DISTINCT u.id)::int as user_count,
+        COUNT(DISTINCT rp.permission_id)::int as permission_count
       FROM roles r
       LEFT JOIN users u ON u.role_id = r.id
       LEFT JOIN role_permissions rp ON rp.role_id = r.id
-      GROUP BY r.id
-      ORDER BY r.created_at ASC
-    `);
+    `;
 
-    return NextResponse.json({ roles: rows });
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (search) {
+      query += ` WHERE (r.name_en ILIKE $${paramIndex} OR r.name_ar ILIKE $${paramIndex} OR r.name ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    query += ` GROUP BY r.id`;
+
+    // Get total count
+    const countQuery = `SELECT COUNT(*) FROM (${query}) as subquery`;
+    const countResult = await pool.query(countQuery, params);
+    const total = parseInt(countResult.rows[0].count);
+
+    // Add sorting and pagination
+    query += ` ORDER BY ${validSortBy} ${validSortOrder} LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(limit, offset);
+
+    const { rows } = await pool.query(query, params);
+
+    return NextResponse.json({
+      roles: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error: any) {
     console.error('Get roles error:', error);
     return NextResponse.json(

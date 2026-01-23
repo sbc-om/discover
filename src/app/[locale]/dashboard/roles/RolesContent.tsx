@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import {
   Shield,
@@ -13,7 +14,13 @@ import {
   X,
   Check,
   Lock,
-  Unlock
+  Unlock,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 interface Permission {
@@ -49,6 +56,13 @@ export default function RolesContent() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(12);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [search, setSearch] = useState('');
+  const [sortField, setSortField] = useState<string>('name_en');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showModal, setShowModal] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
@@ -64,7 +78,7 @@ export default function RolesContent() {
   useEffect(() => {
     fetchRoles();
     fetchModules();
-  }, []);
+  }, [page, limit, search, sortField, sortOrder]);
 
   // Authority hierarchy for sorting roles
   const roleHierarchy: { [key: string]: number } = {
@@ -72,6 +86,45 @@ export default function RolesContent() {
     'academy_manager': 2,
     'coach': 3,
     'player': 4
+  };
+
+  const getRoleColor = (roleName: string) => {
+    const colors: { [key: string]: string } = {
+      admin: 'from-red-500 to-rose-600',
+      coach: 'from-blue-500 to-indigo-600',
+      player: 'from-emerald-500 to-teal-600',
+      academy_manager: 'from-amber-500 to-orange-600',
+    };
+    return colors[roleName] || 'from-zinc-500 to-zinc-600';
+  };
+
+  const getRoleBadgeColor = (roleName: string) => {
+    const colors: { [key: string]: string } = {
+      admin: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      coach: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+      player: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+      academy_manager: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    };
+    return colors[roleName] || 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400';
+  };
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-3.5 h-3.5 opacity-40" />;
+    }
+    return sortOrder === 'asc' ? 
+      <ArrowUp className="w-3.5 h-3.5 text-orange-500" /> : 
+      <ArrowDown className="w-3.5 h-3.5 text-orange-500" />;
   };
 
   const sortRolesByAuthority = (rolesList: Role[]) => {
@@ -85,11 +138,20 @@ export default function RolesContent() {
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/roles');
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        sortBy: sortField,
+        sortOrder: sortOrder,
+        ...(search && { search })
+      });
+
+      const response = await fetch(`/api/roles?${params}`);
       const data = await response.json();
       if (response.ok) {
-        const sortedRoles = sortRolesByAuthority(data.roles);
-        setRoles(sortedRoles);
+        setRoles(data.roles || []);
+        setTotal(data.pagination?.total || data.roles?.length || 0);
+        setTotalPages(data.pagination?.pages || 1);
       }
     } catch (error) {
       console.error('Error fetching roles:', error);
@@ -234,142 +296,321 @@ export default function RolesContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 dark:from-orange-600 dark:to-amber-700 rounded-2xl shadow-lg shadow-orange-500/20">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Role Management</h1>
-              <p className="text-zinc-600 dark:text-zinc-400 mt-1">Manage roles and their permissions</p>
-            </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg shadow-orange-500/20">
+            <Shield className="w-6 h-6 text-white" />
           </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setShowModal(true);
-            }}
-            className="group relative px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-medium shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200 flex items-center gap-2"
-          >
-            <ShieldPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            Add New Role
-          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Roles</h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">{total} total roles</p>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            resetForm();
+            setShowModal(true);
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25 transition-all text-sm"
+        >
+          <ShieldPlus className="w-4 h-4" />
+          Add Role
+        </button>
+      </div>
+
+      {/* Search Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Search roles..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+          />
         </div>
       </div>
 
-      {/* Roles Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
+      {/* Roles List */}
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden backdrop-blur-sm bg-white/5 dark:bg-zinc-900/5">
         {loading ? (
-          <div className="col-span-full flex items-center justify-center py-16 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl">
+          <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
           </div>
         ) : roles.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center py-16 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl">
-            <Shield className="w-16 h-16 text-zinc-300 dark:text-zinc-600 mb-4" />
-            <p className="text-zinc-500 dark:text-zinc-400 text-lg">No roles found</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <Shield className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3" />
+            <p className="text-zinc-500 dark:text-zinc-400">No roles found</p>
           </div>
         ) : (
-          roles.map((role, index) => {
-            // Visual hierarchy based on authority level
-            const authorityLevel = roleHierarchy[role.name] || 999;
-            const isHighAuthority = authorityLevel <= 2;
-            
-            return (
-            <div
-              key={role.id}
-              className={`group bg-white dark:bg-zinc-800 rounded-2xl shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50 border transition-all duration-300 overflow-hidden ${
-                isHighAuthority 
-                  ? 'border-orange-300 dark:border-orange-800/50 hover:shadow-2xl hover:shadow-orange-500/20 dark:hover:shadow-orange-900/30'
-                  : 'border-zinc-200 dark:border-zinc-700 hover:shadow-xl hover:shadow-zinc-300/50 dark:hover:shadow-zinc-900/70'
-              }`}
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className={`p-4 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg ${
-                      isHighAuthority ? 'scale-110' : ''
-                    }`}>
-                      <Shield className={`text-white ${
-                        isHighAuthority ? 'w-7 h-7' : 'w-6 h-6'
-                      }`} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className={`font-bold text-zinc-900 dark:text-white ${
-                          isHighAuthority ? 'text-2xl' : 'text-xl'
-                        }`}>{role.name_en}</h3>
-                        {isHighAuthority && (
-                          <span className="px-2 py-0.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold rounded uppercase">High</span>
-                        )}
+          <>
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                    <th 
+                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors"
+                      onClick={() => handleSort('name_en')}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Role
+                        {getSortIcon('name_en')}
                       </div>
-                      <p className={`text-zinc-500 dark:text-zinc-400 mt-1 ${
-                        isHighAuthority ? 'text-sm font-medium' : 'text-xs'
-                      }`}>{role.name_ar}</p>
+                    </th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Description</th>
+                    <th 
+                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors"
+                      onClick={() => handleSort('user_count')}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Users
+                        {getSortIcon('user_count')}
+                      </div>
+                    </th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Permissions</th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {roles.map((role) => (
+                    <motion.tr
+                      key={role.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    >
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getRoleColor(role.name)} flex items-center justify-center text-white shadow-sm`}>
+                            <Shield className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-zinc-900 dark:text-white text-sm">
+                              {role.name_en}
+                            </p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {role.name_ar}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3">
+                        <p className="text-sm text-zinc-600 dark:text-zinc-300 max-w-md truncate">
+                          {role.description || 'No description'}
+                        </p>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-4 h-4 text-zinc-400" />
+                          <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                            {role.user_count}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <Key className="w-4 h-4 text-zinc-400" />
+                          <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                            {role.permission_count}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleManagePermissions(role.id)}
+                            className="p-2 text-zinc-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="Manage Permissions"
+                          >
+                            <Key className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(role)}
+                            className="p-2 text-zinc-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(role.id)}
+                            className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="lg:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+              {roles.map((role) => (
+                <motion.div
+                  key={role.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="p-4"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getRoleColor(role.name)} flex items-center justify-center text-white shadow-sm shrink-0`}>
+                      <Shield className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-zinc-900 dark:text-white text-sm">
+                        {role.name_en}
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {role.name_ar}
+                      </p>
                     </div>
                   </div>
-                </div>
+                  {role.description && (
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3 line-clamp-2">
+                      {role.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-zinc-400" />
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                        {role.user_count}
+                      </span>
+                      <span className="text-xs text-zinc-500">users</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-zinc-400" />
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                        {role.permission_count}
+                      </span>
+                      <span className="text-xs text-zinc-500">perms</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleManagePermissions(role.id)}
+                      className="flex-1 px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                    >
+                      Permissions
+                    </button>
+                    <button
+                      onClick={() => handleEdit(role)}
+                      className="p-2 text-zinc-500 hover:text-orange-500 rounded-lg transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(role.id)}
+                      className="p-2 text-zinc-500 hover:text-red-500 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </>
+        )}
 
-                <p className={`text-zinc-600 dark:text-zinc-400 mb-5 min-h-[48px] leading-relaxed ${
-                  isHighAuthority ? 'text-sm font-medium' : 'text-sm'
-                }`}>
-                  {role.description || 'No description provided'}
+        {/* Pagination */}
+        {total > 0 && (
+          <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  Showing <span className="font-semibold text-zinc-900 dark:text-white">{((page - 1) * limit) + 1}</span> to <span className="font-semibold text-zinc-900 dark:text-white">{Math.min(page * limit, total)}</span> of <span className="font-semibold text-zinc-900 dark:text-white">{total}</span> roles
                 </p>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="p-3 bg-orange-50/60 dark:bg-orange-900/20 rounded-xl border border-orange-100/70 dark:border-orange-900/40">
-                    <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
-                      <Users className="w-4 h-4" />
-                      <span className="text-xs font-medium">Users</span>
-                    </div>
-                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300 mt-1">{role.user_count}</p>
-                  </div>
-                  <div className="p-3 bg-orange-50/60 dark:bg-orange-900/20 rounded-xl border border-orange-100/70 dark:border-orange-900/40">
-                    <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
-                      <Key className="w-4 h-4" />
-                      <span className="text-xs font-medium">Permissions</span>
-                    </div>
-                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300 mt-1">{role.permission_count}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => handleManagePermissions(role.id)}
-                    className="px-3 py-2.5 bg-zinc-100 dark:bg-zinc-900/40 text-zinc-700 dark:text-zinc-300 rounded-xl hover:bg-orange-50/70 dark:hover:bg-orange-900/20 transition-all text-sm font-medium flex items-center justify-center gap-1.5 group/btn"
-                    title="Manage Permissions"
+                <div className="h-5 w-px bg-zinc-300 dark:bg-zinc-700" />
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-zinc-600 dark:text-zinc-400">Per page:</label>
+                  <select
+                    value={limit}
+                    onChange={(e) => {
+                      setLimit(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="px-2.5 py-1 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 cursor-pointer hover:border-orange-300 dark:hover:border-orange-700 transition-colors"
                   >
-                    <Key className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-                    Permissions
-                  </button>
-                  <button
-                    onClick={() => handleEdit(role)}
-                    className="px-3 py-2.5 bg-zinc-100 dark:bg-zinc-900/40 text-zinc-700 dark:text-zinc-300 rounded-xl hover:bg-orange-50/70 dark:hover:bg-orange-900/20 transition-all text-sm font-medium flex items-center justify-center gap-1.5 group/btn"
-                    title="Edit Role"
-                  >
-                    <Edit2 className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(role.id)}
-                    className="px-3 py-2.5 bg-zinc-100 dark:bg-zinc-900/40 text-zinc-700 dark:text-zinc-300 rounded-xl hover:bg-orange-50/70 dark:hover:bg-orange-900/20 transition-all text-sm font-medium flex items-center justify-center group/btn"
-                    title="Delete Role"
-                  >
-                    <Trash2 className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-                  </button>
+                    <option value="10" className="bg-white dark:bg-zinc-900">10</option>
+                    <option value="12" className="bg-white dark:bg-zinc-900">12</option>
+                    <option value="20" className="bg-white dark:bg-zinc-900">20</option>
+                    <option value="50" className="bg-white dark:bg-zinc-900">50</option>
+                  </select>
                 </div>
               </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
+                >
+                  First
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        className={`min-w-[2.5rem] px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                          page === pageNum
+                            ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25'
+                            : 'border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setPage(totalPages)}
+                  disabled={page === totalPages}
+                  className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
+                >
+                  Last
+                </button>
+              </div>
             </div>
-            );
-          })
+          </div>
         )}
       </div>
 
       {/* Role Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-700 p-6 rounded-t-3xl">
               <div className="flex items-center justify-between">
@@ -482,7 +723,7 @@ export default function RolesContent() {
 
       {/* Permission Modal */}
       {showPermissionModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-700 p-6 rounded-t-3xl z-10">
               <div className="flex items-center justify-between">
@@ -490,10 +731,7 @@ export default function RolesContent() {
                   <div className="p-2 bg-white/20 rounded-xl">
                     <Key className="w-6 h-6 text-white" />
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">Manage Permissions</h2>
-                    <p className="text-orange-100 text-sm mt-0.5">Configure role access to modules and actions</p>
-                  </div>
+                  <h2 className="text-2xl font-bold text-white">Manage Permissions</h2>
                 </div>
                 <button
                   onClick={() => {
