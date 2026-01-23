@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { motion } from 'framer-motion';
 import {
@@ -63,6 +63,14 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
   const scrollNext = useCallback(() => {
     if (emblaApi) emblaApi.scrollNext();
   }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    const activeIndex = accessibleMenuItems.findIndex((item) => `/${locale}${item.route}` === pathname);
+    if (activeIndex >= 0) {
+      emblaApi.scrollTo(activeIndex, true);
+    }
+  }, [emblaApi, accessibleMenuItems, locale, pathname]);
 
   return (
     <section
