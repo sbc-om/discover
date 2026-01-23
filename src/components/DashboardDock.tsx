@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRef } from 'react';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
-import type { OverlayScrollbarsOptions } from 'overlayscrollbars';
 import {
   LayoutDashboard,
   Users,
@@ -51,10 +50,6 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
   const tCommon = useTranslations('common');
   const isRTL = locale === 'ar';
   const railRef = useRef<HTMLDivElement | null>(null);
-  const scrollOptions: OverlayScrollbarsOptions = {
-    scrollbars: { autoHide: 'leave', clickScroll: true, dragScroll: true },
-    overflow: { x: 'scroll', y: 'hidden' },
-  };
 
   const scrollRail = (direction: 'left' | 'right') => {
     const rail = railRef.current;
@@ -86,7 +81,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
             </button>
 
             <OverlayScrollbarsComponent
-              options={scrollOptions}
+              options={{ scrollbars: { autoHide: 'leave' }, overflow: { x: 'scroll', y: 'hidden' } }}
               className="flex-1 min-w-0"
               defer
             >
