@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import TopNavbar from '@/components/TopNavbar';
 import ScrollArea from '@/components/ScrollArea';
+import Footer from '@/components/Footer';
 
 export default async function HomePage({
   params,
@@ -156,6 +157,7 @@ export default async function HomePage({
           </div>
         </section>
       </div>
+      <Footer locale={locale as 'en' | 'ar'} />
     </ScrollArea>
   );
 }

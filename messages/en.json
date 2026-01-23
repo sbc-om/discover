@@ -184,49 +184,67 @@
   },
   "aboutPage": {
     "hero": {
-      "title": "About Discover",
-      "subtitle": "A simple layer that makes progress visible and meaningful."
+      "kicker": "Our Mission",
+      "title": "About Discover Natural Ability",
+      "subtitle": "Building the Future of Youth Sports Development"
     },
-    "cards": {
-      "mission": {
-        "title": "Mission",
-        "body": "Clarify the athlete journey with honest, measurable stages."
-      },
-      "approach": {
-        "title": "Approach",
-        "body": "Work alongside existing programs without interference."
-      },
-      "promise": {
-        "title": "Promise",
-        "body": "Clear progress for athletes, parents, and institutions."
+    "origin": {
+      "title": "Our Origin Story",
+      "body": "Through direct field experience with professional athletes, sports institutions, and parents of developing athletes, we discovered a critical gap: Many athletes train consistently, yet lack real clarity about their level or how they are progressing over time. Parents support their children, but often struggle to see tangible results that can be understood or followed. At the same time, institutions invest significant effort, without a unified system that clearly demonstrates long-term value. Discover Natural Ability was created to address this gap."
+    },
+    "mission": {
+      "title": "Our Mission",
+      "body": "Discover does not add a new program—it creates a real development journey, measured on the field, documented digitally, with achievements that are displayed on walls and carry the institution's name in the child's memory for years."
+    },
+    "team": {
+      "title": "Discover Team",
+      "members": {
+        "m1": "Mohannad Sulimani",
+        "m2": "Talal Naji"
       }
     },
-    "values": {
-      "title": "What we value",
-      "body": "Simplicity, transparency, and long-term trust.",
+    "system": {
+      "title": "The System",
       "items": {
-        "i1": "Measured progress",
-        "i2": "Clear communication",
-        "i3": "Sustainable impact"
+        "i1": {
+          "title": "Structured Assessment Framework",
+          "body": "Scientific, field-based assessments that measure natural athletic abilities in realistic environments"
+        },
+        "i2": {
+          "title": "Digital Development Profiles",
+          "body": "Comprehensive athlete profiles that track progress, stages, and achievements over time"
+        },
+        "i3": {
+          "title": "Clear Stage Progression",
+          "body": "Transparent development stages that show exactly where athletes stand and where they're heading"
+        },
+        "i4": {
+          "title": "Meaningful Recognition",
+          "body": "Physical medals and digital achievements that represent real milestones, not just participation"
+        }
       }
+    },
+    "approach": {
+      "title": "Our Approach",
+      "body": "We work exclusively with institutional partners—academies, schools, sports clubs, and government entities—to provide a layer of organization and clarity that enhances what already exists, without changing training methods or interfering with operations."
     }
   },
   "contactPage": {
     "hero": {
-      "title": "Contact us",
-      "subtitle": "We respond quickly and keep things simple."
+      "title": "Contact Us",
+      "subtitle": "We respond quickly and keep things clear."
     },
     "cards": {
       "email": {
         "title": "Email",
-        "value": "hello@discover.app"
+        "value": "info@discovernaturalability.com"
       },
       "phone": {
         "title": "Phone",
-        "value": "+968 9000 0000"
+        "value": "+968 7772 2112"
       },
       "location": {
-        "title": "Location",
+        "title": "Locations",
         "value": "Muscat, Oman"
       }
     },
@@ -235,5 +253,22 @@
       "subtitle": "Tell us about your institution and goals.",
       "button": "Email Discover"
     }
+  },
+  "footer": {
+    "brand": {
+      "short": "DNA",
+      "name": "Discover Natural Ability",
+      "tagline": "Let’s build champions together."
+    },
+    "quickLinks": "Quick Links",
+    "followUs": "Follow Us",
+    "social": {
+      "instagram": "Instagram",
+      "twitter": "Twitter",
+      "linkedin": "LinkedIn"
+    },
+    "copyright": "© 2026 Discover Natural Ability. All rights reserved.",
+    "builtFor": "Built for athletes, coaches, and families."
+    }
   }
-}
+

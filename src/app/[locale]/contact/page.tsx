@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import TopNavbar from '@/components/TopNavbar';
 import ScrollArea from '@/components/ScrollArea';
+import Footer from '@/components/Footer';
 
 export default async function ContactPage({
   params,
@@ -57,7 +58,7 @@ export default async function ContactPage({
               {t('cta.subtitle')}
             </p>
             <a
-              href="mailto:hello@discover.app"
+              href="mailto:info@discovernaturalability.com"
               className="inline-flex items-center justify-center px-6 py-3 bg-black text-white dark:bg-white dark:text-black rounded-lg font-semibold text-sm md:text-base hover:bg-zinc-900 dark:hover:bg-zinc-100 transition-colors"
             >
               {t('cta.button')}
@@ -65,6 +66,7 @@ export default async function ContactPage({
           </div>
         </section>
       </div>
+      <Footer locale={locale as 'en' | 'ar'} />
     </ScrollArea>
   );
 }
