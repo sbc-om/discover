@@ -5,12 +5,12 @@ import { requireRole } from '@/lib/session';
 // GET single role with permissions (Admin only)
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireRole(['admin']);
 
-    const id = params?.id || new URL(request.url).pathname.split('/').filter(Boolean).pop() || '';
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: 'Role id is required' }, { status: 400 });
     }
@@ -57,12 +57,12 @@ export async function GET(
 // PUT update role (Admin only)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireRole(['admin']);
 
-    const id = params?.id || new URL(request.url).pathname.split('/').filter(Boolean).pop() || '';
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: 'Role id is required' }, { status: 400 });
     }
@@ -122,12 +122,12 @@ export async function PUT(
 // DELETE role (Admin only)
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireRole(['admin']);
 
-    const id = params?.id || new URL(request.url).pathname.split('/').filter(Boolean).pop() || '';
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: 'Role id is required' }, { status: 400 });
     }

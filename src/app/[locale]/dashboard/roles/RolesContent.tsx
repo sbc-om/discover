@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import ModalPortal from '@/components/ModalPortal';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { useToast } from '@/components/ToastProvider';
 import {
   Shield,
   ShieldPlus,
@@ -67,6 +69,10 @@ export default function RolesContent() {
   const [showModal, setShowModal] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [formData, setFormData] = useState({
@@ -205,10 +211,11 @@ export default function RolesContent() {
         fetchRoles();
       } else {
         const data = await response.json();
-        alert(data.message);
+        showToast('error', data.message || 'Failed to save role');
       }
     } catch (error) {
       console.error('Error saving role:', error);
+      showToast('error', 'Failed to save role');
     }
   };
 
@@ -229,26 +236,40 @@ export default function RolesContent() {
         fetchRoles();
       } else {
         const data = await response.json();
-        alert(data.message);
+        showToast('error', data.message || 'Failed to update permissions');
       }
     } catch (error) {
       console.error('Error updating permissions:', error);
+      showToast('error', 'Failed to update permissions');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this role?')) return;
-
+  const handleDelete = async (id: string): Promise<boolean> => {
     try {
       const response = await fetch(`/api/roles/${id}`, { method: 'DELETE' });
       if (response.ok) {
         fetchRoles();
+        return true;
       } else {
         const data = await response.json();
-        alert(data.message);
+        setDeleteError(data.message || 'Failed to delete role');
       }
     } catch (error) {
       console.error('Error deleting role:', error);
+      setDeleteError('Failed to delete role');
+    }
+    return false;
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const success = await handleDelete(deleteTarget.id);
+      if (success) setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -505,12 +526,15 @@ export default function RolesContent() {
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(role.id)}
-                      className="p-2 text-zinc-500 hover:text-red-500 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                          <button
+                            onClick={() => {
+                              setDeleteTarget(role);
+                              setDeleteError(null);
+                            }}
+                            className="p-2 text-zinc-500 hover:text-red-500 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                   </div>
                 </motion.div>
               ))}
@@ -608,6 +632,21 @@ export default function RolesContent() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete role?"
+        description={deleteTarget ? `This will permanently remove the ${deleteTarget.name_en || deleteTarget.name} role.` : undefined}
+        confirmText="Delete Role"
+        cancelText="Cancel"
+        onClose={() => {
+          setDeleteTarget(null);
+          setDeleteError(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+        errorMessage={deleteError}
+      />
 
       <ModalPortal>
         {/* Role Modal */}

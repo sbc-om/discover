@@ -6,12 +6,12 @@ import { hashPassword } from '@/lib/auth';
 // GET single user (Admin only)
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireRole(['admin']);
 
-    const id = params?.id || new URL(request.url).pathname.split('/').filter(Boolean).pop() || '';
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: 'User id is required' }, { status: 400 });
     }
@@ -46,12 +46,12 @@ export async function GET(
 // PUT update user (Admin only)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireRole(['admin']);
 
-    const id = params?.id || new URL(request.url).pathname.split('/').filter(Boolean).pop() || '';
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: 'User id is required' }, { status: 400 });
     }
@@ -198,12 +198,12 @@ export async function PUT(
 // DELETE user (Admin only)
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireRole(['admin']);
 
-    const id = params?.id || new URL(request.url).pathname.split('/').filter(Boolean).pop() || '';
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: 'User id is required' }, { status: 400 });
     }

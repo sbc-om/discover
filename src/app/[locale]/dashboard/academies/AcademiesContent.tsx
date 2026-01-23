@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import ModalPortal from '@/components/ModalPortal';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { useToast } from '@/components/ToastProvider';
 import {
   Building2,
   Plus,
@@ -62,6 +64,10 @@ export default function AcademiesContent() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showModal, setShowModal] = useState(false);
   const [editingAcademy, setEditingAcademy] = useState<Academy | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Academy | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -221,11 +227,11 @@ export default function AcademiesContent() {
         fetchManagers();
       } else {
         const data = await response.json();
-        alert(data.message || 'Failed to save academy');
+        showToast('error', data.message || 'Failed to save academy');
       }
     } catch (error) {
       console.error('Error saving academy:', error);
-      alert('Failed to save academy');
+      showToast('error', 'Failed to save academy');
     }
   };
 
@@ -245,9 +251,7 @@ export default function AcademiesContent() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this academy?')) return;
-
+  const handleDelete = async (id: string): Promise<boolean> => {
     try {
       const response = await fetch(`/api/academies/${id}`, {
         method: 'DELETE'
@@ -255,13 +259,27 @@ export default function AcademiesContent() {
 
       if (response.ok) {
         fetchAcademies();
+        return true;
       } else {
         const data = await response.json();
-        alert(data.message || 'Failed to delete academy');
+        setDeleteError(data.message || 'Failed to delete academy');
       }
     } catch (error) {
       console.error('Error deleting academy:', error);
-      alert('Failed to delete academy');
+      setDeleteError('Failed to delete academy');
+    }
+    return false;
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const success = await handleDelete(deleteTarget.id);
+      if (success) setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -528,7 +546,10 @@ export default function AcademiesContent() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(academy.id)}
+                        onClick={() => {
+                          setDeleteTarget(academy);
+                          setDeleteError(null);
+                        }}
                         className="p-2 text-zinc-500 hover:text-red-500 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -541,6 +562,21 @@ export default function AcademiesContent() {
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete academy?"
+        description={deleteTarget ? `This will permanently remove ${deleteTarget.name}.` : undefined}
+        confirmText="Delete Academy"
+        cancelText="Cancel"
+        onClose={() => {
+          setDeleteTarget(null);
+          setDeleteError(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+        errorMessage={deleteError}
+      />
 
       {/* Pagination */}
       {!loading && total > 0 && (

@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import ModalPortal from '@/components/ModalPortal';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { useToast } from '@/components/ToastProvider';
 import {
   Users as UsersIcon,
   UserPlus,
@@ -91,6 +93,10 @@ export default function UsersContent() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -175,7 +181,7 @@ export default function UsersContent() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+        showToast('error', 'File size must be less than 5MB');
         return;
       }
       setAvatarFile(file);
@@ -205,11 +211,12 @@ export default function UsersContent() {
       if (response.ok) {
         return data.avatarUrl;
       } else {
-        alert(data.message);
+        showToast('error', data.message || 'Failed to upload avatar');
         return null;
       }
     } catch (error) {
       console.error('Error uploading avatar:', error);
+      showToast('error', 'Failed to upload avatar');
       return null;
     } finally {
       setUploadingAvatar(false);
@@ -254,23 +261,40 @@ export default function UsersContent() {
         resetForm();
         fetchUsers();
       } else {
-        alert(result.message);
+        showToast('error', result.message || 'Failed to save user');
       }
     } catch (error) {
       console.error('Error saving user:', error);
+      showToast('error', 'Failed to save user');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-
+  const handleDelete = async (id: string): Promise<boolean> => {
     try {
       const response = await fetch(`/api/users/${id}`, { method: 'DELETE' });
       if (response.ok) {
         fetchUsers();
+        return true;
+      } else {
+        const data = await response.json();
+        setDeleteError(data.message || 'Failed to delete user');
       }
     } catch (error) {
       console.error('Error deleting user:', error);
+      setDeleteError('Failed to delete user');
+    }
+    return false;
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const success = await handleDelete(deleteTarget.id);
+      if (success) setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -534,7 +558,10 @@ export default function UsersContent() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(user.id)}
+                            onClick={() => {
+                              setDeleteTarget(user);
+                              setDeleteError(null);
+                            }}
                             className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -582,7 +609,10 @@ export default function UsersContent() {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(user.id)}
+                      onClick={() => {
+                        setDeleteTarget(user);
+                        setDeleteError(null);
+                      }}
                       className="p-2 text-zinc-500 hover:text-red-500 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -685,6 +715,21 @@ export default function UsersContent() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete user?"
+        description={deleteTarget ? `This will permanently remove ${deleteTarget.first_name} ${deleteTarget.last_name}.` : undefined}
+        confirmText="Delete User"
+        cancelText="Cancel"
+        onClose={() => {
+          setDeleteTarget(null);
+          setDeleteError(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+        errorMessage={deleteError}
+      />
 
       {/* Modal */}
       <ModalPortal>
