@@ -20,7 +20,10 @@ import {
   EyeOff,
   Camera,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 interface User {
@@ -69,10 +72,13 @@ export default function UsersContent() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(12);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [sortField, setSortField] = useState<string>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -93,14 +99,16 @@ export default function UsersContent() {
   useEffect(() => {
     fetchUsers();
     fetchRoles();
-  }, [page, search, roleFilter]);
+  }, [page, limit, search, roleFilter, sortField, sortOrder]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '12',
+        limit: limit.toString(),
+        sortBy: sortField,
+        sortOrder: sortOrder,
         ...(search && { search }),
         ...(roleFilter && { role: roleFilter })
       });
@@ -279,6 +287,25 @@ export default function UsersContent() {
   const getRoleColor = (roleName: string) => roleColors[roleName] || roleColors.default;
   const getRoleBadgeColor = (roleName: string) => roleBadgeColors[roleName] || roleBadgeColors.default;
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+    setPage(1); // Reset to first page when sorting changes
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-3.5 h-3.5 opacity-40" />;
+    }
+    return sortOrder === 'asc' ? 
+      <ArrowUp className="w-3.5 h-3.5 text-orange-500" /> : 
+      <ArrowDown className="w-3.5 h-3.5 text-orange-500" />;
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -364,11 +391,43 @@ export default function UsersContent() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">User</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Contact</th>
+                    <th 
+                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
+                      onClick={() => handleSort('first_name')}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        User
+                        {getSortIcon('first_name')}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
+                      onClick={() => handleSort('email')}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Contact
+                        {getSortIcon('email')}
+                      </div>
+                    </th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Role</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Status</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Joined</th>
+                    <th 
+                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
+                      onClick={() => handleSort('is_active')}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Status
+                        {getSortIcon('is_active')}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Joined
+                        {getSortIcon('created_at')}
+                      </div>
+                    </th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -510,13 +569,31 @@ export default function UsersContent() {
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {total > 0 && (
           <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Showing <span className="font-semibold text-zinc-900 dark:text-white">{((page - 1) * 12) + 1}</span> to <span className="font-semibold text-zinc-900 dark:text-white">{Math.min(page * 12, total)}</span> of <span className="font-semibold text-zinc-900 dark:text-white">{total}</span> users
+                  Showing <span className="font-semibold text-zinc-900 dark:text-white">{((page - 1) * limit) + 1}</span> to <span className="font-semibold text-zinc-900 dark:text-white">{Math.min(page * limit, total)}</span> of <span className="font-semibold text-zinc-900 dark:text-white">{total}</span> users
                 </p>
+                <div className="h-5 w-px bg-zinc-300 dark:bg-zinc-700" />
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-zinc-600 dark:text-zinc-400">Per page:</label>
+                  <select
+                    value={limit}
+                    onChange={(e) => {
+                      setLimit(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="px-2.5 py-1 bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 cursor-pointer hover:border-orange-300 dark:hover:border-orange-700 transition-colors"
+                  >
+                    <option value="10" className="bg-white dark:bg-zinc-900">10</option>
+                    <option value="12" className="bg-white dark:bg-zinc-900">12</option>
+                    <option value="20" className="bg-white dark:bg-zinc-900">20</option>
+                    <option value="50" className="bg-white dark:bg-zinc-900">50</option>
+                    <option value="100" className="bg-white dark:bg-zinc-900">100</option>
+                  </select>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button

@@ -14,7 +14,14 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
     const roleFilter = searchParams.get('role') || '';
+    const sortBy = searchParams.get('sortBy') || 'created_at';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
     const offset = (page - 1) * limit;
+
+    // Validate sortBy to prevent SQL injection
+    const allowedSortFields = ['first_name', 'last_name', 'email', 'created_at', 'is_active'];
+    const validSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const validSortOrder = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
     let query = `
       SELECT 
@@ -50,8 +57,8 @@ export async function GET(request: Request) {
     const countResult = await pool.query(countQuery, params);
     const total = parseInt(countResult.rows[0].count);
 
-    // Add pagination
-    query += ` ORDER BY u.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    // Add sorting and pagination
+    query += ` ORDER BY u.${validSortBy} ${validSortOrder} LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
     const { rows } = await pool.query(query, params);
