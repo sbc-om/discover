@@ -613,29 +613,26 @@ export default function RolesContent() {
         {/* Role Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-700 p-6 rounded-t-3xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-xl">
-                      {editingRole ? <Edit2 className="w-6 h-6 text-white" /> : <ShieldPlus className="w-6 h-6 text-white" />}
-                    </div>
-                    <h2 className="text-2xl font-bold text-white">{editingRole ? 'Edit Role' : 'Add New Role'}</h2>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowModal(false);
-                      resetForm();
-                    }}
-                    className="p-2 hover:bg-white/20 rounded-xl transition-colors"
-                  >
-                    <X className="w-6 h-6 text-white" />
-                  </button>
-                </div>
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  {editingRole ? 'Edit Role' : 'Add New Role'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    resetForm();
+                  }}
+                  className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
+              {/* Body - Scrollable */}
               <OverlayScrollbarsComponent
                 options={{ scrollbars: { autoHide: 'leave' } }}
-                className="max-h-[calc(90vh-168px)]"
+                className="flex-1"
               >
                 <form id="role-modal-form" onSubmit={handleSubmit} className="p-6 space-y-5">
                   <div className="space-y-2">
@@ -697,26 +694,26 @@ export default function RolesContent() {
                   </div>
                 </form>
               </OverlayScrollbarsComponent>
-              <div className="border-t border-zinc-200 dark:border-zinc-700 p-4 rounded-b-3xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur">
-                <div className="flex gap-3">
-                  <button
-                    type="submit"
-                    form="role-modal-form"
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200"
-                  >
-                    {editingRole ? 'Update Role' : 'Create Role'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowModal(false);
-                      resetForm();
-                    }}
-                    className="px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-all duration-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
+
+              {/* Footer - Actions */}
+              <div className="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center gap-3 shrink-0 bg-zinc-50 dark:bg-zinc-800/50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModal(false);
+                    resetForm();
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="role-modal-form"
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-all"
+                >
+                  {editingRole ? 'Update Role' : 'Create Role'}
+                </button>
               </div>
             </div>
           </div>
@@ -725,50 +722,46 @@ export default function RolesContent() {
         {/* Permission Modal */}
         {showPermissionModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-700 p-6 rounded-t-3xl z-10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-xl">
-                      <Key className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-white">Manage Permissions</h2>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowPermissionModal(false);
-                      setSelectedRole(null);
-                      setSelectedPermissions([]);
-                    }}
-                    className="p-2 hover:bg-white/20 rounded-xl transition-colors"
-                  >
-                    <X className="w-6 h-6 text-white" />
-                  </button>
-                </div>
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  Manage Permissions
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowPermissionModal(false);
+                    setSelectedRole(null);
+                    setSelectedPermissions([]);
+                  }}
+                  className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
+              {/* Body - Scrollable */}
               <OverlayScrollbarsComponent
                 options={{ scrollbars: { autoHide: 'leave' } }}
-                className="p-6 space-y-4 max-h-[calc(90vh-200px)]"
+                className="flex-1"
               >
-                {modules.map((module) => {
-                  const modulePermissionIds = module.permissions.map((p) => p.id);
-                  const allSelected = modulePermissionIds.every((id) => selectedPermissions.includes(id));
-                  const someSelected = modulePermissionIds.some((id) => selectedPermissions.includes(id));
+                <div className="p-6 space-y-4">
+                  {modules.map((module) => {
+                    const modulePermissionIds = module.permissions.map((p) => p.id);
+                    const allSelected = modulePermissionIds.every((id) => selectedPermissions.includes(id));
+                    const someSelected = modulePermissionIds.some((id) => selectedPermissions.includes(id));
 
-                  return (
-                    <div key={module.module_id} className="bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-                      <div className="flex items-center gap-4 p-5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          ref={(input) => {
-                            if (input) input.indeterminate = someSelected && !allSelected;
-                          }}
-                          onChange={(e) => toggleModulePermissions(module, e.target.checked)}
-                          className="w-6 h-6 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-orange-500 focus:ring-2 cursor-pointer"
+                    return (
+                      <div key={module.module_id} className="bg-zinc-50 dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                        <div className="flex items-center gap-4 p-5 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            ref={(input) => {
+                              if (input) input.indeterminate = someSelected && !allSelected;
+                            }}
+                            onChange={(e) => toggleModulePermissions(module, e.target.checked)}
+                            className="w-6 h-6 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-orange-500 focus:ring-2 cursor-pointer"
                         />
                         <div className="flex items-center gap-3 flex-1">
                           <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl">
@@ -813,28 +806,28 @@ export default function RolesContent() {
                     </div>
                   );
                 })}
+                </div>
               </OverlayScrollbarsComponent>
 
-              <div className="sticky bottom-0 bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 p-6 rounded-b-3xl">
-                <div className="flex gap-3">
-                  <button
-                    onClick={handlePermissionSubmit}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200 flex items-center justify-center gap-2"
-                  >
-                    <Check className="w-5 h-5" />
-                    Save Permissions ({selectedPermissions.length} selected)
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowPermissionModal(false);
-                      setSelectedRole(null);
-                      setSelectedPermissions([]);
-                    }}
-                    className="px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-all duration-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
+              {/* Footer - Actions */}
+              <div className="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center gap-3 shrink-0 bg-zinc-50 dark:bg-zinc-800/50">
+                <button
+                  onClick={() => {
+                    setShowPermissionModal(false);
+                    setSelectedRole(null);
+                    setSelectedPermissions([]);
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePermissionSubmit}
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-all flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  Save Permissions ({selectedPermissions.length})
+                </button>
               </div>
             </div>
           </div>
