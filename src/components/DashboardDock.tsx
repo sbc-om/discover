@@ -48,13 +48,14 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
   const pathname = usePathname();
   const tCommon = useTranslations('common');
   const isRTL = locale === 'ar';
-  const railRef = useRef<HTMLDivElement | null>(null);
+  const osRef = useRef<any>(null);
 
   const scrollRail = (direction: 'left' | 'right') => {
-    const rail = railRef.current;
-    if (!rail) return;
+    const osInstance = osRef.current?.osInstance?.();
+    if (!osInstance) return;
+    const viewport = osInstance.elements().viewport;
     const delta = direction === 'left' ? -280 : 280;
-    rail.scrollBy({ left: isRTL ? -delta : delta, behavior: 'smooth' });
+    viewport.scrollBy({ left: isRTL ? -delta : delta, behavior: 'smooth' });
   };
 
   return (
@@ -80,6 +81,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
             </button>
 
             <OverlayScrollbarsComponent
+              ref={osRef}
               options={{ scrollbars: { autoHide: 'leave' }, overflow: { x: 'scroll', y: 'hidden' } }}
               className="flex-1 min-w-0"
               defer
