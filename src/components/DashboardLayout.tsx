@@ -1,6 +1,7 @@
 import DashboardHeader from '@/components/DashboardHeader';
 import ScrollArea from '@/components/ScrollArea';
 import DashboardDock from '@/components/DashboardDock';
+import NotificationRequester from '@/components/NotificationRequester';
 import { ReactNode } from 'react';
 
 interface DashboardLayoutProps {
@@ -23,6 +24,7 @@ export default function DashboardLayout({
       <DashboardHeader locale={locale} userName={userName} />
       <ScrollArea className="flex-1">
         <main className="h-full p-6 pb-32">
+          <NotificationRequester />
           {children}
         </main>
       </ScrollArea>
