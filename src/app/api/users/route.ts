@@ -28,6 +28,7 @@ export async function GET(request: Request) {
         u.id, u.email, u.first_name, u.last_name, u.phone, 
         u.is_active, u.email_verified, u.last_login, 
         u.preferred_language, u.created_at, u.avatar_url,
+        u.academy_id, u.created_by,
         r.id as role_id, r.name as role_name, r.name_ar, r.name_en
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id
@@ -81,7 +82,7 @@ export async function GET(request: Request) {
 // POST create new user (Admin only)
 export async function POST(request: Request) {
   try {
-    await requireRole(['admin']);
+    const session = await requireRole(['admin']);
 
     const body = await request.json();
     const {
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
       last_name,
       phone,
       role_id,
+      academy_id,
       preferred_language,
       is_active = true,
     } = body;
@@ -119,13 +121,26 @@ export async function POST(request: Request) {
     // Hash password
     const password_hash = await hashPassword(password);
 
+    if (academy_id) {
+      const academyExists = await pool.query(
+        'SELECT id FROM academies WHERE id = $1',
+        [academy_id]
+      );
+      if (academyExists.rows.length === 0) {
+        return NextResponse.json(
+          { message: 'Academy not found' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Insert user
     const { rows } = await pool.query(
       `INSERT INTO users 
-        (email, password_hash, first_name, last_name, phone, role_id, preferred_language, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id, email, first_name, last_name, phone, role_id, preferred_language, is_active, created_at`,
-      [email, password_hash, first_name, last_name, phone, role_id, preferred_language || 'en', is_active]
+        (email, password_hash, first_name, last_name, phone, role_id, academy_id, preferred_language, is_active, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id, email, first_name, last_name, phone, role_id, academy_id, preferred_language, is_active, created_at, created_by`,
+      [email, password_hash, first_name, last_name, phone, role_id, academy_id || null, preferred_language || 'en', is_active, session.userId]
     );
 
     return NextResponse.json(

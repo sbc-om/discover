@@ -40,6 +40,7 @@ interface User {
   role_name: string;
   name_ar: string;
   name_en: string;
+  academy_id?: string | null;
   created_at: string;
   avatar_url?: string;
 }
@@ -49,6 +50,12 @@ interface Role {
   name: string;
   name_ar: string;
   name_en: string;
+}
+
+interface Academy {
+  id: string;
+  name: string;
+  name_ar: string;
 }
 
 const roleColors: { [key: string]: string } = {
@@ -72,6 +79,7 @@ export default function UsersContent() {
   const [fullName, setFullName] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [academies, setAcademies] = useState<Academy[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(12);
@@ -94,6 +102,7 @@ export default function UsersContent() {
     last_name: '',
     phone: '',
     role_id: '',
+    academy_id: '',
     preferred_language: 'en',
     is_active: true
   });
@@ -101,6 +110,7 @@ export default function UsersContent() {
   useEffect(() => {
     fetchUsers();
     fetchRoles();
+    fetchAcademies();
   }, [page, limit, search, roleFilter, sortField, sortOrder]);
 
   const fetchUsers = async () => {
@@ -139,6 +149,18 @@ export default function UsersContent() {
       }
     } catch (error) {
       console.error('Error fetching roles:', error);
+    }
+  };
+
+  const fetchAcademies = async () => {
+    try {
+      const response = await fetch('/api/academies?limit=100');
+      const data = await response.json();
+      if (response.ok) {
+        setAcademies(data.academies || []);
+      }
+    } catch (error) {
+      console.error('Error fetching academies:', error);
     }
   };
 
@@ -263,6 +285,7 @@ export default function UsersContent() {
       last_name: user.last_name,
       phone: user.phone || '',
       role_id: user.role_id || '',
+      academy_id: user.academy_id || '',
       preferred_language: 'en',
       is_active: user.is_active
     });
@@ -281,6 +304,7 @@ export default function UsersContent() {
       last_name: '',
       phone: '',
       role_id: '',
+      academy_id: '',
       preferred_language: 'en',
       is_active: true
     });
@@ -815,6 +839,25 @@ export default function UsersContent() {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                {/* Academy */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    Academy
+                  </label>
+                  <select
+                    value={formData.academy_id}
+                    onChange={(e) => setFormData({ ...formData, academy_id: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all"
+                  >
+                    <option value="">No academy</option>
+                    {academies.map((academy) => (
+                      <option key={academy.id} value={academy.id}>
+                        {academy.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                       {/* Active Status */}

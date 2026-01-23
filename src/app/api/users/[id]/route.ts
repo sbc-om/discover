@@ -21,6 +21,7 @@ export async function GET(
         u.id, u.email, u.first_name, u.last_name, u.phone, 
         u.is_active, u.email_verified, u.last_login, 
         u.preferred_language, u.created_at, u.updated_at, u.avatar_url,
+        u.academy_id, u.created_by,
         r.id as role_id, r.name as role_name, r.name_ar, r.name_en
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id
@@ -63,6 +64,7 @@ export async function PUT(
       last_name,
       phone,
       role_id,
+      academy_id,
       preferred_language,
       is_active,
       email_verified,
@@ -123,6 +125,23 @@ export async function PUT(
     if (role_id !== undefined) {
       updates.push(`role_id = $${paramIndex++}`);
       values.push(role_id);
+    }
+
+    if (academy_id !== undefined) {
+      if (academy_id) {
+        const academyExists = await pool.query(
+          'SELECT id FROM academies WHERE id = $1',
+          [academy_id]
+        );
+        if (academyExists.rows.length === 0) {
+          return NextResponse.json(
+            { message: 'Academy not found' },
+            { status: 400 }
+          );
+        }
+      }
+      updates.push(`academy_id = $${paramIndex++}`);
+      values.push(academy_id || null);
     }
 
     if (preferred_language !== undefined) {
