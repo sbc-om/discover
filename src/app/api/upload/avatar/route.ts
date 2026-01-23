@@ -8,6 +8,8 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const AVATAR_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
 const ACADEMY_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'academies');
+const PROGRAM_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'programs');
+const LEVEL_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'levels');
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (type !== 'academy' && !userId) {
+    if (!['academy', 'program', 'level'].includes(type) && !userId) {
       return NextResponse.json(
         { message: 'User ID is required' },
         { status: 400 }
@@ -47,7 +49,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure upload directory exists
-    const uploadDir = type === 'academy' ? ACADEMY_UPLOAD_DIR : AVATAR_UPLOAD_DIR;
+    const uploadDir =
+      type === 'academy'
+        ? ACADEMY_UPLOAD_DIR
+        : type === 'program'
+        ? PROGRAM_UPLOAD_DIR
+        : type === 'level'
+        ? LEVEL_UPLOAD_DIR
+        : AVATAR_UPLOAD_DIR;
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true });
     }
@@ -55,9 +64,14 @@ export async function POST(request: NextRequest) {
     // Generate secure filename
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const hash = crypto.randomBytes(16).toString('hex');
-    const filename = type === 'academy'
-      ? `academy-${hash}.${ext}`
-      : `${userId}-${hash}.${ext}`;
+    const filename =
+      type === 'academy'
+        ? `academy-${hash}.${ext}`
+        : type === 'program'
+        ? `program-${hash}.${ext}`
+        : type === 'level'
+        ? `level-${hash}.${ext}`
+        : `${userId}-${hash}.${ext}`;
     const filepath = path.join(uploadDir, filename);
 
     // Convert file to buffer and save
@@ -74,15 +88,21 @@ export async function POST(request: NextRequest) {
 
     await writeFile(filepath, buffer);
 
-    const url = type === 'academy'
-      ? `/uploads/academies/${filename}`
-      : `/uploads/avatars/${filename}`;
+    const url =
+      type === 'academy'
+        ? `/uploads/academies/${filename}`
+        : type === 'program'
+        ? `/uploads/programs/${filename}`
+        : type === 'level'
+        ? `/uploads/levels/${filename}`
+        : `/uploads/avatars/${filename}`;
 
+    const isAvatar = type === 'avatar';
     return NextResponse.json({
       success: true,
-      avatarUrl: type === 'academy' ? undefined : url,
-      url: type === 'academy' ? url : undefined,
-      message: type === 'academy' ? 'Academy logo uploaded successfully' : 'Avatar uploaded successfully'
+      avatarUrl: isAvatar ? url : undefined,
+      url: isAvatar ? undefined : url,
+      message: isAvatar ? 'Avatar uploaded successfully' : 'Image uploaded successfully'
     });
   } catch (error) {
     console.error('Error uploading avatar:', error);
