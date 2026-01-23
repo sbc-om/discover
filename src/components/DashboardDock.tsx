@@ -101,13 +101,13 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
                       className={`group relative flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-2 text-sm font-medium transition-all ${
                         isActive
                           ? 'bg-zinc-900 text-white border-transparent dark:bg-white dark:text-zinc-900'
-                          : 'bg-white/70 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-200 border-white/40 dark:border-zinc-800/60 hover:-translate-y-0.5 hover:shadow-md'
+                          : 'bg-white/70 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-200 border-white/40 dark:border-zinc-800/60'
                       }`}
                     >
-                      <span className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                      <span className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
                         isActive
                           ? 'bg-white/15 text-white dark:bg-zinc-900/10 dark:text-zinc-900'
-                          : 'bg-zinc-900/5 text-zinc-900 dark:bg-white/10 dark:text-white'
+                          : 'bg-zinc-900/5 text-zinc-900 dark:bg-white/10 dark:text-white group-hover:bg-orange-500 group-hover:text-white'
                       }`}>
                         <Icon className="h-4 w-4" />
                       </span>
