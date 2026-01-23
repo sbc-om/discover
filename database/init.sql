@@ -152,6 +152,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
 -- Insert Default Roles
 INSERT INTO roles (name, name_ar, name_en, description) VALUES
 ('admin', 'مدير', 'Admin', 'Full system access and management'),
+('academy_manager', 'مدير الأكاديمية', 'Academy Manager', 'Manage academy operations and programs'),
 ('coach', 'مدرب', 'Coach', 'Can manage players and programs'),
 ('player', 'لاعب', 'Player', 'Basic player access')
 ON CONFLICT (name) DO NOTHING;
@@ -204,6 +205,18 @@ CROSS JOIN permissions p
 WHERE r.name = 'coach' 
 AND p.module_id IN (
     SELECT id FROM modules WHERE name IN ('dashboard', 'users', 'health_tests', 'programs', 'messages', 'whatsapp')
+)
+AND p.action IN ('read', 'create', 'update')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- Assign specific permissions to academy manager role
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.name = 'academy_manager'
+AND p.module_id IN (
+    SELECT id FROM modules WHERE name IN ('dashboard', 'academies', 'programs', 'users', 'health_tests', 'messages', 'whatsapp')
 )
 AND p.action IN ('read', 'create', 'update')
 ON CONFLICT (role_id, permission_id) DO NOTHING;

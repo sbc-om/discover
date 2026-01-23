@@ -1,6 +1,9 @@
 import DashboardLayout from '@/components/DashboardLayout';
 import { useTranslations } from 'next-intl';
 import { Users, Shield, Building2, Award } from 'lucide-react';
+import { requireAuth } from '@/lib/session';
+import { getAccessibleMenuItems } from '@/lib/permissions';
+import { redirect } from 'next/navigation';
 
 export default async function DashboardPage({
   params,
@@ -9,98 +12,103 @@ export default async function DashboardPage({
 }) {
   const { locale } = await params;
   
-  // In a real app, fetch user data from session
-  const userName = 'Admin User';
+  // Require authentication
+  try {
+    const session = await requireAuth();
+    const accessibleMenuItems = await getAccessibleMenuItems();
+    
+    const userName = session.email;
 
-  const stats = [
-    { 
-      key: 'users',
-      icon: Users, 
-      value: '1,234', 
-      labelEn: 'Total Users',
-      labelAr: 'إجمالي المستخدمين',
-      color: 'bg-black' 
-    },
-    { 
-      key: 'coaches',
-      icon: Shield, 
-      value: '45', 
-      labelEn: 'Coaches',
-      labelAr: 'المدربون',
-      color: 'bg-black' 
-    },
-    { 
-      key: 'academies',
-      icon: Building2, 
-      value: '12', 
-      labelEn: 'Academies',
-      labelAr: 'الأكاديميات',
-      color: 'bg-black' 
-    },
-    { 
-      key: 'medals',
-      icon: Award, 
-      value: '89', 
-      labelEn: 'Medal Requests',
-      labelAr: 'طلبات الميداليات',
-      color: 'bg-black' 
-    },
-  ];
+    const stats = [
+      { 
+        key: 'users',
+        icon: Users, 
+        value: '1,234', 
+        labelEn: 'Total Users',
+        labelAr: 'إجمالي المستخدمين',
+        color: 'bg-black' 
+      },
+      { 
+        key: 'coaches',
+        icon: Shield, 
+        value: '45', 
+        labelEn: 'Coaches',
+        labelAr: 'المدربون',
+        color: 'bg-black' 
+      },
+      { 
+        key: 'academies',
+        icon: Building2, 
+        value: '12', 
+        labelEn: 'Academies',
+        labelAr: 'الأكاديميات',
+        color: 'bg-black' 
+      },
+      { 
+        key: 'medals',
+        icon: Award, 
+        value: '89', 
+        labelEn: 'Medal Requests',
+        labelAr: 'طلبات الميداليات',
+        color: 'bg-black' 
+      },
+    ];
 
-  return (
-    <DashboardLayout locale={locale} userName={userName}>
-      <div className="ltr:text-left rtl:text-right">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-8">
-          {locale === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
-        </h1>
+    return (
+      <DashboardLayout locale={locale} userName={userName} accessibleMenuItems={accessibleMenuItems}>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
+              {locale === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
+            </h1>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              {locale === 'ar' 
+                ? `مرحباً ${userName}، هذه نظرة عامة على نظامك`
+                : `Welcome ${userName}, here's an overview of your system`
+              }
+            </p>
+          </div>
 
-        {/* Statistics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.key}
-                className="bg-white dark:bg-zinc-950 rounded-lg shadow-md p-6 flex items-center gap-4 border border-zinc-200/70 dark:border-zinc-800 rtl:flex-row-reverse"
-              >
-                <div className={`${stat.color} w-12 h-12 rounded-lg flex items-center justify-center text-white`}>
-                  <Icon className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-zinc-500 dark:text-zinc-400 text-sm">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.key}
+                  className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-sm border border-zinc-200 dark:border-zinc-800"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`${stat.color} text-white dark:bg-white dark:text-black rounded-lg p-3`}>
+                      <Icon className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold mb-1">{stat.value}</div>
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">
                     {locale === 'ar' ? stat.labelAr : stat.labelEn}
-                  </p>
-                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stat.value}</p>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white dark:bg-zinc-950 rounded-lg shadow-md p-6 border border-zinc-200/70 dark:border-zinc-800">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-            {locale === 'ar' ? 'النشاط الأخير' : 'Recent Activity'}
-          </h2>
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center gap-4 pb-4 border-b border-zinc-200/70 dark:border-zinc-800 last:border-0 rtl:flex-row-reverse">
-                <div className="w-10 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center">
-                  <span className="text-zinc-600 dark:text-zinc-200 font-medium">{i}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-zinc-900 dark:text-zinc-100 font-medium">
-                    {locale === 'ar' ? 'نشاط جديد' : 'New Activity'} #{i}
-                  </p>
-                  <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-                    {locale === 'ar' ? 'منذ ساعتين' : '2 hours ago'}
-                  </p>
-                </div>
-              </div>
-            ))}
+          {/* Recent Activity */}
+          <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-sm border border-zinc-200 dark:border-zinc-800">
+            <h2 className="text-xl font-bold mb-4">
+              {locale === 'ar' ? 'النشاط الأخير' : 'Recent Activity'}
+            </h2>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              {locale === 'ar' 
+                ? 'لا توجد أنشطة حديثة للعرض'
+                : 'No recent activity to display'
+              }
+            </p>
           </div>
         </div>
-      </div>
-    </DashboardLayout>
-  );
+      </DashboardLayout>
+    );
+  } catch (error) {
+    // Not authenticated, redirect to login
+    redirect(`/${locale}/login`);
+  }
 }

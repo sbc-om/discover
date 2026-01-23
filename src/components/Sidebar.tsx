@@ -19,22 +19,29 @@ import {
 
 interface SidebarProps {
   locale: string;
+  accessibleMenuItems?: {
+    name: string;
+    name_ar: string;
+    name_en: string;
+    icon: string;
+    route: string;
+  }[];
 }
 
-const menuItems = [
-  { key: 'dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { key: 'users', icon: Users, path: '/dashboard/users' },
-  { key: 'roles', icon: Shield, path: '/dashboard/roles' },
-  { key: 'academies', icon: Building2, path: '/dashboard/academies' },
-  { key: 'healthTests', icon: Activity, path: '/dashboard/health-tests' },
-  { key: 'medalRequests', icon: Award, path: '/dashboard/medal-requests' },
-  { key: 'programs', icon: Layers, path: '/dashboard/programs' },
-  { key: 'messages', icon: Mail, path: '/dashboard/messages' },
-  { key: 'whatsapp', icon: MessageCircle, path: '/dashboard/whatsapp' },
-  { key: 'settings', icon: Settings, path: '/dashboard/settings' },
-];
+const iconMap: { [key: string]: any } = {
+  dashboard: LayoutDashboard,
+  users: Users,
+  shield: Shield,
+  building: Building2,
+  activity: Activity,
+  award: Award,
+  layers: Layers,
+  mail: Mail,
+  'message-circle': MessageCircle,
+  settings: Settings,
+};
 
-export default function Sidebar({ locale }: SidebarProps) {
+export default function Sidebar({ locale, accessibleMenuItems = [] }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations('menu');
   const tCommon = useTranslations('common');
@@ -62,29 +69,38 @@ export default function Sidebar({ locale }: SidebarProps) {
       {/* Menu Items */}
       <nav className="p-4">
         <ul className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === `/${locale}${item.path}`;
-            
-            return (
-              <li key={item.key}>
-                <Link
-                  href={`/${locale}${item.path}`}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all
-                    ${
-                      isActive
-                        ? 'bg-zinc-900 text-white dark:bg-white dark:text-black'
-                        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white'
-                    }
-                  `}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="flex-1">{t(item.key)}</span>
-                </Link>
-              </li>
-            );
-          })}
+          {accessibleMenuItems.length === 0 ? (
+            <li className="text-center text-zinc-500 py-4">
+              {tCommon('noMenuAccess')}
+            </li>
+          ) : (
+            accessibleMenuItems.map((item) => {
+              const Icon = iconMap[item.icon] || LayoutDashboard;
+              const itemPath = `/${locale}${item.route}`;
+              const isActive = pathname === itemPath;
+              
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={itemPath}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                      ${
+                        isActive
+                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-black'
+                          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white'
+                      }
+                    `}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="flex-1">
+                      {isRTL ? item.name_ar : item.name_en}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })
+          )}
         </ul>
       </nav>
     </aside>
