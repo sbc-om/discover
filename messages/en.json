@@ -4,6 +4,7 @@
     "fullName": "Discover Natural Ability",
     "home": "Home",
     "about": "About",
+    "contact": "Contact",
     "login": "Login",
     "logout": "Logout",
     "email": "Email",
@@ -136,5 +137,103 @@
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?"
+  },
+  "home": {
+    "hero": {
+      "title": "Clear progress. Simple system.",
+      "subtitle": "Discover adds structure without changing your training.",
+      "primaryCta": "Get Started",
+      "secondaryCta": "Learn More",
+      "note": "No curriculum changes. No extra load."
+    },
+    "highlights": {
+      "h1": {
+        "title": "Field assessment",
+        "desc": "Measured, not assumed"
+      },
+      "h2": {
+        "title": "Stage clarity",
+        "desc": "Easy to understand for everyone"
+      },
+      "h3": {
+        "title": "Smart motivation",
+        "desc": "Digital + physical recognition"
+      }
+    },
+    "steps": {
+      "title": "How it works",
+      "subtitle": "A light layer over your current program.",
+      "s1": {
+        "title": "Assess",
+        "desc": "On-site, real-world measurement"
+      },
+      "s2": {
+        "title": "Assign",
+        "desc": "Stage based on actual ability"
+      },
+      "s3": {
+        "title": "Recognize",
+        "desc": "Documented achievement + medal"
+      }
+    },
+    "cta": {
+      "title": "Ready for clarity?",
+      "subtitle": "Discover fits your institution from day one.",
+      "button": "Partner with Discover"
+    }
+  },
+  "aboutPage": {
+    "hero": {
+      "title": "About Discover",
+      "subtitle": "A simple layer that makes progress visible and meaningful."
+    },
+    "cards": {
+      "mission": {
+        "title": "Mission",
+        "body": "Clarify the athlete journey with honest, measurable stages."
+      },
+      "approach": {
+        "title": "Approach",
+        "body": "Work alongside existing programs without interference."
+      },
+      "promise": {
+        "title": "Promise",
+        "body": "Clear progress for athletes, parents, and institutions."
+      }
+    },
+    "values": {
+      "title": "What we value",
+      "body": "Simplicity, transparency, and long-term trust.",
+      "items": {
+        "i1": "Measured progress",
+        "i2": "Clear communication",
+        "i3": "Sustainable impact"
+      }
+    }
+  },
+  "contactPage": {
+    "hero": {
+      "title": "Contact us",
+      "subtitle": "We respond quickly and keep things simple."
+    },
+    "cards": {
+      "email": {
+        "title": "Email",
+        "value": "hello@discover.app"
+      },
+      "phone": {
+        "title": "Phone",
+        "value": "+968 9000 0000"
+      },
+      "location": {
+        "title": "Location",
+        "value": "Muscat, Oman"
+      }
+    },
+    "cta": {
+      "title": "Start a conversation",
+      "subtitle": "Tell us about your institution and goals.",
+      "button": "Email Discover"
+    }
   }
 }

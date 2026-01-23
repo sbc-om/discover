@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { requireRole } from '@/lib/session';
 
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
+
 // PUT update role permissions (Admin only)
 export async function PUT(
   request: Request,
@@ -10,8 +15,11 @@ export async function PUT(
   try {
     await requireRole(['admin']);
 
-    const id = params?.id || new URL(request.url).pathname.split('/').filter(Boolean).pop() || '';
-    if (!id) {
+    const id =
+      params?.id ||
+      new URL(request.url).pathname.split('/').filter(Boolean).pop() ||
+      '';
+    if (!id || !isUuid(id)) {
       return NextResponse.json({ message: 'Role id is required' }, { status: 400 });
     }
 
@@ -23,6 +31,32 @@ export async function PUT(
         { message: 'permission_ids must be an array' },
         { status: 400 }
       );
+    }
+
+    const normalizedPermissionIds = permission_ids
+      .filter((value: unknown): value is string => typeof value === 'string')
+      .filter((value) => isUuid(value));
+
+    if (normalizedPermissionIds.length !== permission_ids.length) {
+      return NextResponse.json(
+        { message: 'permission_ids must be an array of UUID strings' },
+        { status: 400 }
+      );
+    }
+
+    const uniquePermissionIds = Array.from(new Set(normalizedPermissionIds));
+
+    if (uniquePermissionIds.length > 0) {
+      const { rows: permissionRows } = await pool.query(
+        'SELECT id FROM permissions WHERE id = ANY($1::uuid[])',
+        [uniquePermissionIds]
+      );
+      if (permissionRows.length !== uniquePermissionIds.length) {
+        return NextResponse.json(
+          { message: 'One or more permissions do not exist' },
+          { status: 400 }
+        );
+      }
     }
 
     // Check if role exists
@@ -46,13 +80,13 @@ export async function PUT(
       ]);
 
       // Insert new permissions
-      if (permission_ids.length > 0) {
-        const values = permission_ids
+      if (uniquePermissionIds.length > 0) {
+        const values = uniquePermissionIds
           .map((_, i) => `($1, $${i + 2})`)
           .join(', ');
         await client.query(
           `INSERT INTO role_permissions (role_id, permission_id) VALUES ${values}`,
-          [id, ...permission_ids]
+          [id, ...uniquePermissionIds]
         );
       }
 
@@ -83,9 +117,15 @@ export async function PUT(
     }
   } catch (error: any) {
     console.error('Update permissions error:', error);
+    const status =
+      error.message === 'Forbidden'
+        ? 403
+        : error.message === 'Unauthorized'
+          ? 401
+          : 500;
     return NextResponse.json(
       { message: error.message || 'Failed to update permissions' },
-      { status: error.message === 'Forbidden' ? 403 : 500 }
+      { status }
     );
   }
 }

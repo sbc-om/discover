@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 import type { Locale } from '@/i18n/request';
@@ -13,11 +14,13 @@ interface TopNavbarProps {
 
 export default function TopNavbar({ locale }: TopNavbarProps) {
   const [open, setOpen] = useState(false);
+  const t = useTranslations('common');
 
   const navLinks = [
-    { href: `/${locale}`, label: locale === 'ar' ? 'الرئيسية' : 'Home' },
-    { href: `/${locale}/about`, label: locale === 'ar' ? 'عن البرنامج' : 'About' },
-    { href: `/${locale}/login`, label: locale === 'ar' ? 'تسجيل الدخول' : 'Login' }
+    { href: `/${locale}`, label: t('home') },
+    { href: `/${locale}/about`, label: t('about') },
+    { href: `/${locale}/contact`, label: t('contact') },
+    { href: `/${locale}/login`, label: t('login') }
   ];
 
   const isRTL = locale === 'ar';
@@ -27,13 +30,22 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
       <div className="container mx-auto flex items-center justify-between px-4 py-4">
         {/* Logo - Start side (right in RTL, left in LTR) */}
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-black text-white dark:bg-white dark:text-black">
-            <span className="text-lg font-bold">DNA</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white dark:bg-zinc-950">
+            <img
+              src="/logo/icon-black.png"
+              alt="Discover"
+              className="h-8 w-8 dark:hidden"
+            />
+            <img
+              src="/logo/logo-white.png"
+              alt="Discover"
+              className="h-8 w-8 hidden dark:block"
+            />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">DNA</h1>
+            <h1 className="text-lg font-semibold">{t('dna')}</h1>
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              {locale === 'ar' ? 'اكتشف القدرة الطبيعية' : 'Discover Natural Ability'}
+              {t('fullName')}
             </p>
           </div>
         </div>
