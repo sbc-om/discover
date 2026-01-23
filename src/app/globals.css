@@ -36,3 +36,43 @@
     font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   }
 }
+
+@keyframes float-soft {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@layer utilities {
+  .dock-mesh {
+    background:
+      radial-gradient(700px circle at 15% -10%, rgba(59, 130, 246, 0.22), transparent 55%),
+      radial-gradient(600px circle at 95% 0%, rgba(16, 185, 129, 0.2), transparent 55%),
+      radial-gradient(800px circle at 50% 120%, rgba(244, 114, 182, 0.18), transparent 60%);
+  }
+
+  .glass-panel {
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .animate-float-soft {
+    animation: float-soft 8s ease-in-out infinite;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+}
