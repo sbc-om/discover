@@ -66,13 +66,30 @@ export default function RolesContent() {
     fetchModules();
   }, []);
 
+  // Authority hierarchy for sorting roles
+  const roleHierarchy: { [key: string]: number } = {
+    'admin': 1,
+    'academy_manager': 2,
+    'coach': 3,
+    'player': 4
+  };
+
+  const sortRolesByAuthority = (rolesList: Role[]) => {
+    return [...rolesList].sort((a, b) => {
+      const orderA = roleHierarchy[a.name] || 999;
+      const orderB = roleHierarchy[b.name] || 999;
+      return orderA - orderB;
+    });
+  };
+
   const fetchRoles = async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/roles');
       const data = await response.json();
       if (response.ok) {
-        setRoles(data.roles);
+        const sortedRoles = sortRolesByAuthority(data.roles);
+        setRoles(sortedRoles);
       }
     } catch (error) {
       console.error('Error fetching roles:', error);
@@ -244,7 +261,7 @@ export default function RolesContent() {
       </div>
 
       {/* Roles Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
         {loading ? (
           <div className="col-span-full flex items-center justify-center py-16 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
@@ -255,25 +272,49 @@ export default function RolesContent() {
             <p className="text-zinc-500 dark:text-zinc-400 text-lg">No roles found</p>
           </div>
         ) : (
-          roles.map((role) => (
+          roles.map((role, index) => {
+            // Visual hierarchy based on authority level
+            const authorityLevel = roleHierarchy[role.name] || 999;
+            const isHighAuthority = authorityLevel <= 2;
+            
+            return (
             <div
               key={role.id}
-              className="group bg-white dark:bg-zinc-800 rounded-2xl shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50 border border-zinc-200 dark:border-zinc-700 hover:shadow-xl hover:shadow-zinc-300/50 dark:hover:shadow-zinc-900/70 transition-all duration-300 overflow-hidden"
+              className={`group bg-white dark:bg-zinc-800 rounded-2xl shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50 border transition-all duration-300 overflow-hidden ${
+                isHighAuthority 
+                  ? 'border-orange-300 dark:border-orange-800/50 hover:shadow-2xl hover:shadow-orange-500/20 dark:hover:shadow-orange-900/30'
+                  : 'border-zinc-200 dark:border-zinc-700 hover:shadow-xl hover:shadow-zinc-300/50 dark:hover:shadow-zinc-900/70'
+              }`}
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg">
-                      <Shield className="w-6 h-6 text-white" />
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className={`p-4 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg ${
+                      isHighAuthority ? 'scale-110' : ''
+                    }`}>
+                      <Shield className={`text-white ${
+                        isHighAuthority ? 'w-7 h-7' : 'w-6 h-6'
+                      }`} />
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{role.name_en}</h3>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{role.name_ar}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-bold text-zinc-900 dark:text-white ${
+                          isHighAuthority ? 'text-2xl' : 'text-xl'
+                        }`}>{role.name_en}</h3>
+                        {isHighAuthority && (
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold rounded uppercase">High</span>
+                        )}
+                      </div>
+                      <p className={`text-zinc-500 dark:text-zinc-400 mt-1 ${
+                        isHighAuthority ? 'text-sm font-medium' : 'text-xs'
+                      }`}>{role.name_ar}</p>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4 min-h-[40px]">
+                <p className={`text-zinc-600 dark:text-zinc-400 mb-5 min-h-[48px] leading-relaxed ${
+                  isHighAuthority ? 'text-sm font-medium' : 'text-sm'
+                }`}>
                   {role.description || 'No description provided'}
                 </p>
 
@@ -321,14 +362,15 @@ export default function RolesContent() {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
       {/* Role Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-700 p-6 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -348,8 +390,11 @@ export default function RolesContent() {
                 </button>
               </div>
             </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <OverlayScrollbarsComponent
+              options={{ scrollbars: { autoHide: 'leave' } }}
+              className="max-h-[calc(90vh-168px)]"
+            >
+              <form id="role-modal-form" onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                   Role Name (System) <span className="text-orange-500">*</span>
@@ -408,9 +453,13 @@ export default function RolesContent() {
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              </form>
+            </OverlayScrollbarsComponent>
+            <div className="border-t border-zinc-200 dark:border-zinc-700 p-4 rounded-b-3xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur">
+              <div className="flex gap-3">
                 <button
                   type="submit"
+                  form="role-modal-form"
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200"
                 >
                   {editingRole ? 'Update Role' : 'Create Role'}
@@ -426,7 +475,7 @@ export default function RolesContent() {
                   Cancel
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -470,49 +519,33 @@ export default function RolesContent() {
 
                 return (
                   <div key={module.module_id} className="bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-                    <label className="flex items-center gap-4 p-5 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          ref={(input) => {
-                            if (input) input.indeterminate = someSelected && !allSelected;
-                          }}
-                          onChange={(e) => toggleModulePermissions(module, e.target.checked)}
-                          className="w-6 h-6 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-orange-500 focus:ring-2 cursor-pointer"
-                        />
-                        {someSelected && !allSelected && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="w-3 h-0.5 bg-orange-600"></div>
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-4 p-5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        ref={(input) => {
+                          if (input) input.indeterminate = someSelected && !allSelected;
+                        }}
+                        onChange={(e) => toggleModulePermissions(module, e.target.checked)}
+                        className="w-6 h-6 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-orange-500 focus:ring-2 cursor-pointer"
+                      />
                       <div className="flex items-center gap-3 flex-1">
                         <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl">
                           {allSelected ? <Unlock className="w-5 h-5 text-white" /> : <Lock className="w-5 h-5 text-white" />}
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{module.module_name_en}</h3>
-                          <p className="text-sm text-zinc-500 dark:text-zinc-400">{module.module_name_ar}</p>
                         </div>
                       </div>
                       <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                         {selectedPermissions.filter((id) => modulePermissionIds.includes(id)).length} / {module.permissions.length}
                       </div>
-                    </label>
+                    </div>
 
                     <div className="px-5 pb-5 pt-2">
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {module.permissions.map((permission) => {
                           const isSelected = selectedPermissions.includes(permission.id);
-                          const actionColors = {
-                            create: 'from-orange-500 to-amber-600',
-                            read: 'from-orange-500 to-amber-600',
-                            update: 'from-orange-500 to-amber-600',
-                            delete: 'from-orange-500 to-amber-600'
-                          };
-                          const actionColor = actionColors[permission.action as keyof typeof actionColors] || 'from-zinc-500 to-zinc-600';
-
                           return (
                             <label
                               key={permission.id}
@@ -528,15 +561,9 @@ export default function RolesContent() {
                                 onChange={() => togglePermission(permission.id)}
                                 className="w-5 h-5 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
                               />
-                              <div className="flex-1">
-                                <div className={`inline-block px-2 py-0.5 bg-gradient-to-r ${actionColor} text-white text-xs font-bold rounded uppercase mb-1`}>
-                                  {permission.action}
-                                </div>
-                                <p className="text-xs text-zinc-600 dark:text-zinc-400">{permission.name_en}</p>
-                              </div>
-                              {isSelected && (
-                                <Check className="w-5 h-5 text-orange-600 dark:text-orange-400 absolute top-1 right-1" />
-                              )}
+                              <span className="flex-1 text-sm font-semibold text-zinc-700 dark:text-zinc-200 capitalize">
+                                {permission.action}
+                              </span>
                             </label>
                           );
                         })}

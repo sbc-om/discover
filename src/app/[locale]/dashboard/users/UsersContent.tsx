@@ -408,9 +408,9 @@ export default function UsersContent() {
 
             <OverlayScrollbarsComponent
               options={{ scrollbars: { autoHide: 'leave' } }}
-              className="max-h-[calc(90vh-96px)]"
+              className="max-h-[calc(90vh-168px)]"
             >
-              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              <form id="user-modal-form" onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                   Full Name <span className="text-orange-500">*</span>
@@ -520,9 +520,13 @@ export default function UsersContent() {
                 </label>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              </form>
+            </OverlayScrollbarsComponent>
+            <div className="border-t border-zinc-200 dark:border-zinc-700 p-4 rounded-b-3xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur">
+              <div className="flex gap-3">
                 <button
                   type="submit"
+                  form="user-modal-form"
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200"
                 >
                   {editingUser ? 'Update User' : 'Create User'}
@@ -538,8 +542,7 @@ export default function UsersContent() {
                   Cancel
                 </button>
               </div>
-              </form>
-            </OverlayScrollbarsComponent>
+            </div>
           </div>
         </div>
       )}
