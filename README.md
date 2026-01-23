@@ -116,5 +116,13 @@ docker exec -i discover-postgres psql -U postgres -d discover < database/init.sq
 
 ---
 
+## Theming & Direction Notes
+
+- **Theme persistence**: The selected theme is stored in localStorage under `theme` (`light` | `dark` | `system`). A small script in the root layout applies the correct `dark` class on first paint to prevent FOUC.
+- **Language persistence**: The active locale is persisted via the `NEXT_LOCALE` cookie (used by `next-intl` middleware) and mirrored to localStorage for client-side access.
+- **RTL/LTR application**: The document-level `dir` and `lang` attributes are updated by `LocaleProvider`, which reacts to the current route and ensures global directionality. Tailwind RTL/LTR variants are enabled via CSS custom variants, so layout mirroring is consistent across components.
+
+To add a new language, extend the locale list in `src/i18n/request.ts`, add translation JSON in `messages/`, and update any locale-aware labels in the navbar.
+
 صنع بـ ❤️ لاكتشاف المواهب الرياضية  
 Made with ❤️ for sports talent discovery

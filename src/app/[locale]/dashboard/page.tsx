@@ -49,8 +49,8 @@ export default async function DashboardPage({
 
   return (
     <DashboardLayout locale={locale} userName={userName}>
-      <div dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">
+      <div className="ltr:text-left rtl:text-right">
+        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-8">
           {locale === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
         </h1>
 
@@ -61,16 +61,16 @@ export default async function DashboardPage({
             return (
               <div
                 key={stat.key}
-                className="bg-white rounded-lg shadow-md p-6 flex items-center gap-4"
+                className="bg-white dark:bg-zinc-950 rounded-lg shadow-md p-6 flex items-center gap-4 border border-zinc-200/70 dark:border-zinc-800 rtl:flex-row-reverse"
               >
                 <div className={`${stat.color} w-12 h-12 rounded-lg flex items-center justify-center text-white`}>
                   <Icon className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-zinc-500 dark:text-zinc-400 text-sm">
                     {locale === 'ar' ? stat.labelAr : stat.labelEn}
                   </p>
-                  <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stat.value}</p>
                 </div>
               </div>
             );
@@ -78,21 +78,21 @@ export default async function DashboardPage({
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
+        <div className="bg-white dark:bg-zinc-950 rounded-lg shadow-md p-6 border border-zinc-200/70 dark:border-zinc-800">
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
             {locale === 'ar' ? 'النشاط الأخير' : 'Recent Activity'}
           </h2>
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center gap-4 pb-4 border-b border-gray-100 last:border-0">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 font-medium">{i}</span>
+              <div key={i} className="flex items-center gap-4 pb-4 border-b border-zinc-200/70 dark:border-zinc-800 last:border-0 rtl:flex-row-reverse">
+                <div className="w-10 h-10 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center">
+                  <span className="text-zinc-600 dark:text-zinc-200 font-medium">{i}</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-gray-800 font-medium">
+                  <p className="text-zinc-900 dark:text-zinc-100 font-medium">
                     {locale === 'ar' ? 'نشاط جديد' : 'New Activity'} #{i}
                   </p>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-zinc-500 dark:text-zinc-400 text-sm">
                     {locale === 'ar' ? 'منذ ساعتين' : '2 hours ago'}
                   </p>
                 </div>

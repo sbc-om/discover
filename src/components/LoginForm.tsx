@@ -43,19 +43,19 @@ export default function LoginForm({ locale }: LoginFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 flex items-center justify-center p-6" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-black dark:via-zinc-950 dark:to-zinc-900 flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-white dark:bg-zinc-950 rounded-2xl shadow-xl p-8 border border-zinc-200/80 dark:border-zinc-800 ltr:text-left rtl:text-right">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-black rounded-xl mx-auto flex items-center justify-center mb-4">
-            <span className="text-white text-2xl font-bold">DNA</span>
+          <div className="w-16 h-16 bg-black text-white dark:bg-white dark:text-black rounded-xl mx-auto flex items-center justify-center mb-4">
+            <span className="text-2xl font-bold">DNA</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('signIn')}</h1>
-          <p className="text-gray-500 mt-2">{tCommon('fullName')}</p>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{t('signIn')}</h1>
+          <p className="text-zinc-500 dark:text-zinc-400 mt-2">{tCommon('fullName')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               {t('emailPlaceholder')}
             </label>
             <input
@@ -63,13 +63,13 @@ export default function LoginForm({ locale }: LoginFormProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+              className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
               placeholder={t('emailPlaceholder')}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               {t('passwordPlaceholder')}
             </label>
             <input
@@ -77,7 +77,7 @@ export default function LoginForm({ locale }: LoginFormProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+              className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
               placeholder={t('passwordPlaceholder')}
             />
           </div>
@@ -91,7 +91,7 @@ export default function LoginForm({ locale }: LoginFormProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-zinc-900 transition-colors disabled:opacity-50"
+            className="w-full bg-black text-white dark:bg-white dark:text-black py-3 rounded-lg font-semibold hover:bg-zinc-900 dark:hover:bg-zinc-100 transition-colors disabled:opacity-50"
           >
             {loading ? tCommon('loading') : t('signIn')}
           </button>
