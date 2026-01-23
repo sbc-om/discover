@@ -1,17 +1,35 @@
-import createIntlMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
+
+// Supported locales
+const locales = ['en', 'ar'];
+const defaultLocale = 'en';
 
 // Protected routes that require authentication
 const protectedRoutes = ['/dashboard'];
 const publicRoutes = ['/login', '/'];
 
-// Create i18n middleware
-const intlMiddleware = createIntlMiddleware({
-  locales: ['en', 'ar'],
-  defaultLocale: 'en',
-  localePrefix: 'always'
-});
+// Simple locale middleware
+function localeMiddleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Check if pathname already has a locale
+  const pathnameHasLocale = locales.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  );
+
+  if (pathnameHasLocale) {
+    return NextResponse.next();
+  }
+
+  // Detect locale from Accept-Language header or use default
+  const acceptLanguage = request.headers.get('Accept-Language') || '';
+  const detectedLocale = locales.find((locale) => acceptLanguage.includes(locale)) || defaultLocale;
+  
+  // Redirect to locale-prefixed path
+  const newUrl = new URL(`/${detectedLocale}${pathname}`, request.url);
+  return NextResponse.redirect(newUrl);
+}
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -47,7 +65,7 @@ export default function middleware(request: NextRequest) {
     }
 
     // Add user info to headers for use in route handlers
-    const response = intlMiddleware(request);
+    const response = localeMiddleware(request);
     response.headers.set('x-user-id', payload.userId);
     response.headers.set('x-user-email', payload.email);
     response.headers.set('x-user-role', payload.roleName);
@@ -63,7 +81,7 @@ export default function middleware(request: NextRequest) {
     }
   }
 
-  return intlMiddleware(request);
+  return localeMiddleware(request);
 }
 
 export const config = {

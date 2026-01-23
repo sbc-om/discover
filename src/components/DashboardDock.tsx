@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import { useCallback } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { motion } from 'framer-motion';
@@ -47,8 +46,8 @@ const iconMap: { [key: string]: any } = {
 
 export default function DashboardDock({ locale, accessibleMenuItems = [] }: DashboardDockProps) {
   const pathname = usePathname();
-  const tCommon = useTranslations('common');
-  const isRTL = locale === 'ar';
+  const isAr = locale === 'ar';
+  const isRTL = isAr;
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
@@ -74,7 +73,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
       <div className="relative glass-panel rounded-[28px] border-2 border-zinc-900/15 dark:border-white/10 bg-white/90 dark:bg-zinc-900/70 shadow-lg shadow-zinc-900/5 dark:shadow-none px-3 py-3">
         {accessibleMenuItems.length === 0 ? (
           <div className="text-center text-zinc-500 dark:text-zinc-400 text-sm py-2">
-            {tCommon('noData')}
+            {isAr ? 'لا توجد بيانات' : 'No data'}
           </div>
         ) : (
           <div className="flex items-center gap-2">

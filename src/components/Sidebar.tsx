@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import {
   LayoutDashboard,
   Users,
@@ -43,9 +42,8 @@ const iconMap: { [key: string]: any } = {
 
 export default function Sidebar({ locale, accessibleMenuItems = [] }: SidebarProps) {
   const pathname = usePathname();
-  const t = useTranslations('menu');
-  const tCommon = useTranslations('common');
-  const isRTL = locale === 'ar';
+  const isAr = locale === 'ar';
+  const isRTL = isAr;
 
   return (
     <aside
@@ -59,8 +57,8 @@ export default function Sidebar({ locale, accessibleMenuItems = [] }: SidebarPro
             <span className="text-lg font-bold">DNA</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold">{tCommon('dna')}</h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{tCommon('fullName')}</p>
+            <h1 className="text-xl font-bold">DNA</h1>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">{isAr ? 'اكتشف قدرتك الطبيعية' : 'Discover Natural Ability'}</p>
           </div>
         </div>
         <ChevronRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
@@ -71,7 +69,7 @@ export default function Sidebar({ locale, accessibleMenuItems = [] }: SidebarPro
         <ul className="space-y-2">
           {accessibleMenuItems.length === 0 ? (
             <li className="text-center text-zinc-500 py-4">
-              {tCommon('noMenuAccess')}
+              {isAr ? 'لا يوجد وصول للقائمة' : 'No menu access'}
             </li>
           ) : (
             accessibleMenuItems.map((item) => {

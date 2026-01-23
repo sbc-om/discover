@@ -1,5 +1,4 @@
 import DashboardLayout from '@/components/DashboardLayout';
-import { useTranslations } from 'next-intl';
 import { Users, Shield, Building2, Award } from 'lucide-react';
 import { requireAuth } from '@/lib/session';
 import { getAccessibleMenuItems } from '@/lib/permissions';

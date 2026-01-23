@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 import type { Locale } from '@/i18n/request';
@@ -14,19 +13,17 @@ interface TopNavbarProps {
 
 export default function TopNavbar({ locale }: TopNavbarProps) {
   const [open, setOpen] = useState(false);
-  const t = useTranslations('common');
+  const isAr = locale === 'ar';
 
   const navLinks = [
-    { href: `/${locale}`, label: t('home') },
-    { href: `/${locale}/about`, label: t('about') },
-    { href: `/${locale}/contact`, label: t('contact') },
-    { href: `/${locale}/login`, label: t('login') }
+    { href: `/${locale}`, label: isAr ? 'الرئيسية' : 'Home' },
+    { href: `/${locale}/about`, label: isAr ? 'عن النظام' : 'About' },
+    { href: `/${locale}/contact`, label: isAr ? 'تواصل معنا' : 'Contact' },
+    { href: `/${locale}/login`, label: isAr ? 'تسجيل الدخول' : 'Login' }
   ];
 
-  const isRTL = locale === 'ar';
-
   return (
-    <header dir={isRTL ? 'rtl' : 'ltr'} className="sticky top-0 z-30 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/80">
+    <header dir={isAr ? 'rtl' : 'ltr'} className="sticky top-0 z-30 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/80">
       <div className="container mx-auto flex items-center justify-between px-4 py-4">
         {/* Logo - Start side (right in RTL, left in LTR) */}
         <div className="flex items-center gap-3">
@@ -43,9 +40,9 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
             />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">{t('dna')}</h1>
+            <h1 className="text-lg font-semibold">DNA</h1>
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              {t('fullName')}
+              {isAr ? 'اكتشف قدرتك الطبيعية' : 'Discover Natural Ability'}
             </p>
           </div>
         </div>
@@ -76,7 +73,7 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
             type="button"
             onClick={() => setOpen(true)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-800 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-600"
-            aria-label={locale === 'ar' ? 'فتح القائمة' : 'Open menu'}
+            aria-label={isAr ? 'فتح القائمة' : 'Open menu'}
             aria-expanded={open}
             aria-controls="mobile-menu"
           >
@@ -90,23 +87,23 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
           <button
             type="button"
             className="absolute inset-0 bg-black/40"
-            aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close menu'}
+            aria-label={isAr ? 'إغلاق القائمة' : 'Close menu'}
             onClick={() => setOpen(false)}
           />
           <div
             id="mobile-menu"
-            dir={isRTL ? 'rtl' : 'ltr'}
+            dir={isAr ? 'rtl' : 'ltr'}
             className="absolute top-0 h-full w-72 bg-white shadow-xl dark:bg-zinc-950 ltr:left-0 rtl:right-0"
           >
             <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-4 dark:border-zinc-800">
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-                {locale === 'ar' ? 'القائمة' : 'Menu'}
+                {isAr ? 'القائمة' : 'Menu'}
               </span>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-800 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-600"
-                aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close menu'}
+                aria-label={isAr ? 'إغلاق القائمة' : 'Close menu'}
               >
                 <X className="h-4 w-4" />
               </button>

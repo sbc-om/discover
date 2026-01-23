@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
 import TopNavbar from '@/components/TopNavbar';
 import ScrollArea from '@/components/ScrollArea';
 import Footer from '@/components/Footer';
@@ -10,12 +9,12 @@ export default async function HomePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const t = await getTranslations('home');
+  const isAr = locale === 'ar';
 
   const highlights = [
     {
-      title: t('highlights.h1.title'),
-      description: t('highlights.h1.desc'),
+      title: isAr ? 'تقييم ميداني' : 'Field Assessment',
+      description: isAr ? 'قياس حقيقي بلا افتراض' : 'Measured, not assumed',
       icon: (
         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 17l6-6 4 4 8-8" />
@@ -23,8 +22,8 @@ export default async function HomePage({
       ),
     },
     {
-      title: t('highlights.h2.title'),
-      description: t('highlights.h2.desc'),
+      title: isAr ? 'مراحل واضحة' : 'Stage Clarity',
+      description: isAr ? 'مفهومة للجميع' : 'Easy to understand for everyone',
       icon: (
         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 16v-2m8-6h-2M6 12H4" />
@@ -32,8 +31,8 @@ export default async function HomePage({
       ),
     },
     {
-      title: t('highlights.h3.title'),
-      description: t('highlights.h3.desc'),
+      title: isAr ? 'تحفيز ذكي' : 'Smart Motivation',
+      description: isAr ? 'إنجاز رقمي + ميدالية' : 'Digital + physical recognition',
       icon: (
         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-7 4h8m-6-8h4M4 6h16v12H4z" />
@@ -44,16 +43,16 @@ export default async function HomePage({
 
   const steps = [
     {
-      title: t('steps.s1.title'),
-      description: t('steps.s1.desc'),
+      title: isAr ? 'قياس' : 'Assess',
+      description: isAr ? 'تقييم واقعي داخل المؤسسة' : 'On-site, real-world measurement',
     },
     {
-      title: t('steps.s2.title'),
-      description: t('steps.s2.desc'),
+      title: isAr ? 'توزيع' : 'Assign',
+      description: isAr ? 'مرحلة حسب القدرة الفعلية' : 'Stage based on actual ability',
     },
     {
-      title: t('steps.s3.title'),
-      description: t('steps.s3.desc'),
+      title: isAr ? 'توثيق' : 'Recognize',
+      description: isAr ? 'إنجاز موثق وميدالية' : 'Documented achievement + medal',
     },
   ];
 
@@ -77,27 +76,29 @@ export default async function HomePage({
             </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-semibold mb-4">
-            {t('hero.title')}
+            {isAr ? 'تقدّم واضح. نظام بسيط.' : 'Clear progress. Simple system.'}
           </h1>
           <p className="text-lg text-zinc-600 dark:text-zinc-300 mb-6 max-w-2xl mx-auto">
-            {t('hero.subtitle')}
+            {isAr
+              ? 'يضيف Discover هيكلًا دون تغيير التدريب.'
+              : 'Discover adds structure without changing your training.'}
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
               href={`/${locale}/login`}
               className="px-6 py-3 bg-black text-white dark:bg-white dark:text-black rounded-lg font-semibold text-sm md:text-base hover:bg-zinc-900 dark:hover:bg-zinc-100 transition-colors"
             >
-              {t('hero.primaryCta')}
+              {isAr ? 'ابدأ الآن' : 'Get Started'}
             </Link>
             <Link
               href={`/${locale}/about`}
               className="px-6 py-3 bg-black/5 text-zinc-900 dark:bg-white/10 dark:text-white rounded-lg font-semibold text-sm md:text-base hover:bg-black/10 dark:hover:bg-white/20 transition-colors"
             >
-              {t('hero.secondaryCta')}
+              {isAr ? 'اعرف المزيد' : 'Learn More'}
             </Link>
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-4">
-            {t('hero.note')}
+            {isAr ? 'دون تغيير المناهج أو زيادة العبء' : 'No curriculum changes. No extra load.'}
           </p>
         </section>
 
@@ -121,10 +122,10 @@ export default async function HomePage({
         <section className="mb-16">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-semibold text-zinc-900 dark:text-white mb-3">
-              {t('steps.title')}
+              {isAr ? 'كيف يعمل' : 'How it works'}
             </h2>
             <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-300 max-w-xl mx-auto">
-              {t('steps.subtitle')}
+              {isAr ? 'طبقة خفيفة فوق برنامجك الحالي.' : 'A light layer over your current program.'}
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto">
@@ -143,16 +144,18 @@ export default async function HomePage({
         <section className="text-center">
           <div className="max-w-2xl mx-auto bg-white/80 dark:bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-zinc-200/80 dark:border-zinc-800/80">
             <h2 className="text-2xl md:text-3xl font-semibold text-zinc-900 dark:text-white mb-3">
-              {t('cta.title')}
+              {isAr ? 'جاهز للوضوح؟' : 'Ready for clarity?'}
             </h2>
             <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-300 mb-6">
-              {t('cta.subtitle')}
+              {isAr
+                ? 'Discover يناسب مؤسستك من اليوم الأول.'
+                : 'Discover fits your institution from day one.'}
             </p>
             <Link
               href={`/${locale}/login`}
               className="inline-flex items-center justify-center px-6 py-3 bg-black text-white dark:bg-white dark:text-black rounded-lg font-semibold text-sm md:text-base hover:bg-zinc-900 dark:hover:bg-zinc-100 transition-colors"
             >
-              {t('cta.button')}
+              {isAr ? 'تعاون مع Discover' : 'Partner with Discover'}
             </Link>
           </div>
         </section>

@@ -1,6 +1,5 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { LogOut } from 'lucide-react';
 import Image from 'next/image';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
@@ -12,8 +11,8 @@ interface DashboardHeaderProps {
 }
 
 export default function DashboardHeader({ locale, userName }: DashboardHeaderProps) {
-  const tCommon = useTranslations('common');
-  const isRTL = locale === 'ar';
+  const isAr = locale === 'ar';
+  const isRTL = isAr;
 
   return (
     <header 
@@ -39,10 +38,10 @@ export default function DashboardHeader({ locale, userName }: DashboardHeaderPro
         </div>
         <div>
           <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
-            {tCommon('fullName')}
+            {isAr ? 'اكتشف قدرتك الطبيعية' : 'Discover Natural Ability'}
           </p>
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-            {tCommon('dna')}
+            DNA
           </h2>
         </div>
       </div>
@@ -59,10 +58,10 @@ export default function DashboardHeader({ locale, userName }: DashboardHeaderPro
             window.location.href = `/${locale}/login`;
           }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
-          aria-label={tCommon('logout')}
+          aria-label={isAr ? 'تسجيل الخروج' : 'Logout'}
         >
           <LogOut className="w-4 h-4" />
-          <span className="text-sm font-medium">{tCommon('logout')}</span>
+          <span className="text-sm font-medium">{isAr ? 'خروج' : 'Logout'}</span>
         </button>
       </div>
     </header>
