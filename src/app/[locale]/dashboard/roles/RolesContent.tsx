@@ -731,7 +731,9 @@ export default function RolesContent() {
                   <div className="p-2 bg-white/20 rounded-xl">
                     <Key className="w-6 h-6 text-white" />
                   </div>
-                  <h2 className="text-2xl font-bold text-white">Manage Permissions</h2>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Manage Permissions</h2>
+                  </div>
                 </div>
                 <button
                   onClick={() => {
