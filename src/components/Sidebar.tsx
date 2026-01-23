@@ -38,10 +38,12 @@ export default function Sidebar({ locale }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations('menu');
   const tCommon = useTranslations('common');
+  const isRTL = locale === 'ar';
 
   return (
     <aside
-      className="w-64 min-h-screen bg-white text-zinc-900 border-r border-zinc-200 dark:bg-zinc-950 dark:text-zinc-100 dark:border-zinc-800 rtl:border-l rtl:border-r-0"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="w-64 min-h-screen bg-white text-zinc-900 border-zinc-200 dark:bg-zinc-950 dark:text-zinc-100 dark:border-zinc-800 ltr:border-r rtl:border-l"
     >
       {/* Logo Section */}
       <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
@@ -54,11 +56,11 @@ export default function Sidebar({ locale }: SidebarProps) {
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{tCommon('fullName')}</p>
           </div>
         </div>
-        <ChevronRight className="w-5 h-5 rtl:rotate-180" />
+        <ChevronRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
       </div>
 
       {/* Menu Items */}
-      <nav className="p-4 ltr:text-left rtl:text-right">
+      <nav className="p-4">
         <ul className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -69,7 +71,7 @@ export default function Sidebar({ locale }: SidebarProps) {
                 <Link
                   href={`/${locale}${item.path}`}
                   className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all rtl:flex-row-reverse
+                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all
                     ${
                       isActive
                         ? 'bg-zinc-900 text-white dark:bg-white dark:text-black'

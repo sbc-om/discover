@@ -9,8 +9,10 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children, locale, userName }: DashboardLayoutProps) {
+  const isRTL = locale === 'ar';
+  
   return (
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950 rtl:flex-row-reverse">
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Sidebar locale={locale} />
       <div className="flex-1 flex flex-col">
         <DashboardHeader locale={locale} userName={userName} />
