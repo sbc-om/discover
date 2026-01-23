@@ -1,0 +1,11 @@
+# Backups Directory
+
+This directory contains temporary backup and restore files.
+
+## Structure
+- `database/` - Database SQL backups
+- `files/` - Files archive backups
+- `restore/` - Temporary files during restore operations
+
+**Note:** This directory is automatically managed by the backup system.
+Files are temporary and will be cleaned up after downloads/uploads.

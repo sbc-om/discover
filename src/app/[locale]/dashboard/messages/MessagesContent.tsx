@@ -13,6 +13,22 @@ interface SubscriberUser {
   phone: string | null;
   avatar_url: string | null;
   role_name: string | null;
+  role_id: string | null;
+  academy_id: string | null;
+  academy_name: string | null;
+}
+
+interface Academy {
+  id: string;
+  name: string;
+  name_ar: string;
+}
+
+interface Role {
+  id: string;
+  name: string;
+  name_ar: string;
+  name_en: string;
 }
 
 export default function MessagesContent() {
@@ -21,20 +37,58 @@ export default function MessagesContent() {
   const { showToast } = useToast();
 
   const [users, setUsers] = useState<SubscriberUser[]>([]);
+  const [academies, setAcademies] = useState<Academy[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedAcademy, setSelectedAcademy] = useState<string>('');
+  const [selectedRole, setSelectedRole] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
+    fetchAcademies();
+    fetchRoles();
     fetchSubscribers();
   }, []);
+
+  useEffect(() => {
+    fetchSubscribers();
+  }, [selectedAcademy, selectedRole]);
+
+  const fetchAcademies = async () => {
+    try {
+      const response = await fetch('/api/academies?limit=1000');
+      const data = await response.json();
+      if (response.ok) {
+        setAcademies(data.academies || []);
+      }
+    } catch (error) {
+      console.error('Error fetching academies:', error);
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch('/api/roles?limit=1000');
+      const data = await response.json();
+      if (response.ok) {
+        setRoles(data.roles || []);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  };
 
   const fetchSubscribers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/push/subscribers');
+      const params = new URLSearchParams();
+      if (selectedAcademy) params.append('academyId', selectedAcademy);
+      if (selectedRole) params.append('roleId', selectedRole);
+      
+      const response = await fetch(`/api/push/subscribers?${params.toString()}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -131,6 +185,33 @@ export default function MessagesContent() {
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               />
             </div>
+            
+            <select
+              value={selectedAcademy}
+              onChange={(e) => setSelectedAcademy(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+            >
+              <option value="">{isAr ? 'جميع الأكاديميات' : 'All Academies'}</option>
+              {academies.map((academy) => (
+                <option key={academy.id} value={academy.id}>
+                  {isAr ? academy.name_ar || academy.name : academy.name}
+                </option>
+              ))}
+            </select>
+            
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+            >
+              <option value="">{isAr ? 'جميع الأدوار' : 'All Roles'}</option>
+              {roles.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {isAr ? role.name_ar || role.name_en : role.name_en}
+                </option>
+              ))}
+            </select>
+            
             <button
               onClick={toggleAll}
               className="w-full text-sm px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
