@@ -6,12 +6,14 @@ import crypto from 'crypto';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
+const AVATAR_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
+const ACADEMY_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'academies');
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const file = formData.get('avatar') as File | null;
+    const type = (formData.get('type') as string | null) || 'avatar';
+    const file = (formData.get('file') || formData.get('avatar')) as File | null;
     const userId = formData.get('userId') as string | null;
 
     if (!file) {
@@ -21,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!userId) {
+    if (type !== 'academy' && !userId) {
       return NextResponse.json(
         { message: 'User ID is required' },
         { status: 400 }
@@ -45,15 +47,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure upload directory exists
-    if (!existsSync(UPLOAD_DIR)) {
-      await mkdir(UPLOAD_DIR, { recursive: true });
+    const uploadDir = type === 'academy' ? ACADEMY_UPLOAD_DIR : AVATAR_UPLOAD_DIR;
+    if (!existsSync(uploadDir)) {
+      await mkdir(uploadDir, { recursive: true });
     }
 
     // Generate secure filename
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const hash = crypto.randomBytes(16).toString('hex');
-    const filename = `${userId}-${hash}.${ext}`;
-    const filepath = path.join(UPLOAD_DIR, filename);
+    const filename = type === 'academy'
+      ? `academy-${hash}.${ext}`
+      : `${userId}-${hash}.${ext}`;
+    const filepath = path.join(uploadDir, filename);
 
     // Convert file to buffer and save
     const bytes = await file.arrayBuffer();
@@ -69,12 +74,15 @@ export async function POST(request: NextRequest) {
 
     await writeFile(filepath, buffer);
 
-    const avatarUrl = `/uploads/avatars/${filename}`;
+    const url = type === 'academy'
+      ? `/uploads/academies/${filename}`
+      : `/uploads/avatars/${filename}`;
 
     return NextResponse.json({
       success: true,
-      avatarUrl,
-      message: 'Avatar uploaded successfully'
+      avatarUrl: type === 'academy' ? undefined : url,
+      url: type === 'academy' ? url : undefined,
+      message: type === 'academy' ? 'Academy logo uploaded successfully' : 'Avatar uploaded successfully'
     });
   } catch (error) {
     console.error('Error uploading avatar:', error);

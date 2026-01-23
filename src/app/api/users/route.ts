@@ -50,10 +50,7 @@ export async function GET(request: Request) {
     }
 
     // Get total count
-    const countQuery = query.replace(
-      /SELECT .* FROM/,
-      'SELECT COUNT(*) FROM'
-    );
+    const countQuery = `SELECT COUNT(*) FROM (${query}) AS count_sub`;
     const countResult = await pool.query(countQuery, params);
     const total = parseInt(countResult.rows[0].count);
 
