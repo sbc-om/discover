@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { LogOut } from 'lucide-react';
+import Image from 'next/image';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -20,8 +21,21 @@ export default function DashboardHeader({ locale, userName }: DashboardHeaderPro
       className="bg-white/90 dark:bg-zinc-950/90 border-b border-zinc-200/70 dark:border-zinc-800/80 px-6 py-4 flex items-center justify-between"
     >
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 flex items-center justify-center shadow-lg">
-          <span className="text-base font-black">DNA</span>
+        <div className="h-10 w-10 rounded-2xl overflow-hidden flex items-center justify-center">
+          <Image 
+            src="/logo/icon-black.png"
+            alt="DNA"
+            width={40}
+            height={40}
+            className="dark:hidden"
+          />
+          <Image 
+            src="/logo/logo-white.png"
+            alt="DNA"
+            width={40}
+            height={40}
+            className="hidden dark:block"
+          />
         </div>
         <div>
           <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">

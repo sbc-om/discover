@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       SELECT 
         u.id, u.email, u.first_name, u.last_name, u.phone, 
         u.is_active, u.email_verified, u.last_login, 
-        u.preferred_language, u.created_at,
+        u.preferred_language, u.created_at, u.avatar_url,
         r.id as role_id, r.name as role_name, r.name_ar, r.name_en
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id

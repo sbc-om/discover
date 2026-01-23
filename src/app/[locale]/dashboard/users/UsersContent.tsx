@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
+import { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users as UsersIcon,
   UserPlus,
@@ -17,7 +17,10 @@ import {
   Loader2,
   X,
   Eye,
-  EyeOff
+  EyeOff,
+  Camera,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 interface User {
@@ -33,6 +36,7 @@ interface User {
   name_ar: string;
   name_en: string;
   created_at: string;
+  avatar_url?: string;
 }
 
 interface Role {
@@ -42,6 +46,22 @@ interface Role {
   name_en: string;
 }
 
+const roleColors: { [key: string]: string } = {
+  admin: 'from-red-500 to-rose-600',
+  coach: 'from-blue-500 to-indigo-600',
+  player: 'from-emerald-500 to-teal-600',
+  academy_manager: 'from-amber-500 to-orange-600',
+  default: 'from-zinc-500 to-zinc-600'
+};
+
+const roleBadgeColors: { [key: string]: string } = {
+  admin: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  coach: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  player: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  academy_manager: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  default: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
+};
+
 export default function UsersContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -50,10 +70,15 @@ export default function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -75,7 +100,7 @@ export default function UsersContent() {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '10',
+        limit: '12',
         ...(search && { search }),
         ...(roleFilter && { role: roleFilter })
       });
@@ -86,6 +111,7 @@ export default function UsersContent() {
       if (response.ok) {
         setUsers(data.users);
         setTotal(data.pagination.total);
+        setTotalPages(data.pagination.pages);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -113,6 +139,51 @@ export default function UsersContent() {
     return { firstName, lastName };
   };
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadAvatar = async (userId: string): Promise<string | null> => {
+    if (!avatarFile) return null;
+
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
+      formData.append('userId', userId);
+
+      const response = await fetch('/api/upload/avatar', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        return data.avatarUrl;
+      } else {
+        alert(data.message);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      return null;
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -132,13 +203,26 @@ export default function UsersContent() {
         body: JSON.stringify(payload)
       });
 
+      const result = await response.json();
+
       if (response.ok) {
+        const userId = editingUser?.id || result.user?.id;
+        if (avatarFile && userId) {
+          const avatarUrl = await uploadAvatar(userId);
+          if (avatarUrl) {
+            await fetch(`/api/users/${userId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ avatar_url: avatarUrl })
+            });
+          }
+        }
+
         setShowModal(false);
         resetForm();
         fetchUsers();
       } else {
-        const data = await response.json();
-        alert(data.message);
+        alert(result.message);
       }
     } catch (error) {
       console.error('Error saving user:', error);
@@ -161,6 +245,7 @@ export default function UsersContent() {
   const handleEdit = (user: User) => {
     setFullName(`${user.first_name} ${user.last_name}`.trim());
     setEditingUser(user);
+    setAvatarPreview(user.avatar_url || null);
     setFormData({
       email: user.email,
       password: '',
@@ -177,6 +262,8 @@ export default function UsersContent() {
   const resetForm = () => {
     setEditingUser(null);
     setFullName('');
+    setAvatarFile(null);
+    setAvatarPreview(null);
     setFormData({
       email: '',
       password: '',
@@ -189,363 +276,507 @@ export default function UsersContent() {
     });
   };
 
+  const getRoleColor = (roleName: string) => roleColors[roleName] || roleColors.default;
+  const getRoleBadgeColor = (roleName: string) => roleBadgeColors[roleName] || roleBadgeColors.default;
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl shadow-lg shadow-orange-500/20">
-              <UsersIcon className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">User Management</h1>
-              <p className="text-zinc-600 dark:text-zinc-400 mt-1">Manage system users and their roles</p>
-            </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg shadow-orange-500/20">
+            <UsersIcon className="w-6 h-6 text-white" />
           </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setShowModal(true);
-            }}
-            className="group relative px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200 flex items-center gap-2"
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Users</h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">{total} total users</p>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            resetForm();
+            setShowModal(true);
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25 transition-all text-sm"
+        >
+          <UserPlus className="w-4 h-4" />
+          Add User
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+          />
+        </div>
+        <div className="relative sm:w-56">
+          <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="w-full pl-10 pr-9 py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all hover:border-zinc-300 dark:hover:border-zinc-700"
           >
-            <UserPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            Add New User
-          </button>
+            <option value="" className="bg-white dark:bg-zinc-900">🎯 All Roles</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.name} className="bg-white dark:bg-zinc-900">
+                {role.name === 'admin' && '👑'}
+                {role.name === 'coach' && '⚽'}
+                {role.name === 'player' && '🏃'}
+                {role.name === 'academy_manager' && '🎓'}
+                {' '}{role.name_en}
+              </option>
+            ))}
+          </select>
+          <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 rotate-90 pointer-events-none" />
         </div>
       </div>
 
-      {/* Filters Card */}
-      <div className="mb-6 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl shadow-zinc-200/50 dark:shadow-zinc-900/50 border border-zinc-200 dark:border-zinc-700 p-6">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Search by name, email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-            />
-          </div>
-          <div className="relative min-w-[200px]">
-            <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-zinc-400" />
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent appearance-none cursor-pointer transition-all"
-            >
-              <option value="">All Roles</option>
-              {roles.map((role) => (
-                <option key={role.id} value={role.name}>
-                  {role.name_en}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Users Grid */}
-      <div className="grid grid-cols-1 gap-4 mb-6">
+      {/* Users List */}
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden backdrop-blur-sm bg-white/5 dark:bg-zinc-900/5">
         {loading ? (
-          <div className="flex items-center justify-center py-16 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl">
+          <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
           </div>
         ) : users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl">
-            <UsersIcon className="w-16 h-16 text-zinc-300 dark:text-zinc-600 mb-4" />
-            <p className="text-zinc-500 dark:text-zinc-400 text-lg">No users found</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <UsersIcon className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3" />
+            <p className="text-zinc-500 dark:text-zinc-400">No users found</p>
           </div>
         ) : (
-          users.map((user) => (
-            <div
-              key={user.id}
-              className="group bg-white dark:bg-zinc-800 rounded-2xl shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50 border border-zinc-200 dark:border-zinc-700 hover:shadow-xl hover:shadow-zinc-300/50 dark:hover:shadow-zinc-900/70 transition-all duration-300 overflow-hidden"
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                      {user.first_name.charAt(0)}{user.last_name.charAt(0)}
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
-                          {user.first_name} {user.last_name}
-                        </h3>
-                        {user.email_verified && <CheckCircle2 className="w-5 h-5 text-orange-500" />}
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 ${
-                            user.is_active
-                              ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400'
-                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
-                          }`}
-                        >
+          <>
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">User</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Contact</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Role</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Status</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Joined</th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {users.map((user) => (
+                    <motion.tr
+                      key={user.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    >
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getRoleColor(user.role_name)} flex items-center justify-center text-white font-semibold text-sm overflow-hidden shadow-sm`}>
+                            {user.avatar_url ? (
+                              <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{user.first_name.charAt(0)}{user.last_name.charAt(0)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-zinc-900 dark:text-white text-sm">
+                              {user.first_name} {user.last_name}
+                            </p>
+                            {user.email_verified && (
+                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                Verified
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="space-y-0.5">
+                          <p className="text-sm text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5">
+                            <Mail className="w-3.5 h-3.5 text-zinc-400" />
+                            {user.email}
+                          </p>
+                          {user.phone && (
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                              <Phone className="w-3.5 h-3.5 text-zinc-400" />
+                              {user.phone}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-3">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role_name)}`}>
+                          <Shield className="w-3 h-3" />
+                          {user.name_en || user.role_name}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                          user.is_active
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                        }`}>
                           {user.is_active ? (
-                            <>
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              Active
-                            </>
+                            <><CheckCircle2 className="w-3 h-3" /> Active</>
                           ) : (
-                            <>
-                              <XCircle className="w-3.5 h-3.5" />
-                              Inactive
-                            </>
+                            <><XCircle className="w-3 h-3" /> Inactive</>
                           )}
                         </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                        <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                          <Mail className="w-4 h-4" />
-                          <span className="text-sm">{user.email}</span>
+                      </td>
+                      <td className="px-6 py-3">
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                          {formatDate(user.created_at)}
+                        </p>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="p-2 text-zinc-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user.id)}
+                            className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                        {user.phone && (
-                          <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                            <Phone className="w-4 h-4" />
-                            <span className="text-sm">{user.phone}</span>
-                          </div>
-                        )}
-                      </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                      <div className="flex items-center gap-2 mt-3">
-                        <Shield className="w-4 h-4 text-orange-500" />
-                        <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 rounded-lg text-sm font-medium">
-                          {user.name_en}
-                        </span>
-                      </div>
-                    </div>
+            {/* Mobile Cards */}
+            <div className="lg:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+              {users.map((user) => (
+                <motion.div
+                  key={user.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="p-4 flex items-center gap-3"
+                >
+                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getRoleColor(user.role_name)} flex items-center justify-center text-white font-semibold overflow-hidden shrink-0 shadow-sm`}>
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{user.first_name.charAt(0)}{user.last_name.charAt(0)}</span>
+                    )}
                   </div>
-
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-zinc-900 dark:text-white text-sm truncate">
+                        {user.first_name} {user.last_name}
+                      </p>
+                      <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getRoleBadgeColor(user.role_name)}`}>
+                        {user.name_en || user.role_name}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => handleEdit(user)}
-                      className="p-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl hover:bg-orange-100/70 dark:hover:bg-orange-900/20 transition-all group/btn"
-                      title="Edit User"
+                      className="p-2 text-zinc-500 hover:text-orange-500 rounded-lg transition-colors"
                     >
-                      <Edit2 className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+                      <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(user.id)}
-                      className="p-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl hover:bg-orange-100/70 dark:hover:bg-orange-900/20 transition-all group/btn"
-                      title="Delete User"
+                      className="p-2 text-zinc-500 hover:text-red-500 rounded-lg transition-colors"
                     >
-                      <Trash2 className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              ))}
             </div>
-          ))
+          </>
         )}
-      </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between bg-white dark:bg-zinc-800 rounded-2xl shadow-xl shadow-zinc-200/50 dark:shadow-zinc-900/50 border border-zinc-200 dark:border-zinc-700 p-4">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">
-          Showing <span className="font-semibold text-zinc-900 dark:text-white">{users.length}</span> of{' '}
-          <span className="font-semibold text-zinc-900 dark:text-white">{total}</span> users
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-4 py-2 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg font-medium hover:bg-zinc-200 dark:hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            Previous
-          </button>
-          <div className="flex gap-1">
-            {Array.from({ length: Math.min(5, Math.ceil(total / 10)) }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`w-10 h-10 rounded-lg font-medium transition-all ${
-                  page === p
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30'
-                    : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page >= Math.ceil(total / 10)}
-            className="px-4 py-2 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg font-medium hover:bg-zinc-200 dark:hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] animate-in zoom-in-95 duration-200">
-            <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-6 rounded-t-3xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-xl">
-                    {editingUser ? <Edit2 className="w-6 h-6 text-white" /> : <UserPlus className="w-6 h-6 text-white" />}
-                  </div>
-                  <h2 className="text-2xl font-bold text-white">{editingUser ? 'Edit User' : 'Add New User'}</h2>
-                </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  Showing <span className="font-semibold text-zinc-900 dark:text-white">{((page - 1) * 12) + 1}</span> to <span className="font-semibold text-zinc-900 dark:text-white">{Math.min(page * 12, total)}</span> of <span className="font-semibold text-zinc-900 dark:text-white">{total}</span> users
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                  className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
                 >
-                  <X className="w-6 h-6 text-white" />
+                  First
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        className={`min-w-[2.5rem] px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                          page === pageNum
+                            ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25'
+                            : 'border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setPage(totalPages)}
+                  disabled={page === totalPages}
+                  className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
+                >
+                  Last
                 </button>
               </div>
             </div>
+          </div>
+        )}
+      </div>
 
-            <OverlayScrollbarsComponent
-              options={{ scrollbars: { autoHide: 'leave' } }}
-              className="max-h-[calc(90vh-168px)]"
+      {/* Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden"
             >
-              <form id="user-modal-form" onSubmit={handleSubmit} className="p-6 space-y-5">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  Full Name <span className="text-orange-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setFullName(value);
-                    const { firstName, lastName } = splitFullName(value);
-                    setFormData({ ...formData, first_name: firstName, last_name: lastName });
-                  }}
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  required
-                  placeholder="John Doe"
-                />
+              <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  {editingUser ? 'Edit User' : 'Add New User'}
+                </h2>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  Email Address <span className="text-orange-500">*</span>
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-zinc-400" />
+              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                {/* Avatar Upload */}
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
+                      ) : editingUser ? (
+                        <span>{editingUser.first_name.charAt(0)}{editingUser.last_name.charAt(0)}</span>
+                      ) : (
+                        <Camera className="w-8 h-8" />
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 p-2 bg-white dark:bg-zinc-800 rounded-full shadow-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:text-orange-500 transition-colors"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+
+                {/* Full Name */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    Email
+                  </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    placeholder="john@example.com"
                     required
-                    placeholder="john.doe@example.com"
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  Password {editingUser && <span className="text-zinc-500 text-xs">(leave blank to keep current)</span>}
-                  {!editingUser && <span className="text-orange-500">*</span>}
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                    required={!editingUser}
-                    placeholder="••••••••"
-                  />
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    Password {editingUser && <span className="text-zinc-400">(leave empty to keep current)</span>}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all pr-12"
+                      placeholder="••••••••"
+                      required={!editingUser}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Phone & Role */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                      placeholder="+1234567890"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                      Role
+                    </label>
+                    <select
+                      value={formData.role_id}
+                      onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all"
+                      required
+                    >
+                      <option value="">Select role</option>
+                      {roles.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name_en}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Active Status */}
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                    onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      formData.is_active ? 'bg-orange-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                    }`}
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    <span
+                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                        formData.is_active ? 'translate-x-5' : ''
+                      }`}
+                    />
+                  </button>
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300">Active User</span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={uploadingAvatar}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {uploadingAvatar ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      editingUser ? 'Update User' : 'Create User'
+                    )}
                   </button>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Phone Number</label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-zinc-400" />
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                    placeholder="+1 (555) 123-4567"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                  Role <span className="text-orange-500">*</span>
-                </label>
-                <div className="relative">
-                  <Shield className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-zinc-400" />
-                  <select
-                    value={formData.role_id}
-                    onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
-                    className="w-full pl-12 pr-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent appearance-none cursor-pointer transition-all"
-                    required
-                  >
-                    <option value="">Select a role</option>
-                    {roles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name_en}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-5 h-5 text-orange-600 bg-zinc-100 border-zinc-300 rounded focus:ring-orange-500 focus:ring-2"
-                />
-                <label htmlFor="is_active" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer">
-                  Active User (User can log in and access the system)
-                </label>
-              </div>
-
               </form>
-            </OverlayScrollbarsComponent>
-            <div className="border-t border-zinc-200 dark:border-zinc-700 p-4 rounded-b-3xl bg-white/90 dark:bg-zinc-800/90 backdrop-blur">
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  form="user-modal-form"
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all duration-200"
-                >
-                  {editingUser ? 'Update User' : 'Create User'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                  className="px-6 py-3 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-semibold hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-all duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

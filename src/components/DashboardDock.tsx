@@ -71,7 +71,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
       className="shrink-0 px-4 pb-4 pt-2"
       style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
     >
-      <div className="relative glass-panel rounded-[28px] border border-white/60 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 px-3 py-3">
+      <div className="relative glass-panel rounded-[28px] border-2 border-zinc-900/15 dark:border-white/10 bg-white/90 dark:bg-zinc-900/70 shadow-lg shadow-zinc-900/5 dark:shadow-none px-3 py-3">
         {accessibleMenuItems.length === 0 ? (
           <div className="text-center text-zinc-500 dark:text-zinc-400 text-sm py-2">
             {tCommon('noData')}
@@ -81,7 +81,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
             <button
               type="button"
               onClick={scrollPrev}
-              className="h-9 w-9 shrink-0 rounded-full border border-white/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-700 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5"
+              className="h-9 w-9 shrink-0 rounded-full border-2 border-zinc-900/20 dark:border-white/10 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5 hover:border-orange-500/50 hover:bg-orange-50 dark:hover:bg-zinc-800 shadow-sm"
               aria-label={isRTL ? 'scroll right' : 'scroll left'}
             >
               {isRTL ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -136,7 +136,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
             <button
               type="button"
               onClick={scrollNext}
-              className="h-9 w-9 shrink-0 rounded-full border border-white/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-700 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5"
+              className="h-9 w-9 shrink-0 rounded-full border-2 border-zinc-900/20 dark:border-white/10 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5 hover:border-orange-500/50 hover:bg-orange-50 dark:hover:bg-zinc-800 shadow-sm"
               aria-label={isRTL ? 'scroll left' : 'scroll right'}
             >
               {isRTL ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
