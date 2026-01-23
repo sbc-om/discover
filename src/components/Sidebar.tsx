@@ -44,8 +44,8 @@ export default function Sidebar({ locale }: SidebarProps) {
       className="w-64 min-h-screen bg-white text-zinc-900 border-r border-zinc-200 dark:bg-zinc-950 dark:text-zinc-100 dark:border-zinc-800 rtl:border-l rtl:border-r-0"
     >
       {/* Logo Section */}
-      <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between rtl:flex-row-reverse">
-        <div className="flex items-center gap-3 rtl:flex-row-reverse">
+      <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-black text-white dark:bg-white dark:text-black rounded-lg flex items-center justify-center">
             <span className="text-lg font-bold">DNA</span>
           </div>

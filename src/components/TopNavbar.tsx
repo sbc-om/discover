@@ -20,14 +20,17 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
     { href: `/${locale}/login`, label: locale === 'ar' ? 'تسجيل الدخول' : 'Login' }
   ];
 
+  const isRTL = locale === 'ar';
+
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/80">
-      <div className="container mx-auto flex items-center justify-between px-4 py-4 rtl:flex-row-reverse">
-        <div className="flex items-center gap-3 rtl:flex-row-reverse">
+    <header dir={isRTL ? 'rtl' : 'ltr'} className="sticky top-0 z-30 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/80">
+      <div className="container mx-auto flex items-center justify-between px-4 py-4">
+        {/* Logo - Start side (right in RTL, left in LTR) */}
+        <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-black text-white dark:bg-white dark:text-black">
             <span className="text-lg font-bold">DNA</span>
           </div>
-          <div className="ltr:text-left rtl:text-right">
+          <div>
             <h1 className="text-lg font-semibold">DNA</h1>
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
               {locale === 'ar' ? 'اكتشف القدرة الطبيعية' : 'Discover Natural Ability'}
@@ -35,7 +38,8 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
           </div>
         </div>
 
-        <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-700 dark:text-zinc-200 lg:flex rtl:flex-row-reverse">
+        {/* Navigation - Center */}
+        <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-700 dark:text-zinc-200 lg:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -47,12 +51,14 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 lg:flex rtl:flex-row-reverse">
+        {/* Buttons - End side (left in RTL, right in LTR) */}
+        <div className="hidden items-center gap-3 lg:flex">
           <LocaleSwitcher />
           <ThemeToggle />
         </div>
 
-        <div className="flex items-center gap-2 lg:hidden rtl:flex-row-reverse">
+        {/* Mobile menu button */}
+        <div className="flex items-center gap-2 lg:hidden">
           <ThemeToggle />
           <button
             type="button"
@@ -77,9 +83,10 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
           />
           <div
             id="mobile-menu"
+            dir={isRTL ? 'rtl' : 'ltr'}
             className="absolute top-0 h-full w-72 bg-white shadow-xl dark:bg-zinc-950 ltr:left-0 rtl:right-0"
           >
-            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-4 dark:border-zinc-800 rtl:flex-row-reverse">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-4 dark:border-zinc-800">
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
                 {locale === 'ar' ? 'القائمة' : 'Menu'}
               </span>
@@ -92,7 +99,7 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <nav className="flex flex-col gap-3 px-4 py-6 text-sm font-medium text-zinc-700 dark:text-zinc-200 ltr:text-left rtl:text-right">
+            <nav className="flex flex-col gap-3 px-4 py-6 text-sm font-medium text-zinc-700 dark:text-zinc-200">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
