@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
+import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
   Users,
@@ -98,20 +99,34 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
                       key={item.name}
                       href={itemPath}
                       aria-current={isActive ? 'page' : undefined}
-                      className={`group relative flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-2 text-sm font-medium transition-all ${
-                        isActive
-                          ? 'bg-zinc-900 text-white border-transparent dark:bg-white dark:text-zinc-900'
-                          : 'bg-white/70 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-200 border-white/40 dark:border-zinc-800/60'
-                      }`}
+                      className="group relative flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium"
                     >
-                      <span className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+                      {isActive && (
+                        <motion.div
+                          layoutId="dock-active-bg"
+                          className="absolute inset-0 rounded-full bg-zinc-900 dark:bg-white"
+                          initial={false}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 500,
+                            damping: 35,
+                          }}
+                        />
+                      )}
+                      <span className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
                         isActive
                           ? 'bg-white/15 text-white dark:bg-zinc-900/10 dark:text-zinc-900'
                           : 'bg-zinc-900/5 text-zinc-900 dark:bg-white/10 dark:text-white group-hover:bg-orange-500 group-hover:text-white'
                       }`}>
                         <Icon className="h-4 w-4" />
                       </span>
-                      <span>{isRTL ? item.name_ar : item.name_en}</span>
+                      <span className={`relative z-10 transition-colors ${
+                        isActive
+                          ? 'text-white dark:text-zinc-900'
+                          : 'text-zinc-700 dark:text-zinc-200'
+                      }`}>
+                        {isRTL ? item.name_ar : item.name_en}
+                      </span>
                     </Link>
                   );
                 })}
