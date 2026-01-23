@@ -87,10 +87,10 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
 
             <OverlayScrollbarsComponent
               options={scrollOptions}
-              className="flex-1"
+              className="flex-1 min-w-0"
               defer
             >
-              <div ref={railRef} className="flex items-center gap-2 overflow-x-auto pb-2">
+              <div className="flex items-center gap-2">
                 {accessibleMenuItems.map((item) => {
                   const Icon = iconMap[item.icon] || LayoutDashboard;
                   const itemPath = `/${locale}${item.route}`;
