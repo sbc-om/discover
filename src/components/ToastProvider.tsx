@@ -35,7 +35,7 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
   if (!mounted) return null;
 
   const content = (
-    <div className="fixed bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 z-[99999] flex flex-col-reverse items-center gap-3 pointer-events-none w-full px-4">
+    <div className="fixed bottom-28 sm:bottom-24 left-1/2 -translate-x-1/2 z-[99999] flex flex-col-reverse items-center gap-3 pointer-events-none w-full px-4">
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <motion.div

@@ -249,14 +249,18 @@ export default function RolesContent() {
       const response = await fetch(`/api/roles/${id}`, { method: 'DELETE' });
       if (response.ok) {
         fetchRoles();
+        showToast('success', 'Role deleted successfully');
         return true;
       } else {
         const data = await response.json();
-        setDeleteError(data.message || 'Failed to delete role');
+        const errorMsg = data.message || 'Failed to delete role';
+        setDeleteError(errorMsg);
+        showToast('error', errorMsg);
       }
     } catch (error) {
       console.error('Error deleting role:', error);
       setDeleteError('Failed to delete role');
+      showToast('error', 'Failed to delete role');
     }
     return false;
   };
