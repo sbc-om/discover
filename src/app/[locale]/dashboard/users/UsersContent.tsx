@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import {
   Users as UsersIcon,
   UserPlus,
@@ -384,8 +385,8 @@ export default function UsersContent() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-amber-500 p-6 rounded-t-3xl">
+          <div className="bg-white dark:bg-zinc-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] animate-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-6 rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-xl">
@@ -405,7 +406,11 @@ export default function UsersContent() {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <OverlayScrollbarsComponent
+              options={{ scrollbars: { autoHide: 'leave' } }}
+              className="max-h-[calc(90vh-96px)]"
+            >
+              <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                   Full Name <span className="text-orange-500">*</span>
@@ -533,7 +538,8 @@ export default function UsersContent() {
                   Cancel
                 </button>
               </div>
-            </form>
+              </form>
+            </OverlayScrollbarsComponent>
           </div>
         </div>
       )}

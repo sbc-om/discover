@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import {
   Shield,
   ShieldPlus,
@@ -458,7 +459,10 @@ export default function RolesContent() {
               </div>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
+            <OverlayScrollbarsComponent
+              options={{ scrollbars: { autoHide: 'leave' } }}
+              className="p-6 space-y-4 max-h-[calc(90vh-200px)]"
+            >
               {modules.map((module) => {
                 const modulePermissionIds = module.permissions.map((p) => p.id);
                 const allSelected = modulePermissionIds.every((id) => selectedPermissions.includes(id));
@@ -541,7 +545,7 @@ export default function RolesContent() {
                   </div>
                 );
               })}
-            </div>
+            </OverlayScrollbarsComponent>
 
             <div className="sticky bottom-0 bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 p-6 rounded-b-3xl">
               <div className="flex gap-3">

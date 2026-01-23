@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import ThemeProvider from "@/providers/ThemeProvider";
+import ScrollArea from "@/components/ScrollArea";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,9 +36,13 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground h-screen overflow-hidden`}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <ScrollArea className="h-screen w-screen">
+            {children}
+          </ScrollArea>
+        </ThemeProvider>
       </body>
     </html>
   );

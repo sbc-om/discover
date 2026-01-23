@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import TopNavbar from '@/components/TopNavbar';
+import ScrollArea from '@/components/ScrollArea';
 
 export default async function HomePage({
   params,
@@ -9,7 +10,7 @@ export default async function HomePage({
   const { locale } = await params;
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-black dark:via-zinc-950 dark:to-zinc-900">
+    <ScrollArea className="min-h-screen bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-black dark:via-zinc-950 dark:to-zinc-900">
       <TopNavbar locale={locale as 'en' | 'ar'} />
       <div className="container mx-auto px-4 py-16">
 
@@ -97,6 +98,6 @@ export default async function HomePage({
           </div>
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 }
