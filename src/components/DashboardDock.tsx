@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useRef } from 'react';
-import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
+import { useCallback } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
 import {
   LayoutDashboard,
   Users,
@@ -48,44 +48,21 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
   const pathname = usePathname();
   const tCommon = useTranslations('common');
   const isRTL = locale === 'ar';
-  const osRef = useRef<any>(null);
-  const dragStateRef = useRef({ isDragging: false, startX: 0, startScroll: 0 });
 
-  const scrollRail = (direction: 'left' | 'right') => {
-    const osInstance = osRef.current?.osInstance?.();
-    if (!osInstance) return;
-    const viewport = osInstance.elements().viewport;
-    const delta = direction === 'left' ? -280 : 280;
-    viewport.scrollBy({ left: isRTL ? -delta : delta, behavior: 'smooth' });
-  };
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: false,
+    dragFree: true,
+    containScroll: 'trimSnaps',
+    direction: isRTL ? 'rtl' : 'ltr',
+  });
 
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    const osInstance = osRef.current?.osInstance?.();
-    if (!osInstance) return;
-    const viewport = osInstance.elements().viewport;
-    dragStateRef.current = {
-      isDragging: true,
-      startX: event.clientX,
-      startScroll: viewport.scrollLeft,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
+  const scrollPrev = useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev();
+  }, [emblaApi]);
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragStateRef.current.isDragging) return;
-    const osInstance = osRef.current?.osInstance?.();
-    if (!osInstance) return;
-    const viewport = osInstance.elements().viewport;
-    const deltaX = event.clientX - dragStateRef.current.startX;
-    const targetScroll = dragStateRef.current.startScroll - deltaX;
-    viewport.scrollLeft = targetScroll;
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragStateRef.current.isDragging) return;
-    dragStateRef.current.isDragging = false;
-    event.currentTarget.releasePointerCapture(event.pointerId);
-  };
+  const scrollNext = useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext();
+  }, [emblaApi]);
 
   return (
     <section
@@ -102,27 +79,15 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => scrollRail('left')}
-              className="h-9 w-9 rounded-full border border-white/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-700 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5"
+              onClick={scrollPrev}
+              className="h-9 w-9 shrink-0 rounded-full border border-white/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-700 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5"
               aria-label={isRTL ? 'scroll right' : 'scroll left'}
             >
               {isRTL ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
 
-            <OverlayScrollbarsComponent
-              ref={osRef}
-              options={{ scrollbars: { visibility: 'hidden' }, overflow: { x: 'scroll', y: 'hidden' } }}
-              className="flex-1 min-w-0 cursor-grab active:cursor-grabbing"
-              defer
-            >
-              <div
-                className="flex items-center gap-2 select-none"
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-                style={{ touchAction: 'pan-y' }}
-              >
+            <div className="flex-1 min-w-0 overflow-hidden" ref={emblaRef}>
+              <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
                 {accessibleMenuItems.map((item) => {
                   const Icon = iconMap[item.icon] || LayoutDashboard;
                   const itemPath = `/${locale}${item.route}`;
@@ -151,12 +116,12 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
                   );
                 })}
               </div>
-            </OverlayScrollbarsComponent>
+            </div>
 
             <button
               type="button"
-              onClick={() => scrollRail('right')}
-              className="h-9 w-9 rounded-full border border-white/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-700 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5"
+              onClick={scrollNext}
+              className="h-9 w-9 shrink-0 rounded-full border border-white/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/70 text-zinc-700 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5"
               aria-label={isRTL ? 'scroll left' : 'scroll right'}
             >
               {isRTL ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
