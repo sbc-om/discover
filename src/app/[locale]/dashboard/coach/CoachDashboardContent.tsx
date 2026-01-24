@@ -522,44 +522,44 @@ function PlayerCard({
           </div>
 
           {/* Action Buttons Row */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {/* Star - Achievement Button */}
             <button
               type="button"
               onClick={onAchievementToggle}
-              className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${
+              className={`h-11 w-11 rounded-xl flex items-center justify-center transition-all ${
                 achievementOpen
                   ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-300 dark:border-indigo-600'
                   : 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-500 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/40'
               }`}
             >
-              <Star className="h-5 w-5" />
+              <Star className="h-6 w-6" />
             </button>
             
             {/* Plus - Score Button */}
             <button
               type="button"
               onClick={onScoreToggle}
-              className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${
+              className={`h-11 w-11 rounded-xl flex items-center justify-center transition-all ${
                 scoreOpen
                   ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-300 dark:border-indigo-600'
                   : 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-500 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/40'
               }`}
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-6 w-6" />
             </button>
             
             {/* Message Button */}
             <button
               type="button"
               onClick={onMessageToggle}
-              className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${
+              className={`h-11 w-11 rounded-xl flex items-center justify-center transition-all ${
                 messageOpen
                   ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-300 dark:border-indigo-600'
                   : 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-500 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/40'
               }`}
             >
-              <MessageSquare className="h-5 w-5" />
+              <MessageSquare className="h-6 w-6" />
             </button>
           </div>
         </div>
