@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, IdCard, Medal, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, IdCard, Medal, Trophy, Printer } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
@@ -127,92 +127,150 @@ export default function PlayerCardContent({ userId }: PlayerCardContentProps) {
   const rating = Math.min(99, Math.max(1, Math.round(pointsTotal || 1)));
 
   return (
-    <div className="mx-auto w-full max-w-lg space-y-6">
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => {
-            if (userId) {
-              router.push(`/${locale}/dashboard/players/${userId}`);
-              return;
-            }
-            router.push(`/${locale}/dashboard/profile`);
-          }}
-          className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
-        >
-          {isAr ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
-        </button>
-        <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
-          <IdCard className="h-5 w-5" />
-          <span className="text-sm font-semibold">
-            {isAr ? 'بطاقة اللاعب' : 'Player Card'}
-          </span>
-        </div>
-        <div className="w-10" />
-      </div>
-
-      <div className="relative overflow-hidden rounded-[34px] border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-400 p-5 text-white shadow-2xl">
-        <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
-        <div className="absolute -bottom-12 -left-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_rgba(255,255,255,0))]" />
-
-        <div className="relative z-10 grid grid-cols-[110px_1fr] gap-4 items-center">
-          <div className="space-y-3">
-            <div className="rounded-2xl bg-black/25 backdrop-blur px-3 py-2 text-center">
-              <p className="text-[10px] uppercase tracking-widest text-white/70">{isAr ? 'التقييم' : 'OVR'}</p>
-              <p className="text-3xl font-bold text-white">{rating}</p>
-            </div>
-            <div className="rounded-2xl bg-black/20 backdrop-blur px-3 py-2 text-center">
-              <p className="text-[10px] uppercase tracking-widest text-white/70">{isAr ? 'المستوى' : 'Level'}</p>
-              <p className="text-2xl font-semibold text-white">{currentLevel?.level_order || 0}</p>
-            </div>
+    <>
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: auto;
+            margin: 0;
+          }
+          html,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+          }
+          body {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            background: white !important;
+          }
+          body * {
+            visibility: hidden !important;
+          }
+          #player-card-print,
+          #player-card-print * {
+            visibility: visible !important;
+          }
+          #player-card-print {
+            position: absolute !important;
+            left: 50% !important;
+            top: 0 !important;
+            transform: translateX(-50%) !important;
+            width: 100% !important;
+            max-width: 42rem !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+            min-height: auto !important;
+          }
+          #player-card-print > div {
+            min-height: auto !important;
+          }
+        }
+      `}</style>
+      <div className="mx-auto w-full max-w-2xl space-y-6">
+        <div className="flex items-center justify-between print:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              if (userId) {
+                router.push(`/${locale}/dashboard/players/${userId}`);
+                return;
+              }
+              router.push(`/${locale}/dashboard/profile`);
+            }}
+            className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
+          >
+            {isAr ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
+          </button>
+          <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
+            <IdCard className="h-5 w-5" />
+            <span className="text-sm font-semibold">
+              {isAr ? 'بطاقة اللاعب' : 'Player Card'}
+            </span>
           </div>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
+          >
+            <Printer className="h-4 w-4" />
+            {isAr ? 'طباعة' : 'Print'}
+          </button>
+        </div>
 
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative h-36 w-36 rounded-[28px] border border-white/40 bg-white/20 backdrop-blur shadow-xl overflow-hidden">
-              {data.user.avatar_url ? (
-                <img src={data.user.avatar_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-4xl font-bold text-white/90">
-                  {data.user.first_name?.charAt(0)}{data.user.last_name?.charAt(0)}
+        <div id="player-card-print" className="relative overflow-hidden rounded-[36px] border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-[#f6d365] via-[#fda085] to-[#f6d365] p-1 shadow-2xl">
+          <div className="relative overflow-hidden rounded-[32px] bg-zinc-900/90 text-white min-h-[420px]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_rgba(255,255,255,0))]" />
+            <div className="absolute -top-24 right-0 h-64 w-64 rounded-full bg-amber-400/20 blur-3xl" />
+            <div className="absolute -bottom-24 left-0 h-64 w-64 rounded-full bg-orange-500/20 blur-3xl" />
+
+            <div className="relative z-10 grid gap-6 p-8 md:grid-cols-[1fr_260px]">
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl bg-black/30 px-3 py-3 text-center">
+                  <p className="text-[10px] uppercase tracking-widest text-white/70">{isAr ? 'التقييم' : 'OVR'}</p>
+                  <p className="text-3xl font-bold text-white">{rating}</p>
                 </div>
-              )}
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold drop-shadow">{fullName}</p>
-              <p className="text-xs uppercase tracking-[0.35em] text-white/80">
-                {(data.profile?.sport || (isAr ? 'رياضة' : 'Sport')).toString()}
-              </p>
-            </div>
-          </div>
-        </div>
+                <div className="rounded-2xl bg-black/25 px-3 py-3 text-center">
+                  <p className="text-[10px] uppercase tracking-widest text-white/70">{isAr ? 'المستوى' : 'Level'}</p>
+                  <p className="text-2xl font-semibold text-white">{currentLevel?.level_order || 0}</p>
+                </div>
+                <div className="rounded-2xl bg-black/25 px-3 py-3 text-center">
+                  <p className="text-[10px] uppercase tracking-widest text-white/70">{isAr ? 'الجلسات' : 'Sessions'}</p>
+                  <p className="text-2xl font-semibold text-white">{sessionsCompleted}</p>
+                </div>
+              </div>
 
-        <div className="relative z-10 mt-4 space-y-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-white/90">
-            <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-3 py-1">
-              <Trophy className="h-3.5 w-3.5" />
-              {isAr ? 'نقاط' : 'Points'}: {pointsTotal}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-3 py-1">
-              <Medal className="h-3.5 w-3.5" />
-              {isAr ? 'جلسات' : 'Sessions'}: {sessionsCompleted}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-3 py-1">
-              {isAr ? 'المركز' : 'Position'}: {data.profile?.position || '-'}
-            </span>
-          </div>
-          <div className="text-xs text-white/80">
-            {academyName || (isAr ? 'أكاديمية غير محددة' : 'No academy')}
-          </div>
-          {assignment && (
-            <div className="text-xs text-white/80">
-              {isAr ? assignment.program_name_ar || assignment.program_name : assignment.program_name}
-              {' · '}
-              {isAr ? assignment.age_group_name_ar || assignment.age_group_name : assignment.age_group_name}
+              <div>
+                <p className="text-2xl md:text-3xl font-extrabold drop-shadow">{fullName}</p>
+                <p className="text-xs uppercase tracking-[0.35em] text-white/80">
+                  {(data.profile?.sport || (isAr ? 'رياضة' : 'Sport')).toString()}
+                </p>
+                <p className="mt-2 text-sm text-white/80">
+                  {academyName || (isAr ? 'أكاديمية غير محددة' : 'No academy')}
+                </p>
+                {assignment && (
+                  <p className="text-sm text-white/80">
+                    {isAr ? assignment.program_name_ar || assignment.program_name : assignment.program_name}
+                    {' · '}
+                    {isAr ? assignment.age_group_name_ar || assignment.age_group_name : assignment.age_group_name}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs text-white/90">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1">
+                  <Trophy className="h-3.5 w-3.5" />
+                  {isAr ? 'نقاط' : 'Points'}: {pointsTotal}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1">
+                  <Medal className="h-3.5 w-3.5" />
+                  {isAr ? 'جلسات' : 'Sessions'}: {sessionsCompleted}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1">
+                  {isAr ? 'المركز' : 'Position'}: {data.profile?.position || '-'}
+                </span>
+              </div>
             </div>
-          )}
+
+            <div className="flex items-center justify-center md:justify-end">
+              <div className="relative h-52 w-52 md:h-64 md:w-64 rounded-[32px] border border-white/30 bg-white/10 backdrop-blur shadow-2xl overflow-hidden">
+                {data.user.avatar_url ? (
+                  <img src={data.user.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-5xl font-bold text-white/90">
+                    {data.user.first_name?.charAt(0)}{data.user.last_name?.charAt(0)}
+                  </div>
+                )}
+              </div>
+            </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

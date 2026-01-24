@@ -10,6 +10,7 @@ const AVATAR_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars
 const ACADEMY_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'academies');
 const PROGRAM_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'programs');
 const LEVEL_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'levels');
+const ACHIEVEMENT_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'achievements');
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!['academy', 'program', 'level'].includes(type) && !userId) {
+    if (!['academy', 'program', 'level', 'achievement'].includes(type) && !userId) {
       return NextResponse.json(
         { message: 'User ID is required' },
         { status: 400 }
@@ -56,6 +57,8 @@ export async function POST(request: NextRequest) {
         ? PROGRAM_UPLOAD_DIR
         : type === 'level'
         ? LEVEL_UPLOAD_DIR
+        : type === 'achievement'
+        ? ACHIEVEMENT_UPLOAD_DIR
         : AVATAR_UPLOAD_DIR;
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true });
@@ -71,6 +74,8 @@ export async function POST(request: NextRequest) {
         ? `program-${hash}.${ext}`
         : type === 'level'
         ? `level-${hash}.${ext}`
+        : type === 'achievement'
+        ? `achievement-${hash}.${ext}`
         : `${userId}-${hash}.${ext}`;
     const filepath = path.join(uploadDir, filename);
 
@@ -95,6 +100,8 @@ export async function POST(request: NextRequest) {
         ? `/uploads/programs/${filename}`
         : type === 'level'
         ? `/uploads/levels/${filename}`
+        : type === 'achievement'
+        ? `/uploads/achievements/${filename}`
         : `/uploads/avatars/${filename}`;
 
     const isAvatar = type === 'avatar';

@@ -51,6 +51,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Player not assigned to program' }, { status: 400 });
     }
 
+    const previousNotesResult = await pool.query(
+      `SELECT notes
+       FROM program_attendance
+       WHERE user_id = $1 AND program_id = $2 AND attendance_date = $3
+       LIMIT 1`,
+      [user_id, program_id, date]
+    );
+    const previousNotes = previousNotesResult.rows[0]?.notes || '';
+
     const { rows } = await pool.query(
       `INSERT INTO program_attendance (user_id, program_id, age_group_id, attendance_date, present, score, notes, marked_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -65,6 +74,15 @@ export async function POST(request: Request) {
        RETURNING id, user_id, program_id, age_group_id, attendance_date, present, score, notes`,
       [user_id, program_id, age_group_id, date, !!present, score ?? null, notes || null, session.userId]
     );
+
+    const normalizedNotes = typeof notes === 'string' ? notes.trim() : '';
+    if (normalizedNotes && normalizedNotes !== (previousNotes || '').trim()) {
+      await pool.query(
+        `INSERT INTO messages (sender_id, receiver_id, subject, content, is_read)
+         VALUES ($1, $2, $3, $4, false)`,
+        [session.userId, user_id, 'Session notes', normalizedNotes]
+      );
+    }
 
     return NextResponse.json({ attendance: rows[0] });
   } catch (error: any) {

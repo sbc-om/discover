@@ -86,6 +86,16 @@ const fetchProfileData = async (userId: string) => {
     [userId]
   );
 
+  const achievementsResult = await pool.query(
+    `SELECT pa.id, pa.awarded_at, pa.note,
+            a.id as achievement_id, a.title, a.title_ar, a.description, a.icon_url
+     FROM player_achievements pa
+     JOIN achievements a ON a.id = pa.achievement_id
+     WHERE pa.user_id = $1
+     ORDER BY pa.awarded_at DESC`,
+    [userId]
+  );
+
   const user = userResult.rows[0];
   const profile = {
     sport: user.sport,
@@ -123,6 +133,7 @@ const fetchProfileData = async (userId: string) => {
     latestTest: latestTestResult.rows[0] || null,
     activeRequest: activeRequestResult.rows[0] || null,
     medalRequest: latestMedalRequestResult.rows[0] || null,
+    achievements: achievementsResult.rows || [],
     messages: messagesResult.rows || [],
     attendance: attendanceResult.rows || [],
   };

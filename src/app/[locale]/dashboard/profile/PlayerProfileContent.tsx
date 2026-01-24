@@ -101,6 +101,23 @@ interface AttendanceRecord {
   notes?: string | null;
 }
 
+interface PlayerAchievement {
+  id: string;
+  awarded_at: string;
+  note?: string | null;
+  achievement_id: string;
+  title: string;
+  title_ar?: string | null;
+  description?: string | null;
+  icon_url?: string | null;
+}
+
+interface AchievementOption {
+  id: string;
+  title: string;
+  title_ar?: string | null;
+}
+
 interface ProfileResponse {
   user: ProfileUser;
   profile?: PlayerProfileData | null;
@@ -110,6 +127,7 @@ interface ProfileResponse {
   medalRequest?: MedalRequestData | null;
   assignment?: AssignmentData | null;
   program_levels?: ProgramLevel[];
+  achievements?: PlayerAchievement[];
   messages?: PlayerMessage[];
   attendance?: AttendanceRecord[];
 }
@@ -193,6 +211,10 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const [ageGroups, setAgeGroups] = useState<AgeGroupOption[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [achievementsCatalog, setAchievementsCatalog] = useState<AchievementOption[]>([]);
+  const [awardAchievementId, setAwardAchievementId] = useState('');
+  const [awardNote, setAwardNote] = useState('');
+  const [awarding, setAwarding] = useState(false);
   const [assignmentForm, setAssignmentForm] = useState({
     program_id: '',
     age_group_id: '',
@@ -212,6 +234,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const [medalRequestOpen, setMedalRequestOpen] = useState(true);
   const isAdminView = Boolean(userId);
   const canRequestMedal = isAdminView && (currentRole === 'admin' || currentRole === 'academy_manager');
+  const canAwardAchievement = isAdminView && (currentRole === 'admin' || currentRole === 'academy_manager');
 
   const endpoint = useMemo(() => {
     return userId ? `/api/player-profile/${userId}` : '/api/player-profile';
@@ -316,6 +339,22 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     fetchPrograms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdminView]);
+
+  useEffect(() => {
+    if (!canAwardAchievement) return;
+    const fetchAchievements = async () => {
+      try {
+        const response = await fetch('/api/achievements');
+        const payload = await response.json();
+        if (response.ok) {
+          setAchievementsCatalog(payload.achievements || []);
+        }
+      } catch (error) {
+        console.error('Failed to load achievements', error);
+      }
+    };
+    fetchAchievements();
+  }, [canAwardAchievement]);
 
   useEffect(() => {
     if (!isAdminView) return;
@@ -442,6 +481,34 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     }
   };
 
+  const handleAwardAchievement = async () => {
+    if (!userId || !awardAchievementId) return;
+    try {
+      setAwarding(true);
+      const response = await fetch('/api/player-achievements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          achievement_id: awardAchievementId,
+          note: awardNote.trim() || null,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || 'Failed to award achievement');
+      }
+      setAwardAchievementId('');
+      setAwardNote('');
+      showToast('success', isAr ? 'تم منح الإنجاز' : 'Achievement awarded');
+      await fetchProfile();
+    } catch (error: any) {
+      showToast('error', error.message || (isAr ? 'تعذر منح الإنجاز' : 'Failed to award achievement'));
+    } finally {
+      setAwarding(false);
+    }
+  };
+
   if (loading || !data) {
     return (
       <div className="flex items-center justify-center py-20 text-zinc-500">
@@ -460,6 +527,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const programLevels = data.program_levels || [];
   const messages = data.messages || [];
   const attendance = data.attendance || [];
+  const achievements = data.achievements || [];
   const medalRequest = data.medalRequest || null;
   const sessionsCompleted = attendance.filter((record) => record.present).length;
   const pointsTotal = attendance.reduce((sum, record) => sum + (record.score || 0), 0);
@@ -659,6 +727,85 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             {isAr ? 'لم يتم تعيين برنامج بعد.' : 'No program assigned yet.'}
           </p>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+          {isAr ? 'الإنجازات' : 'Achievements'}
+        </h3>
+        {achievements.length === 0 ? (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            {isAr ? 'لا توجد إنجازات بعد.' : 'No achievements yet.'}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {achievements.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
+                <div className="h-12 w-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex items-center justify-center">
+                  {item.icon_url ? (
+                    <img src={item.icon_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] font-semibold text-zinc-400">{isAr ? 'بدون' : 'N/A'}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                    {isAr ? item.title_ar || item.title : item.title}
+                  </p>
+                  {item.description && (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {item.description}
+                    </p>
+                  )}
+                </div>
+                <span className="text-[10px] text-zinc-400 whitespace-nowrap">
+                  {formatDate(item.awarded_at, locale)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {canAwardAchievement && (
+          <div className="pt-2 space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                {isAr ? 'اختر الإنجاز' : 'Select achievement'}
+              </label>
+              <select
+                value={awardAchievementId}
+                onChange={(event) => setAwardAchievementId(event.target.value)}
+                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+              >
+                <option value="">{isAr ? 'اختر الإنجاز' : 'Select achievement'}</option>
+                {achievementsCatalog.map((achievement) => (
+                  <option key={achievement.id} value={achievement.id}>
+                    {isAr ? achievement.title_ar || achievement.title : achievement.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                {isAr ? 'ملاحظة' : 'Note'}
+              </label>
+              <textarea
+                value={awardNote}
+                onChange={(event) => setAwardNote(event.target.value)}
+                rows={2}
+                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleAwardAchievement}
+              disabled={awarding || !awardAchievementId}
+              className="w-full rounded-xl bg-emerald-600 text-white py-2 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {awarding ? (isAr ? 'جاري الإرسال...' : 'Awarding...') : (isAr ? 'منح الإنجاز' : 'Award achievement')}
+            </button>
+          </div>
         )}
       </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Loader2, MessageSquare, Send, Users } from 'lucide-react';
+import { CalendarDays, Loader2, MessageSquare, Send, Users, Award } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
 
@@ -35,6 +35,13 @@ interface Player {
   notes?: string | null;
 }
 
+interface AchievementOption {
+  id: string;
+  title: string;
+  title_ar?: string | null;
+  icon_url?: string | null;
+}
+
 export default function CoachProgramsContent() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
@@ -49,6 +56,10 @@ export default function CoachProgramsContent() {
   const [messageDrafts, setMessageDrafts] = useState<Record<string, string>>({});
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [messageOpenId, setMessageOpenId] = useState<string | null>(null);
+  const [achievements, setAchievements] = useState<AchievementOption[]>([]);
+  const [awardSelections, setAwardSelections] = useState<Record<string, string>>({});
+  const [awardNotes, setAwardNotes] = useState<Record<string, string>>({});
+  const [awardingId, setAwardingId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const saveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -104,6 +115,7 @@ export default function CoachProgramsContent() {
 
   useEffect(() => {
     fetchPrograms();
+    fetchAchievements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -177,6 +189,46 @@ export default function CoachProgramsContent() {
       showToast('error', error.message || (isAr ? 'تعذر إرسال الرسالة' : 'Failed to send message'));
     } finally {
       setSendingId(null);
+    }
+  };
+
+  const fetchAchievements = async () => {
+    try {
+      const response = await fetch('/api/achievements');
+      const data = await response.json();
+      if (response.ok) {
+        setAchievements(data.achievements || []);
+      }
+    } catch (error) {
+      console.error('Error loading achievements', error);
+    }
+  };
+
+  const handleAwardAchievement = async (playerId: string) => {
+    const achievementId = awardSelections[playerId];
+    if (!achievementId) return;
+    try {
+      setAwardingId(playerId);
+      const response = await fetch('/api/player-achievements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: playerId,
+          achievement_id: achievementId,
+          note: awardNotes[playerId]?.trim() || null,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to award');
+      }
+      setAwardSelections((prev) => ({ ...prev, [playerId]: '' }));
+      setAwardNotes((prev) => ({ ...prev, [playerId]: '' }));
+      showToast('success', isAr ? 'تم منح الإنجاز' : 'Achievement awarded');
+    } catch (error: any) {
+      showToast('error', error.message || (isAr ? 'تعذر منح الإنجاز' : 'Failed to award achievement'));
+    } finally {
+      setAwardingId(null);
     }
   };
 
@@ -412,7 +464,7 @@ export default function CoachProgramsContent() {
                   </div>
 
                   {messageOpenId === player.id && (
-                    <div className="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 p-3 space-y-2">
+                    <div className="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 p-3 space-y-3">
                       <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-300">
                         <MessageSquare className="h-3 w-3" />
                         {isAr ? 'رسالة للاعب' : 'Message to player'}
@@ -439,6 +491,51 @@ export default function CoachProgramsContent() {
                             <Send className="h-3 w-3" />
                           )}
                           {isAr ? 'إرسال' : 'Send'}
+                        </button>
+                      </div>
+
+                      <div className="pt-2 border-t border-blue-200/60 dark:border-blue-900/40 space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-300">
+                          <Award className="h-3 w-3" />
+                          {isAr ? 'منح إنجاز' : 'Award achievement'}
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-2">
+                          <select
+                            value={awardSelections[player.id] || ''}
+                            onChange={(e) =>
+                              setAwardSelections((prev) => ({ ...prev, [player.id]: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-white dark:bg-zinc-900 text-sm"
+                          >
+                            <option value="">{isAr ? 'اختر الإنجاز' : 'Select achievement'}</option>
+                            {achievements.map((achievement) => (
+                              <option key={achievement.id} value={achievement.id}>
+                                {isAr ? achievement.title_ar || achievement.title : achievement.title}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            value={awardNotes[player.id] || ''}
+                            onChange={(e) =>
+                              setAwardNotes((prev) => ({ ...prev, [player.id]: e.target.value }))
+                            }
+                            placeholder={isAr ? 'ملاحظة (اختياري)' : 'Note (optional)'}
+                            className="w-full px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-white dark:bg-zinc-900 text-sm"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAwardAchievement(player.id)}
+                          disabled={awardingId === player.id || !awardSelections[player.id]}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 text-white text-xs font-semibold disabled:opacity-50"
+                        >
+                          {awardingId === player.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Award className="h-3 w-3" />
+                          )}
+                          {isAr ? 'منح الإنجاز' : 'Award'}
                         </button>
                       </div>
                     </div>
