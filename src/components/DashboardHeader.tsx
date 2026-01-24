@@ -52,9 +52,8 @@ export default function DashboardHeader({ locale, userName }: DashboardHeaderPro
 
         {/* Logout Button */}
         <button
-          onClick={() => {
-            // Handle logout
-            document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+          onClick={async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = `/${locale}/login`;
           }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"

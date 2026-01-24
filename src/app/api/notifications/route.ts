@@ -10,13 +10,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only players can view their notifications
-    if (session.roleName !== 'player') {
-      return NextResponse.json({ message: 'Only players have notifications' }, { status: 403 });
-    }
-
     const { searchParams } = new URL(request.url);
     const unreadOnly = searchParams.get('unread_only') === 'true';
+    const targetUserId = searchParams.get('user_id') || session.userId;
+
+    if (targetUserId !== session.userId && session.roleName !== 'admin') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
 
     let query = `
       SELECT 
@@ -34,20 +34,20 @@ export async function GET(request: Request) {
       WHERE m.receiver_id = $1
     `;
 
-    const params: any[] = [session.userId];
+    const params: any[] = [targetUserId];
 
     if (unreadOnly) {
       query += ' AND m.is_read = false';
     }
 
-    query += ' ORDER BY m.created_at DESC LIMIT 100';
+    query += ' ORDER BY m.created_at DESC LIMIT 500';
 
     const result = await pool.query(query, params);
 
     // Get unread count
     const countResult = await pool.query(
       'SELECT COUNT(*) as count FROM messages WHERE receiver_id = $1 AND is_read = false',
-      [session.userId]
+      [targetUserId]
     );
 
     return NextResponse.json({

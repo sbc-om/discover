@@ -10,10 +10,6 @@ export async function POST() {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.roleName !== 'player') {
-      return NextResponse.json({ message: 'Only players have notifications' }, { status: 403 });
-    }
-
     await pool.query(
       `UPDATE messages 
        SET is_read = true, read_at = CURRENT_TIMESTAMP

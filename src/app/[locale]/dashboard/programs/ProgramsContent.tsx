@@ -6,6 +6,7 @@ import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import ModalPortal from '@/components/ModalPortal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useToast } from '@/components/ToastProvider';
+import CoachProgramsContent from './CoachProgramsContent';
 import {
   Layers,
   Plus,
@@ -96,6 +97,7 @@ export default function ProgramsContent() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { showToast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentRole, setCurrentRole] = useState<string>('');
   const [programImageFile, setProgramImageFile] = useState<File | null>(null);
   const [programImagePreview, setProgramImagePreview] = useState<string | null>(null);
   const [uploadingProgramImage, setUploadingProgramImage] = useState(false);
@@ -131,6 +133,10 @@ export default function ProgramsContent() {
     is_active: true
   });
 
+  if (currentRole === 'coach') {
+    return <CoachProgramsContent />;
+  }
+
   useEffect(() => {
     fetchPrograms();
     fetchAcademies();
@@ -143,6 +149,7 @@ export default function ProgramsContent() {
       if (response.ok) {
         const data = await response.json();
         setIsAdmin(data.roleName === 'admin');
+        setCurrentRole(data.roleName || '');
       }
     } catch (error) {
       console.error('Error checking admin status:', error);

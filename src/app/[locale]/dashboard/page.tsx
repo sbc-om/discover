@@ -17,6 +17,9 @@ export default async function DashboardPage({
     if (session.roleName === 'player') {
       redirect(`/${locale}/dashboard/profile`);
     }
+    if (session.roleName === 'coach') {
+      redirect(`/${locale}/dashboard/coach`);
+    }
     const accessibleMenuItems = await getAccessibleMenuItems();
     
     const userName = session.email;

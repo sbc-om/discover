@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, CheckCircle2, Clock, XCircle } from 'lucide-react';
-import Link from 'next/link';
+import { Bell, CheckCircle2, Clock, XCircle, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ToastProvider';
 import useLocale from '@/hooks/useLocale';
 
@@ -76,6 +76,23 @@ interface ProgramLevel {
   is_active: boolean;
 }
 
+interface PlayerMessage {
+  id: string;
+  subject?: string | null;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  sender_first_name?: string | null;
+  sender_last_name?: string | null;
+}
+
+interface AttendanceRecord {
+  attendance_date: string;
+  present: boolean;
+  score?: number | null;
+  notes?: string | null;
+}
+
 interface ProfileResponse {
   user: ProfileUser;
   profile?: PlayerProfileData | null;
@@ -84,6 +101,8 @@ interface ProfileResponse {
   activeRequest?: HealthTestData | null;
   assignment?: AssignmentData | null;
   program_levels?: ProgramLevel[];
+  messages?: PlayerMessage[];
+  attendance?: AttendanceRecord[];
 }
 
 interface PlayerProfileContentProps {
@@ -153,6 +172,7 @@ const RadialInsight = ({
 export default function PlayerProfileContent({ userId, readOnly }: PlayerProfileContentProps) {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
+  const router = useRouter();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -172,6 +192,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     bio: '',
     goals: '',
   });
+  const [profileFormOpen, setProfileFormOpen] = useState(false);
   const isAdminView = Boolean(userId);
 
   const endpoint = useMemo(() => {
@@ -180,9 +201,9 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
 
   // Fetch unread notification count for players
   const fetchUnreadCount = async () => {
-    if (isAdminView) return;
     try {
-      const response = await fetch('/api/notifications?unread_only=true');
+      const query = isAdminView && userId ? `?unread_only=true&user_id=${userId}` : '?unread_only=true';
+      const response = await fetch(`/api/notifications${query}`);
       const data = await response.json();
       if (response.ok) {
         setUnreadCount(data.unread_count || 0);
@@ -365,9 +386,18 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const requestStatus = activeRequest || (latestTest?.status === 'rejected' ? latestTest : null);
   const assignment = data.assignment;
   const programLevels = data.program_levels || [];
+  const messages = data.messages || [];
+  const attendance = data.attendance || [];
+  const sessionsCompleted = attendance.filter((record) => record.present).length;
+  const pointsTotal = attendance.reduce((sum, record) => sum + (record.score || 0), 0);
   const activeLevels = programLevels.filter((level) => level.is_active);
   const sortedLevels = [...activeLevels].sort((a, b) => a.level_order - b.level_order);
-  const currentLevel = sortedLevels[0] || null;
+  const currentLevel = sortedLevels.reduce((acc, level) => {
+    if (sessionsCompleted >= level.min_sessions && pointsTotal >= level.min_points) {
+      return level;
+    }
+    return acc;
+  }, sortedLevels[0] || null);
   const assignmentLabel = assignment
     ? isAr
       ? `${assignment.program_name_ar || assignment.program_name} • ${assignment.age_group_name_ar || assignment.age_group_name}`
@@ -385,19 +415,22 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {!isAdminView && (
-              <Link
-                href={`/${locale}/dashboard/notifications`}
-                className="relative h-9 w-9 rounded-full border border-zinc-300/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 flex items-center justify-center"
-              >
-                <Bell className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </Link>
-            )}
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  `/${locale}/dashboard/notifications${isAdminView && userId ? `?user_id=${userId}` : ''}`
+                )
+              }
+              className="relative h-9 w-9 rounded-full border border-zinc-300/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 flex items-center justify-center"
+            >
+              <Bell className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
             <div className="h-10 w-10 overflow-hidden rounded-full border border-white/50 bg-zinc-200 dark:bg-zinc-800">
               {data.user.avatar_url ? (
                 <img src={data.user.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -427,15 +460,15 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         <div className="mt-4 grid grid-cols-3 gap-3 text-center">
           <div className="rounded-xl bg-zinc-900 text-white py-3">
             <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'نقاط' : 'Points'}</p>
-            <p className="text-lg font-semibold">0</p>
+            <p className="text-lg font-semibold">{pointsTotal}</p>
           </div>
           <div className="rounded-xl bg-zinc-900 text-white py-3">
             <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'جلسات' : 'Sessions'}</p>
-            <p className="text-lg font-semibold">0</p>
+            <p className="text-lg font-semibold">{sessionsCompleted}</p>
           </div>
           <div className="rounded-xl bg-zinc-900 text-white py-3">
             <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'مستوى' : 'Level'}</p>
-            <p className="text-lg font-semibold">0</p>
+            <p className="text-lg font-semibold">{currentLevel?.level_order || 0}</p>
           </div>
         </div>
       </div>
@@ -499,24 +532,24 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
                             <div>
                               <div className="flex items-center justify-between text-[10px] text-zinc-500">
                                 <span>{isAr ? 'تقدم الجلسات' : 'Sessions progress'}</span>
-                                <span>0/{level.min_sessions}</span>
+                                <span>{sessionsCompleted}/{level.min_sessions}</span>
                               </div>
                               <div className="mt-1 h-2 w-full rounded-full bg-zinc-200/70 dark:bg-zinc-800 overflow-hidden">
                                 <div
                                   className={`h-full rounded-full ${currentLevel?.id === level.id ? 'bg-orange-500' : 'bg-zinc-900'}`}
-                                  style={{ width: `${level.min_sessions > 0 ? 0 : 0}%` }}
+                                  style={{ width: `${level.min_sessions > 0 ? Math.min(100, (sessionsCompleted / level.min_sessions) * 100) : 0}%` }}
                                 />
                               </div>
                             </div>
                             <div>
                               <div className="flex items-center justify-between text-[10px] text-zinc-500">
                                 <span>{isAr ? 'تقدم النقاط' : 'Points progress'}</span>
-                                <span>0/{level.min_points}</span>
+                                <span>{pointsTotal}/{level.min_points}</span>
                               </div>
                               <div className="mt-1 h-2 w-full rounded-full bg-zinc-200/70 dark:bg-zinc-800 overflow-hidden">
                                 <div
                                   className={`h-full rounded-full ${currentLevel?.id === level.id ? 'bg-orange-500' : 'bg-zinc-900'}`}
-                                  style={{ width: `${level.min_points > 0 ? 0 : 0}%` }}
+                                  style={{ width: `${level.min_points > 0 ? Math.min(100, (pointsTotal / level.min_points) * 100) : 0}%` }}
                                 />
                               </div>
                             </div>
@@ -643,64 +676,74 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         </div>
       )}
 
+
       {(!readOnly || isAdminView) && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
-          <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-            {isAr ? 'تحديث الملف الشخصي' : 'Update profile'}
-          </h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'الرياضة' : 'Sport'}
-              </label>
-              <input
-                value={form.sport}
-                onChange={(event) => setForm((prev) => ({ ...prev, sport: event.target.value }))}
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-                placeholder={isAr ? 'مثال: كرة القدم' : 'e.g. Football'}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'المركز' : 'Position'}
-              </label>
-              <input
-                value={form.position}
-                onChange={(event) => setForm((prev) => ({ ...prev, position: event.target.value }))}
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'نبذة اللاعب' : 'Player bio'}
-              </label>
-              <textarea
-                value={form.bio}
-                onChange={(event) => setForm((prev) => ({ ...prev, bio: event.target.value }))}
-                rows={3}
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'الأهداف' : 'Goals'}
-              </label>
-              <textarea
-                value={form.goals}
-                onChange={(event) => setForm((prev) => ({ ...prev, goals: event.target.value }))}
-                rows={2}
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-              />
-            </div>
-          </div>
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
           <button
             type="button"
-            onClick={handleSaveProfile}
-            disabled={saving}
-            className="w-full rounded-xl bg-zinc-900 text-white py-2 text-sm font-semibold hover:bg-zinc-800 disabled:opacity-60"
+            onClick={() => setProfileFormOpen((prev) => !prev)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100"
           >
-            {saving ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ الملف' : 'Save profile')}
+            <span>{isAr ? 'تحديث الملف الشخصي' : 'Update profile'}</span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${profileFormOpen ? 'rotate-180' : ''}`} />
           </button>
+          {profileFormOpen && (
+            <div className="px-4 pb-4 space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                    {isAr ? 'الرياضة' : 'Sport'}
+                  </label>
+                  <input
+                    value={form.sport}
+                    onChange={(event) => setForm((prev) => ({ ...prev, sport: event.target.value }))}
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+                    placeholder={isAr ? 'مثال: كرة القدم' : 'e.g. Football'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                    {isAr ? 'المركز' : 'Position'}
+                  </label>
+                  <input
+                    value={form.position}
+                    onChange={(event) => setForm((prev) => ({ ...prev, position: event.target.value }))}
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                    {isAr ? 'نبذة اللاعب' : 'Player bio'}
+                  </label>
+                  <textarea
+                    value={form.bio}
+                    onChange={(event) => setForm((prev) => ({ ...prev, bio: event.target.value }))}
+                    rows={3}
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                    {isAr ? 'الأهداف' : 'Goals'}
+                  </label>
+                  <textarea
+                    value={form.goals}
+                    onChange={(event) => setForm((prev) => ({ ...prev, goals: event.target.value }))}
+                    rows={2}
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                disabled={saving}
+                className="w-full rounded-xl bg-zinc-900 text-white py-2 text-sm font-semibold hover:bg-zinc-800 disabled:opacity-60"
+              >
+                {saving ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ الملف' : 'Save profile')}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

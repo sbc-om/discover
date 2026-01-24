@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
 import type { Locale } from '@/i18n/request';
@@ -14,12 +14,39 @@ interface TopNavbarProps {
 export default function TopNavbar({ locale }: TopNavbarProps) {
   const [open, setOpen] = useState(false);
   const isAr = locale === 'ar';
+  const [dashboardHref, setDashboardHref] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (!response.ok) {
+          setDashboardHref(null);
+          return;
+        }
+        const data = await response.json();
+        const destination = data.roleName === 'player'
+          ? `/${locale}/dashboard/profile`
+          : data.roleName === 'coach'
+            ? `/${locale}/dashboard/coach`
+            : `/${locale}/dashboard`;
+        setDashboardHref(destination);
+      } catch (error) {
+        setDashboardHref(null);
+      }
+    };
+
+    fetchSession();
+  }, [locale]);
 
   const navLinks = [
     { href: `/${locale}`, label: isAr ? 'الرئيسية' : 'Home' },
     { href: `/${locale}/about`, label: isAr ? 'عن النظام' : 'About' },
     { href: `/${locale}/contact`, label: isAr ? 'تواصل معنا' : 'Contact' },
-    { href: `/${locale}/login`, label: isAr ? 'تسجيل الدخول' : 'Login' }
+    {
+      href: dashboardHref || `/${locale}/login`,
+      label: dashboardHref ? (isAr ? 'لوحة التحكم' : 'Dashboard') : (isAr ? 'تسجيل الدخول' : 'Login')
+    }
   ];
 
   return (

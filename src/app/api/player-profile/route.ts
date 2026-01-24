@@ -57,6 +57,26 @@ const fetchProfileData = async (userId: string) => {
     [userId]
   );
 
+  const attendanceResult = await pool.query(
+    `SELECT attendance_date, present, score, notes
+     FROM program_attendance
+     WHERE user_id = $1
+     ORDER BY attendance_date DESC
+     LIMIT 10`,
+    [userId]
+  );
+
+  const messagesResult = await pool.query(
+    `SELECT m.id, m.subject, m.content, m.is_read, m.created_at,
+            u.first_name as sender_first_name, u.last_name as sender_last_name
+     FROM messages m
+     LEFT JOIN users u ON u.id = m.sender_id
+     WHERE m.receiver_id = $1
+     ORDER BY m.created_at DESC
+     LIMIT 10`,
+    [userId]
+  );
+
   const user = userResult.rows[0];
   const profile = {
     sport: user.sport,
@@ -93,6 +113,8 @@ const fetchProfileData = async (userId: string) => {
     program_levels: programLevels,
     latestTest: latestTestResult.rows[0] || null,
     activeRequest: activeRequestResult.rows[0] || null,
+    messages: messagesResult.rows || [],
+    attendance: attendanceResult.rows || [],
   };
 };
 

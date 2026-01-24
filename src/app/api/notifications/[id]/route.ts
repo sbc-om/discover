@@ -13,10 +13,6 @@ export async function PUT(
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.roleName !== 'player') {
-      return NextResponse.json({ message: 'Only players have notifications' }, { status: 403 });
-    }
-
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: 'Notification id is required' }, { status: 400 });

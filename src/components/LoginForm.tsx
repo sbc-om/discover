@@ -36,8 +36,15 @@ export default function LoginForm({ locale }: LoginFormProps) {
         throw new Error(data?.message || 'Login failed');
       }
 
+      const roleName = data?.user?.roleName;
+      const destination = roleName === 'player'
+        ? `/${locale}/dashboard/profile`
+        : roleName === 'coach'
+          ? `/${locale}/dashboard/coach`
+          : `/${locale}/dashboard`;
+
       // Force a full page navigation to ensure server-side session is read
-      window.location.href = `/${locale}/dashboard`;
+      window.location.href = destination;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, Bell, CheckCheck, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ToastProvider';
 import useLocale from '@/hooks/useLocale';
 
@@ -33,6 +33,8 @@ export default function NotificationsContent() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const targetUserId = searchParams.get('user_id');
   const { showToast } = useToast();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -43,7 +45,8 @@ export default function NotificationsContent() {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/notifications');
+      const query = targetUserId ? `?user_id=${targetUserId}` : '';
+      const response = await fetch(`/api/notifications${query}`);
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || 'Failed to load notifications');
@@ -110,7 +113,13 @@ export default function NotificationsContent() {
       <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={() => router.push(`/${locale}/dashboard/profile`)}
+          onClick={() => {
+            if (targetUserId) {
+              router.push(`/${locale}/dashboard/players/${targetUserId}`);
+              return;
+            }
+            router.push(`/${locale}/dashboard/profile`);
+          }}
           className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
         >
           {isAr ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}

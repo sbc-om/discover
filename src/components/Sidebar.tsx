@@ -12,6 +12,7 @@ import {
   Layers,
   Mail,
   MessageCircle,
+  User,
   Settings,
   ChevronRight
 } from 'lucide-react';
@@ -37,6 +38,7 @@ const iconMap: { [key: string]: any } = {
   layers: Layers,
   mail: Mail,
   'message-circle': MessageCircle,
+  'user-circle': User,
   settings: Settings,
 };
 
