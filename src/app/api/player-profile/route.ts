@@ -103,6 +103,11 @@ export async function GET() {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
+    // Only players have player profiles
+    if (session.roleName !== 'player') {
+      return NextResponse.json({ message: 'Only players have profiles' }, { status: 403 });
+    }
+
     const data = await fetchProfileData(session.userId);
     if (!data) {
       return NextResponse.json({ message: 'Profile not found' }, { status: 404 });
@@ -123,6 +128,11 @@ export async function POST(request: Request) {
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Only players can update their own profile
+    if (session.roleName !== 'player') {
+      return NextResponse.json({ message: 'Only players have profiles' }, { status: 403 });
     }
 
     const body = await request.json();
