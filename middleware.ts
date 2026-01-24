@@ -64,6 +64,14 @@ export default function middleware(request: NextRequest) {
       return response;
     }
 
+    const locale = pathname.split('/')[1] || 'en';
+    const isPlayer = payload.roleName === 'player';
+    const playerAllowedPath = `/${locale}/dashboard/profile`;
+
+    if (isPlayer && pathname.startsWith(`/${locale}/dashboard`) && !pathname.startsWith(playerAllowedPath)) {
+      return NextResponse.redirect(new URL(playerAllowedPath, request.url));
+    }
+
     // Add user info to headers for use in route handlers
     const response = localeMiddleware(request);
     response.headers.set('x-user-id', payload.userId);

@@ -74,16 +74,56 @@ export interface Program {
   updatedAt: Date;
 }
 
+export interface ProgramAgeGroup {
+  id: string;
+  programId: string;
+  name: string;
+  nameAr?: string;
+  minAge: number;
+  maxAge: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PlayerProgram {
+  userId: string;
+  programId: string;
+  ageGroupId?: string;
+  assignedBy?: string;
+  assignedAt: Date;
+  updatedAt: Date;
+}
+
 export interface HealthTest {
   id: string;
   userId: string;
-  testDate: Date;
+  testDate?: Date;
   height?: number;
   weight?: number;
   bloodPressure?: string;
   heartRate?: number;
   notes?: string;
   createdBy: string;
+  status?: 'pending' | 'approved' | 'rejected' | 'completed';
+  requestedAt?: Date;
+  scheduledAt?: Date;
+  reviewedBy?: string;
+  reviewNotes?: string;
+  completedAt?: Date;
+  speedScore?: number;
+  agilityScore?: number;
+  powerScore?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PlayerProfile {
+  userId: string;
+  sport?: string;
+  position?: string;
+  bio?: string;
+  goals?: string;
   createdAt: Date;
   updatedAt: Date;
 }

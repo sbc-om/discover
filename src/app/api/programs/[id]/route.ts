@@ -58,10 +58,19 @@ export async function GET(
       [id]
     );
 
+    const ageGroupsResult = await pool.query(
+      `SELECT id, name, name_ar, min_age, max_age, is_active, created_at
+       FROM program_age_groups
+       WHERE program_id = $1
+       ORDER BY min_age ASC, max_age ASC`,
+      [id]
+    );
+
     return NextResponse.json({
       program: {
         ...program,
         levels: levelsResult.rows,
+        age_groups: ageGroupsResult.rows,
       },
     });
   } catch (error: any) {

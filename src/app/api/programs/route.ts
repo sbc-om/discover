@@ -29,7 +29,8 @@ export async function GET(request: Request) {
         p.id, p.name, p.name_ar, p.description, p.description_ar, p.image_url,
         p.academy_id, p.is_active, p.created_at, p.updated_at,
         a.name as academy_name, a.name_ar as academy_name_ar,
-        (SELECT COUNT(*) FROM program_levels WHERE program_id = p.id) as level_count
+        (SELECT COUNT(*) FROM program_levels WHERE program_id = p.id) as level_count,
+        (SELECT COUNT(*) FROM program_age_groups WHERE program_id = p.id) as age_group_count
       FROM programs p
       LEFT JOIN academies a ON a.id = p.academy_id
       WHERE 1=1

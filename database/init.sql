@@ -98,13 +98,57 @@ CREATE TABLE IF NOT EXISTS programs (
 CREATE TABLE IF NOT EXISTS health_tests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    test_date DATE NOT NULL,
+    test_date DATE,
     height DECIMAL(5,2), -- in cm
     weight DECIMAL(5,2), -- in kg
     blood_pressure VARCHAR(20),
     heart_rate INT,
     notes TEXT,
     created_by UUID REFERENCES users(id),
+    status VARCHAR(20) DEFAULT 'pending', -- pending, approved, rejected, completed
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    scheduled_at TIMESTAMP,
+    reviewed_by UUID REFERENCES users(id),
+    review_notes TEXT,
+    completed_at TIMESTAMP,
+    speed_score INT,
+    agility_score INT,
+    power_score INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Program Age Groups Table
+CREATE TABLE IF NOT EXISTS program_age_groups (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    program_id UUID REFERENCES programs(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    name_ar VARCHAR(255),
+    min_age INT NOT NULL,
+    max_age INT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(program_id, name)
+);
+
+-- Player Programs Table
+CREATE TABLE IF NOT EXISTS player_programs (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    program_id UUID REFERENCES programs(id) ON DELETE CASCADE,
+    age_group_id UUID REFERENCES program_age_groups(id) ON DELETE SET NULL,
+    assigned_by UUID REFERENCES users(id),
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Player Profiles Table
+CREATE TABLE IF NOT EXISTS player_profiles (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    sport VARCHAR(100),
+    position VARCHAR(100),
+    bio TEXT,
+    goals TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -160,6 +204,7 @@ ON CONFLICT (name) DO NOTHING;
 -- Insert Modules
 INSERT INTO modules (name, name_ar, name_en, icon, route, display_order) VALUES
 ('dashboard', 'لوحة التحكم', 'Dashboard', 'dashboard', '/dashboard', 1),
+('player_profile', 'ملف اللاعب', 'Player Profile', 'user-circle', '/dashboard/profile', 11),
 ('users', 'المستخدمون', 'Users', 'users', '/dashboard/users', 2),
 ('roles', 'الأدوار', 'Roles', 'shield', '/dashboard/roles', 3),
 ('academies', 'الأكاديميات', 'Academies', 'building', '/dashboard/academies', 4),
@@ -228,9 +273,9 @@ FROM roles r
 CROSS JOIN permissions p
 WHERE r.name = 'player' 
 AND p.module_id IN (
-    SELECT id FROM modules WHERE name IN ('dashboard', 'health_tests', 'programs', 'messages')
+    SELECT id FROM modules WHERE name IN ('player_profile')
 )
-AND p.action = 'read'
+AND p.action IN ('read', 'create', 'update')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Create indexes for better performance
@@ -243,6 +288,9 @@ CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id ON role_permission
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_health_tests_user_id ON health_tests(user_id);
+CREATE INDEX IF NOT EXISTS idx_program_age_groups_program_id ON program_age_groups(program_id);
+CREATE INDEX IF NOT EXISTS idx_player_programs_user_id ON player_programs(user_id);
+CREATE INDEX IF NOT EXISTS idx_player_programs_program_id ON player_programs(program_id);
 CREATE INDEX IF NOT EXISTS idx_medal_requests_user_id ON medal_requests(user_id);
 
 -- Create updated_at trigger function

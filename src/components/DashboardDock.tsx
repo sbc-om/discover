@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
   Users,
@@ -15,6 +14,7 @@ import {
   Layers,
   Mail,
   MessageCircle,
+  User,
   Settings,
   ChevronLeft,
   ChevronRight
@@ -41,6 +41,7 @@ const iconMap: { [key: string]: any } = {
   layers: Layers,
   mail: Mail,
   'message-circle': MessageCircle,
+  'user-circle': User,
   settings: Settings,
 };
 
@@ -109,16 +110,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
                       className="group relative flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium"
                     >
                       {isActive && (
-                        <motion.div
-                          layoutId="dock-active-bg"
-                          className="absolute inset-0 rounded-full bg-zinc-900 dark:bg-white"
-                          initial={false}
-                          transition={{
-                            type: 'spring',
-                            stiffness: 500,
-                            damping: 35,
-                          }}
-                        />
+                        <div className="absolute inset-0 rounded-full bg-zinc-900 dark:bg-white" />
                       )}
                       <span className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
                         isActive

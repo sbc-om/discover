@@ -1,14 +1,17 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import ModalPortal from '@/components/ModalPortal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useToast } from '@/components/ToastProvider';
+import useLocale from '@/hooks/useLocale';
 import {
   Users as UsersIcon,
   UserPlus,
+  User,
   Search,
   Filter,
   Edit2,
@@ -77,6 +80,8 @@ const roleBadgeColors: { [key: string]: string } = {
 };
 
 export default function UsersContent() {
+  const { locale } = useLocale();
+  const isAr = locale === 'ar';
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [users, setUsers] = useState<User[]>([]);
@@ -551,6 +556,15 @@ export default function UsersContent() {
                       </td>
                       <td className="px-6 py-3">
                         <div className="flex items-center justify-end gap-1">
+                          {user.role_name === 'player' && (
+                            <Link
+                              href={`/${locale}/dashboard/players/${user.id}`}
+                              title={isAr ? 'عرض ملف اللاعب' : 'View player profile'}
+                              className="p-2 text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                            >
+                              <User className="w-4 h-4" />
+                            </Link>
+                          )}
                           <button
                             onClick={() => handleEdit(user)}
                             className="p-2 text-zinc-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
@@ -602,6 +616,15 @@ export default function UsersContent() {
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    {user.role_name === 'player' && (
+                      <Link
+                        href={`/${locale}/dashboard/players/${user.id}`}
+                        title={isAr ? 'عرض ملف اللاعب' : 'View player profile'}
+                        className="p-2 text-zinc-500 hover:text-emerald-600 rounded-lg transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                      </Link>
+                    )}
                     <button
                       onClick={() => handleEdit(user)}
                       className="p-2 text-zinc-500 hover:text-orange-500 rounded-lg transition-colors"

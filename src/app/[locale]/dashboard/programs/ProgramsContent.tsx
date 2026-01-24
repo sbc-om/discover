@@ -39,6 +39,16 @@ interface Level {
   created_at: string;
 }
 
+interface AgeGroup {
+  id: string;
+  name: string;
+  name_ar: string;
+  min_age: number;
+  max_age: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 interface Program {
   id: string;
   name: string;
@@ -51,8 +61,10 @@ interface Program {
   academy_name_ar: string;
   is_active: boolean;
   level_count: number;
+  age_group_count?: number;
   created_at: string;
   levels?: Level[];
+  age_groups?: AgeGroup[];
 }
 
 interface Academy {
@@ -74,10 +86,12 @@ export default function ProgramsContent() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showModal, setShowModal] = useState(false);
   const [showLevelModal, setShowLevelModal] = useState(false);
+  const [showAgeGroupModal, setShowAgeGroupModal] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [editingLevel, setEditingLevel] = useState<Level | null>(null);
+  const [editingAgeGroup, setEditingAgeGroup] = useState<AgeGroup | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'program' | 'level'; item: Program | Level; programId?: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'program' | 'level' | 'age_group'; item: Program | Level | AgeGroup; programId?: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { showToast } = useToast();
@@ -107,6 +121,13 @@ export default function ProgramsContent() {
     level_order: 1,
     min_sessions: 0,
     min_points: 0,
+    is_active: true
+  });
+  const [ageGroupFormData, setAgeGroupFormData] = useState({
+    name: '',
+    name_ar: '',
+    min_age: 6,
+    max_age: 18,
     is_active: true
   });
 
@@ -303,13 +324,22 @@ export default function ProgramsContent() {
       let url = '';
       if (deleteTarget.type === 'program') {
         url = `/api/programs/${(deleteTarget.item as Program).id}`;
-      } else {
+      } else if (deleteTarget.type === 'level') {
         url = `/api/programs/${deleteTarget.programId}/levels/${(deleteTarget.item as Level).id}`;
+      } else {
+        url = `/api/programs/${deleteTarget.programId}/age-groups/${(deleteTarget.item as AgeGroup).id}`;
       }
 
       const response = await fetch(url, { method: 'DELETE' });
       if (response.ok) {
-        showToast('success', deleteTarget.type === 'program' ? 'Program deleted successfully' : 'Level deleted successfully');
+        showToast(
+          'success',
+          deleteTarget.type === 'program'
+            ? 'Program deleted successfully'
+            : deleteTarget.type === 'level'
+            ? 'Level deleted successfully'
+            : 'Age group deleted successfully'
+        );
         if (deleteTarget.type === 'program') {
           fetchPrograms();
         } else if (selectedProgram) {
@@ -456,6 +486,66 @@ export default function ProgramsContent() {
     }
   };
 
+  // Age group management
+  const handleAddAgeGroup = () => {
+    if (!selectedProgram) return;
+    setEditingAgeGroup(null);
+    setAgeGroupFormData({
+      name: '',
+      name_ar: '',
+      min_age: 6,
+      max_age: 18,
+      is_active: true
+    });
+    setShowAgeGroupModal(true);
+  };
+
+  const handleEditAgeGroup = (ageGroup: AgeGroup) => {
+    setEditingAgeGroup(ageGroup);
+    setAgeGroupFormData({
+      name: ageGroup.name,
+      name_ar: ageGroup.name_ar || '',
+      min_age: ageGroup.min_age,
+      max_age: ageGroup.max_age,
+      is_active: ageGroup.is_active
+    });
+    setShowAgeGroupModal(true);
+  };
+
+  const handleSaveAgeGroup = async () => {
+    if (!selectedProgram) return;
+
+    try {
+      const payload = {
+        ...ageGroupFormData,
+      };
+
+      const url = editingAgeGroup
+        ? `/api/programs/${selectedProgram.id}/age-groups/${editingAgeGroup.id}`
+        : `/api/programs/${selectedProgram.id}/age-groups`;
+      const method = editingAgeGroup ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showToast('success', editingAgeGroup ? 'Age group updated successfully' : 'Age group created successfully');
+        setShowAgeGroupModal(false);
+        fetchProgramWithLevels(selectedProgram.id);
+      } else {
+        showToast('error', data.message || 'Failed to save age group');
+      }
+    } catch (error) {
+      console.error('Error saving age group:', error);
+      showToast('error', 'Failed to save age group');
+    }
+  };
+
   const handleViewLevels = (program: Program) => {
     fetchProgramWithLevels(program.id);
   };
@@ -487,13 +577,22 @@ export default function ProgramsContent() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleAddLevel}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add Level</span>
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleAddLevel}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add Level</span>
+            </button>
+            <button
+              onClick={handleAddAgeGroup}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add Age Group</span>
+            </button>
+          </div>
         </div>
 
         {/* Levels Grid */}
@@ -609,6 +708,95 @@ export default function ProgramsContent() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Age Groups */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              Age Groups
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <AnimatePresence mode="popLayout">
+              {selectedProgram.age_groups?.map((ageGroup) => (
+                <motion.div
+                  key={ageGroup.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="relative group"
+                >
+                  <div className={`rounded-2xl border ${ageGroup.is_active ? 'border-zinc-200 dark:border-zinc-800' : 'border-red-200 dark:border-red-900/50'} bg-white dark:bg-zinc-900 p-5 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50 transition-all`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{ageGroup.name}</h3>
+                        {ageGroup.name_ar && (
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">{ageGroup.name_ar}</p>
+                        )}
+                      </div>
+                      {ageGroup.is_active ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      ) : (
+                        <XCircle className="w-5 h-5 text-red-500" />
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 text-sm mb-4">
+                      <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                        <Target className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div>
+                        <p className="text-zinc-500 dark:text-zinc-400">Age Range</p>
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+                          {ageGroup.min_age} - {ageGroup.max_age}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditAgeGroup(ageGroup)}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget({ type: 'age_group', item: ageGroup, programId: selectedProgram.id })}
+                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {(!selectedProgram.age_groups || selectedProgram.age_groups.length === 0) && (
+              <div className="col-span-full flex flex-col items-center justify-center py-8 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+                  <Target className="w-8 h-8 text-zinc-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                  No age groups yet
+                </h3>
+                <p className="text-zinc-500 dark:text-zinc-400 mb-4">
+                  Create the first age group for this program
+                </p>
+                <button
+                  onClick={handleAddAgeGroup}
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Age Group
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Level Modal */}
@@ -801,15 +989,137 @@ export default function ProgramsContent() {
         </ModalPortal>
         )}
 
+        {/* Age Group Modal */}
+        {showAgeGroupModal && (
+        <ModalPortal>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowAgeGroupModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                  {editingAgeGroup ? 'Edit Age Group' : 'Add Age Group'}
+                </h2>
+                <button
+                  onClick={() => setShowAgeGroupModal(false)}
+                  className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                      Name (EN)
+                    </label>
+                    <input
+                      type="text"
+                      value={ageGroupFormData.name}
+                      onChange={(e) => setAgeGroupFormData({ ...ageGroupFormData, name: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      placeholder="U10"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                      Name (AR)
+                    </label>
+                    <input
+                      type="text"
+                      value={ageGroupFormData.name_ar}
+                      onChange={(e) => setAgeGroupFormData({ ...ageGroupFormData, name_ar: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      placeholder="تحت 10"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                      Min Age
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={ageGroupFormData.min_age}
+                      onChange={(e) => setAgeGroupFormData({ ...ageGroupFormData, min_age: Number(e.target.value) })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                      Max Age
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={ageGroupFormData.max_age}
+                      onChange={(e) => setAgeGroupFormData({ ...ageGroupFormData, max_age: Number(e.target.value) })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ageGroupFormData.is_active}
+                    onChange={(e) => setAgeGroupFormData({ ...ageGroupFormData, is_active: e.target.checked })}
+                    className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-600 text-orange-500 focus:ring-orange-500 transition-all"
+                  />
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Active</span>
+                </label>
+              </div>
+
+              <div className="flex gap-3 px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+                <button
+                  onClick={() => setShowAgeGroupModal(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveAgeGroup}
+                  disabled={!ageGroupFormData.name}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {editingAgeGroup ? 'Update' : 'Create'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </ModalPortal>
+        )}
+
         {/* Delete Confirmation */}
         <ConfirmDialog
           open={!!deleteTarget}
           onClose={() => { setDeleteTarget(null); setDeleteError(null); }}
           onConfirm={handleConfirmDelete}
-          title={deleteTarget?.type === 'program' ? 'Delete Program' : 'Delete Level'}
+          title={deleteTarget?.type === 'program'
+            ? 'Delete Program'
+            : deleteTarget?.type === 'level'
+            ? 'Delete Level'
+            : 'Delete Age Group'
+          }
           description={deleteTarget?.type === 'program' 
-            ? `Are you sure you want to delete "${(deleteTarget?.item as Program)?.name}"? All levels will also be deleted.`
-            : `Are you sure you want to delete level "${(deleteTarget?.item as Level)?.name}"?`
+            ? `Are you sure you want to delete "${(deleteTarget?.item as Program)?.name}"? All levels and age groups will also be deleted.`
+            : deleteTarget?.type === 'level'
+            ? `Are you sure you want to delete level "${(deleteTarget?.item as Level)?.name}"?`
+            : `Are you sure you want to delete age group "${(deleteTarget?.item as AgeGroup)?.name}"?`
           }
           confirmText="Delete"
           loading={deleting}
@@ -921,10 +1231,14 @@ export default function ProgramsContent() {
                     )}
 
                     {/* Stats */}
-                    <div className="flex items-center gap-4 mb-4 text-sm">
+                    <div className="flex flex-wrap items-center gap-3 mb-4 text-sm">
                       <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                         <Target className="w-4 h-4" />
-                        <span>{program.level_count || 0} Levels</span>
+                        <span>{program.level_count || 0} {program.level_count === 1 ? 'Level' : 'Levels'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
+                        <Target className="w-4 h-4" />
+                        <span>{program.age_group_count || 0} {program.age_group_count === 1 ? 'Age Group' : 'Age Groups'}</span>
                       </div>
                     </div>
 

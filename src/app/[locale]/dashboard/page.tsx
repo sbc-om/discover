@@ -14,6 +14,9 @@ export default async function DashboardPage({
   // Require authentication
   try {
     const session = await requireAuth();
+    if (session.roleName === 'player') {
+      redirect(`/${locale}/dashboard/profile`);
+    }
     const accessibleMenuItems = await getAccessibleMenuItems();
     
     const userName = session.email;

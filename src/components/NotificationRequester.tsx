@@ -21,7 +21,7 @@ function urlBase64ToUint8Array(base64String: string) {
 export default function NotificationRequester() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [permission, setPermission] = useState<NotificationPermission | null>(null);
   const [supported, setSupported] = useState(true);
   const [configMissing, setConfigMissing] = useState(false);
 
@@ -74,6 +74,8 @@ export default function NotificationRequester() {
   };
 
   if (!supported) return null;
+
+  if (permission === null) return null;
 
   if (configMissing) {
     return (
