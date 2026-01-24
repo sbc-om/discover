@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, CheckCircle2, Clock, XCircle, ChevronDown, IdCard, List } from 'lucide-react';
+import { Bell, ChevronDown, Award, Activity } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ToastProvider';
 import useLocale from '@/hooks/useLocale';
@@ -25,26 +25,40 @@ interface PlayerProfileData {
 interface HealthTestData {
   id: string;
   status: 'pending' | 'approved' | 'rejected' | 'completed';
-  requested_at?: string | null;
-  scheduled_at?: string | null;
-  test_date?: string | null;
-  height?: string | null;
-  weight?: string | null;
-  blood_pressure?: string | null;
-  heart_rate?: number | null;
-  notes?: string | null;
-  review_notes?: string | null;
   speed_score?: number | null;
   agility_score?: number | null;
   power_score?: number | null;
+  balance_score?: number | null;
+  reaction_score?: number | null;
+  coordination_score?: number | null;
+  flexibility_score?: number | null;
 }
 
-interface MedalRequestData {
+interface AssignmentData {
+  program_id: string;
+  program_name: string;
+  program_name_ar?: string | null;
+  age_group_id: string;
+  age_group_name: string;
+  age_group_name_ar?: string | null;
+}
+
+interface ProgramLevel {
   id: string;
-  medal_type: string;
-  status: 'pending' | 'approved' | 'rejected';
-  requested_date?: string | null;
-  delivery_date?: string | null;
+  name: string;
+  name_ar?: string | null;
+  image_url?: string | null;
+  level_order: number;
+  min_sessions: number;
+  min_points: number;
+  is_active: boolean;
+}
+
+interface AttendanceRecord {
+  attendance_date: string;
+  present: boolean;
+  score?: number | null;
+  notes?: string | null;
 }
 
 interface ProgramOption {
@@ -61,74 +75,13 @@ interface AgeGroupOption {
   max_age: number;
 }
 
-interface AssignmentData {
-  program_id: string;
-  program_name: string;
-  program_name_ar?: string | null;
-  age_group_id: string;
-  age_group_name: string;
-  age_group_name_ar?: string | null;
-  min_age?: number | null;
-  max_age?: number | null;
-  assigned_at?: string | null;
-}
-
-interface ProgramLevel {
-  id: string;
-  name: string;
-  name_ar?: string | null;
-  image_url?: string | null;
-  level_order: number;
-  min_sessions: number;
-  min_points: number;
-  is_active: boolean;
-}
-
-interface PlayerMessage {
-  id: string;
-  subject?: string | null;
-  content: string;
-  is_read: boolean;
-  created_at: string;
-  sender_first_name?: string | null;
-  sender_last_name?: string | null;
-}
-
-interface AttendanceRecord {
-  attendance_date: string;
-  present: boolean;
-  score?: number | null;
-  notes?: string | null;
-}
-
-interface PlayerAchievement {
-  id: string;
-  awarded_at: string;
-  note?: string | null;
-  achievement_id: string;
-  title: string;
-  title_ar?: string | null;
-  description?: string | null;
-  icon_url?: string | null;
-}
-
-interface AchievementOption {
-  id: string;
-  title: string;
-  title_ar?: string | null;
-}
-
 interface ProfileResponse {
   user: ProfileUser;
   profile?: PlayerProfileData | null;
   profileComplete: boolean;
   latestTest?: HealthTestData | null;
-  activeRequest?: HealthTestData | null;
-  medalRequest?: MedalRequestData | null;
   assignment?: AssignmentData | null;
   program_levels?: ProgramLevel[];
-  achievements?: PlayerAchievement[];
-  messages?: PlayerMessage[];
   attendance?: AttendanceRecord[];
 }
 
@@ -137,61 +90,26 @@ interface PlayerProfileContentProps {
   readOnly?: boolean;
 }
 
-const formatDate = (value?: string | null, locale?: string) => {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleString(locale === 'ar' ? 'ar' : 'en');
-};
-
 const getChartPercent = (value?: number | null) => {
   if (value === null || value === undefined) return 0;
   const max = value <= 10 ? 10 : 100;
   return Math.min(100, Math.max(0, (value / max) * 100));
 };
 
-const RadialInsight = ({
-  label,
-  value,
-}: {
-  label: string;
-  value?: number | null;
-}) => {
+const RadialInsight = ({ label, value }: { label: string; value?: number | null }) => {
   const percent = getChartPercent(value);
   const radius = 16;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percent / 100) * circumference;
 
   return (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 text-center">
+    <div className="rounded-xl bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-300 dark:border-zinc-700 p-3 text-center">
       <svg width="46" height="46" className="mx-auto">
-        <circle
-          cx="23"
-          cy="23"
-          r={radius}
-          stroke="currentColor"
-          strokeWidth="4"
-          className="text-zinc-200 dark:text-zinc-800"
-          fill="transparent"
-        />
-        <circle
-          cx="23"
-          cy="23"
-          r={radius}
-          stroke="currentColor"
-          strokeWidth="4"
-          strokeLinecap="round"
-          className="text-orange-500"
-          fill="transparent"
-          strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={offset}
-          transform="rotate(-90 23 23)"
-        />
-        <text x="23" y="27" textAnchor="middle" className="fill-zinc-800 dark:fill-zinc-100 text-[10px] font-semibold">
-          {value ?? 0}
-        </text>
+        <circle cx="23" cy="23" r={radius} stroke="currentColor" strokeWidth="4" className="text-zinc-300 dark:text-zinc-700" fill="transparent" />
+        <circle cx="23" cy="23" r={radius} stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="text-orange-500" fill="transparent" strokeDasharray={`${circumference} ${circumference}`} strokeDashoffset={offset} transform="rotate(-90 23 23)" />
+        <text x="23" y="27" textAnchor="middle" className="fill-zinc-800 dark:fill-white text-[10px] font-semibold">{value ?? 0}</text>
       </svg>
-      <p className="mt-2 text-[10px] uppercase tracking-widest text-zinc-400">{label}</p>
+      <p className="mt-2 text-[10px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">{label}</p>
     </div>
   );
 };
@@ -203,57 +121,25 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [requesting, setRequesting] = useState(false);
   const [assigning, setAssigning] = useState(false);
-  const [medalSubmitting, setMedalSubmitting] = useState(false);
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [programs, setPrograms] = useState<ProgramOption[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroupOption[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
-  const [achievementsCatalog, setAchievementsCatalog] = useState<AchievementOption[]>([]);
-  const [awardAchievementId, setAwardAchievementId] = useState('');
-  const [awardNote, setAwardNote] = useState('');
-  const [awarding, setAwarding] = useState(false);
-  const [showAllTests, setShowAllTests] = useState(false);
-  const [allTests, setAllTests] = useState<HealthTestData[]>([]);
-  const [allTestsLoading, setAllTestsLoading] = useState(false);
-  const [assignmentForm, setAssignmentForm] = useState({
-    program_id: '',
-    age_group_id: '',
-  });
-  const [medalForm, setMedalForm] = useState({
-    medal_type: '',
-    achievement_description: '',
-  });
-  const [form, setForm] = useState({
-    sport: '',
-    position: '',
-    bio: '',
-    goals: '',
-  });
+  const [assignmentForm, setAssignmentForm] = useState({ program_id: '', age_group_id: '' });
+  const [form, setForm] = useState({ sport: '', position: '', bio: '', goals: '' });
   const [profileFormOpen, setProfileFormOpen] = useState(false);
-  const [healthTestOpen, setHealthTestOpen] = useState(true);
-  const [medalRequestOpen, setMedalRequestOpen] = useState(true);
+
   const isAdminView = Boolean(userId);
-  const canRequestMedal = isAdminView && (currentRole === 'admin' || currentRole === 'academy_manager');
-  const canAwardAchievement = isAdminView && (currentRole === 'admin' || currentRole === 'academy_manager');
-  const canSeeTestReviewNotes = currentRole === 'admin' || currentRole === 'academy_manager';
-  const canSeeAllTests = currentRole === 'admin' || currentRole === 'academy_manager';
+  const endpoint = useMemo(() => userId ? `/api/player-profile/${userId}` : '/api/player-profile', [userId]);
 
-  const endpoint = useMemo(() => {
-    return userId ? `/api/player-profile/${userId}` : '/api/player-profile';
-  }, [userId]);
-
-  // Fetch unread notification count for players
   const fetchUnreadCount = async () => {
     try {
       const query = isAdminView && userId ? `?unread_only=true&user_id=${userId}` : '?unread_only=true';
       const response = await fetch(`/api/notifications${query}`);
       const data = await response.json();
-      if (response.ok) {
-        setUnreadCount(data.unread_count || 0);
-      }
+      if (response.ok) setUnreadCount(data.unread_count || 0);
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
     }
@@ -264,9 +150,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
       setLoading(true);
       const response = await fetch(endpoint);
       const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message || 'Failed to load profile');
-      }
+      if (!response.ok) throw new Error(payload.message || 'Failed to load profile');
       setData(payload);
       setForm({
         sport: payload.profile?.sport || '',
@@ -275,10 +159,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         goals: payload.profile?.goals || '',
       });
       if (payload.assignment) {
-        setAssignmentForm({
-          program_id: payload.assignment.program_id,
-          age_group_id: payload.assignment.age_group_id,
-        });
+        setAssignmentForm({ program_id: payload.assignment.program_id, age_group_id: payload.assignment.age_group_id });
       }
     } catch (error: any) {
       showToast('error', error.message || (isAr ? 'تعذر تحميل الملف' : 'Failed to load profile'));
@@ -289,92 +170,46 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
 
   const fetchPrograms = async () => {
     try {
-      const params = new URLSearchParams({ limit: '100' });
-      const response = await fetch(`/api/programs?${params}`);
+      const response = await fetch('/api/programs?limit=100');
       const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message || 'Failed to load programs');
-      }
-      setPrograms(payload.programs || []);
-    } catch (error: any) {
-      showToast('error', error.message || (isAr ? 'تعذر تحميل البرامج' : 'Failed to load programs'));
+      if (response.ok) setPrograms(payload.programs || []);
+    } catch (error) {
+      console.error('Failed to load programs:', error);
     }
   };
 
   const fetchAgeGroups = async (programId: string) => {
-    if (!programId) {
-      setAgeGroups([]);
-      return;
-    }
+    if (!programId) { setAgeGroups([]); return; }
     try {
       const response = await fetch(`/api/programs/${programId}/age-groups`);
       const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message || 'Failed to load age groups');
-      }
-      setAgeGroups(payload.age_groups || []);
-    } catch (error: any) {
-      showToast('error', error.message || (isAr ? 'تعذر تحميل الفئات العمرية' : 'Failed to load age groups'));
+      if (response.ok) setAgeGroups(payload.age_groups || []);
+    } catch (error) {
+      console.error('Failed to load age groups:', error);
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-    fetchUnreadCount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endpoint]);
-
+  useEffect(() => { fetchProfile(); fetchUnreadCount(); }, [endpoint]);
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
         const response = await fetch('/api/auth/me');
         const payload = await response.json();
-        if (response.ok) {
-          setCurrentRole(payload.roleName || null);
-        }
+        if (response.ok) setCurrentRole(payload.roleName || null);
       } catch (error) {
         console.error('Failed to fetch user role:', error);
       }
     };
     fetchCurrentUser();
   }, []);
-
-  useEffect(() => {
-    if (!isAdminView) return;
-    fetchPrograms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdminView]);
-
-  useEffect(() => {
-    if (!canAwardAchievement) return;
-    const fetchAchievements = async () => {
-      try {
-        const response = await fetch('/api/achievements');
-        const payload = await response.json();
-        if (response.ok) {
-          setAchievementsCatalog(payload.achievements || []);
-        }
-      } catch (error) {
-        console.error('Failed to load achievements', error);
-      }
-    };
-    fetchAchievements();
-  }, [canAwardAchievement]);
-
-  useEffect(() => {
-    if (!isAdminView) return;
-    if (assignmentForm.program_id) {
-      fetchAgeGroups(assignmentForm.program_id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assignmentForm.program_id, isAdminView]);
+  useEffect(() => { if (isAdminView) fetchPrograms(); }, [isAdminView]);
+  useEffect(() => { if (isAdminView && assignmentForm.program_id) fetchAgeGroups(assignmentForm.program_id); }, [assignmentForm.program_id, isAdminView]);
 
   const handleSaveProfile = async () => {
     if (!form.sport.trim() || !form.bio.trim()) {
       showToast('error', isAr ? 'يرجى إكمال الرياضة و نبذة اللاعب' : 'Please complete sport and bio');
       return;
     }
-
     try {
       setSaving(true);
       const response = await fetch(userId ? `/api/player-profile/${userId}` : '/api/player-profile', {
@@ -383,9 +218,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         body: JSON.stringify(form),
       });
       const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message || 'Failed to save profile');
-      }
+      if (!response.ok) throw new Error(payload.message || 'Failed to save profile');
       setData((prev) => prev ? { ...prev, profile: payload.profile, profileComplete: payload.profileComplete } : prev);
       showToast('success', isAr ? 'تم حفظ الملف' : 'Profile saved');
     } catch (error: any) {
@@ -395,72 +228,20 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     }
   };
 
-  const handleRequestTest = async () => {
-    try {
-      setRequesting(true);
-      const response = await fetch('/api/health-tests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: userId ? JSON.stringify({ user_id: userId }) : undefined,
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message || 'Failed to request test');
-      }
-      showToast('success', isAr ? 'تم إرسال طلب الاختبار' : 'Test request submitted');
-      await fetchProfile();
-    } catch (error: any) {
-      showToast('error', error.message || (isAr ? 'تعذر إرسال الطلب' : 'Failed to request test'));
-    } finally {
-      setRequesting(false);
-    }
-  };
-
-  const fetchAllTests = async () => {
-    try {
-      setAllTestsLoading(true);
-      const params = new URLSearchParams();
-      if (isAdminView && userId) {
-        params.set('user_id', userId);
-      }
-      const response = await fetch(`/api/health-tests?${params.toString()}`);
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message || 'Failed to load tests');
-      }
-      const completedTests = (payload.tests || []).filter(
-        (test: HealthTestData) => test.status === 'completed'
-      );
-      setAllTests(completedTests);
-    } catch (error: any) {
-      showToast('error', error.message || (isAr ? 'تعذر تحميل الاختبارات' : 'Failed to load tests'));
-    } finally {
-      setAllTestsLoading(false);
-    }
-  };
-
   const handleAssignProgram = async () => {
-    if (!userId) return;
-    if (!assignmentForm.program_id || !assignmentForm.age_group_id) {
+    if (!userId || !assignmentForm.program_id || !assignmentForm.age_group_id) {
       showToast('error', isAr ? 'يرجى اختيار البرنامج والفئة العمرية' : 'Select program and age group');
       return;
     }
-
     try {
       setAssigning(true);
       const response = await fetch('/api/player-programs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          program_id: assignmentForm.program_id,
-          age_group_id: assignmentForm.age_group_id,
-        }),
+        body: JSON.stringify({ user_id: userId, program_id: assignmentForm.program_id, age_group_id: assignmentForm.age_group_id }),
       });
       const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message || 'Failed to assign program');
-      }
+      if (!response.ok) throw new Error(payload.message || 'Failed to assign program');
       showToast('success', isAr ? 'تم تحديث البرنامج' : 'Program updated');
       await fetchProfile();
     } catch (error: any) {
@@ -470,769 +251,333 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     }
   };
 
-  const medalOptions = useMemo(() => (
-    [
-      { value: 'gold', label: isAr ? 'ذهبية' : 'Gold' },
-      { value: 'silver', label: isAr ? 'فضية' : 'Silver' },
-      { value: 'bronze', label: isAr ? 'برونزية' : 'Bronze' },
-    ]
-  ), [isAr]);
-
-  const handleRequestMedal = async () => {
-    if (!userId) return;
-    if (!medalForm.medal_type) {
-      showToast('error', isAr ? 'اختر نوع الميدالية أولاً' : 'Select a medal type first');
-      return;
-    }
-
-    try {
-      setMedalSubmitting(true);
-      const response = await fetch('/api/medal-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          medal_type: medalForm.medal_type,
-          achievement_description: medalForm.achievement_description,
-        }),
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message || 'Failed to submit medal request');
-      }
-      setMedalForm({ medal_type: '', achievement_description: '' });
-      showToast('success', isAr ? 'تم إرسال طلب الميدالية' : 'Medal request submitted');
-    } catch (error: any) {
-      showToast('error', error.message || (isAr ? 'تعذر إرسال الطلب' : 'Failed to submit request'));
-    } finally {
-      setMedalSubmitting(false);
-    }
-  };
-
-  const handleAwardAchievement = async () => {
-    if (!userId || !awardAchievementId) return;
-    try {
-      setAwarding(true);
-      const response = await fetch('/api/player-achievements', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          achievement_id: awardAchievementId,
-          note: awardNote.trim() || null,
-        }),
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message || 'Failed to award achievement');
-      }
-      setAwardAchievementId('');
-      setAwardNote('');
-      showToast('success', isAr ? 'تم منح الإنجاز' : 'Achievement awarded');
-      await fetchProfile();
-    } catch (error: any) {
-      showToast('error', error.message || (isAr ? 'تعذر منح الإنجاز' : 'Failed to award achievement'));
-    } finally {
-      setAwarding(false);
-    }
-  };
-
   if (loading || !data) {
     return (
-      <div className="flex items-center justify-center py-20 text-zinc-500">
-        {isAr ? 'جاري التحميل...' : 'Loading...'}
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
       </div>
     );
   }
 
-  const userName = `${data.user.first_name} ${data.user.last_name}`.trim();
+  const userName = `${data.user.first_name} ${data.user.last_name}`.trim().toUpperCase();
   const academyName = isAr ? data.user.academy_name_ar || data.user.academy_name : data.user.academy_name || data.user.academy_name_ar;
   const profileComplete = data.profileComplete;
-  const activeRequest = data.activeRequest;
-  const latestTest = data.latestTest;
-  const requestStatus = activeRequest || (latestTest?.status === 'rejected' ? latestTest : null);
   const assignment = data.assignment;
   const programLevels = data.program_levels || [];
-  const messages = data.messages || [];
   const attendance = data.attendance || [];
-  const achievements = data.achievements || [];
-  const medalRequest = data.medalRequest || null;
-  const sessionsCompleted = attendance.filter((record) => record.present).length;
-  const pointsTotal = attendance.reduce((sum, record) => sum + (record.score || 0), 0);
+  const latestTest = data.latestTest;
+  const sessionsCompleted = attendance.filter((r) => r.present).length;
+  const pointsTotal = attendance.reduce((sum, r) => sum + (r.score || 0), 0);
+  const notesCount = attendance.filter((r) => r.notes).length;
   const activeLevels = programLevels.filter((level) => level.is_active);
   const sortedLevels = [...activeLevels].sort((a, b) => a.level_order - b.level_order);
   const currentLevel = sortedLevels.reduce((acc, level) => {
-    if (sessionsCompleted >= level.min_sessions && pointsTotal >= level.min_points) {
-      return level;
-    }
+    if (sessionsCompleted >= level.min_sessions && pointsTotal >= level.min_points) return level;
     return acc;
   }, sortedLevels[0] || null);
-  const assignmentLabel = assignment
-    ? isAr
-      ? `${assignment.program_name_ar || assignment.program_name} • ${assignment.age_group_name_ar || assignment.age_group_name}`
-      : `${assignment.program_name} • ${assignment.age_group_name}`
-    : null;
+
+  const totalProgress = currentLevel ? Math.round(((sessionsCompleted / (currentLevel.min_sessions || 1)) + (pointsTotal / (currentLevel.min_points || 1))) / 2 * 100) : 0;
+  const sessionProgress = currentLevel?.min_sessions ? Math.round((sessionsCompleted / currentLevel.min_sessions) * 100) : 0;
+  const pointProgress = currentLevel?.min_points ? Math.round((pointsTotal / currentLevel.min_points) * 100) : 0;
 
   return (
-    <div className="mx-auto w-full max-w-md space-y-5">
-      <div className="rounded-[28px] border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-zinc-100 via-white to-zinc-200 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900 p-5 shadow-sm">
-        <div className="flex items-start justify-between">
+    <div className="mx-auto w-full max-w-[390px] pb-8">
+      {/* Main Card */}
+      <div className="rounded-3xl border-2 border-zinc-300 dark:border-zinc-800 bg-gradient-to-b from-white to-zinc-100 dark:from-zinc-900 dark:to-zinc-950 p-4 shadow-[0_20px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+        
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{userName}</p>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
-              {academyName || (isAr ? 'أكاديمية غير محددة' : 'No academy')}
+            <p className="text-base font-bold text-zinc-900 dark:text-white tracking-wide">{userName}</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+              {academyName || (isAr ? 'أكاديمية غير محددة' : 'NO ACADEMY')}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  `/${locale}/dashboard/player-card${isAdminView && userId ? `?user_id=${userId}` : ''}`
-                )
-              }
-              className="relative h-9 w-9 rounded-full border border-zinc-300/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 flex items-center justify-center"
-            >
-              <IdCard className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  `/${locale}/dashboard/notifications${isAdminView && userId ? `?user_id=${userId}` : ''}`
-                )
-              }
-              className="relative h-9 w-9 rounded-full border border-zinc-300/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 flex items-center justify-center"
-            >
-              <Bell className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </button>
-            <div className="h-10 w-10 overflow-hidden rounded-full border border-white/50 bg-zinc-200 dark:bg-zinc-800">
-              {data.user.avatar_url ? (
-                <img src={data.user.avatar_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-                  {data.user.first_name?.charAt(0)}{data.user.last_name?.charAt(0)}
-                </div>
-              )}
+          <button
+            type="button"
+            onClick={() => router.push(`/${locale}/dashboard/notifications${isAdminView && userId ? `?user_id=${userId}` : ''}`)}
+            className="relative h-9 w-9 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"
+          >
+            <Bell className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Player Image */}
+        <div className="rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-lg">
+          <div className="aspect-[4/3] w-full bg-zinc-300 dark:bg-zinc-700">
+            {data.user.avatar_url ? (
+              <img src={data.user.avatar_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-4xl font-bold text-zinc-400 dark:text-zinc-500">
+                {data.user.first_name?.charAt(0)}{data.user.last_name?.charAt(0)}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* TRACK Button */}
+        <div className="-mt-5 flex items-center justify-center relative z-10">
+          <button
+            type="button"
+            className="rounded-full border-2 border-zinc-900 bg-orange-500 px-10 py-2 text-[12px] font-bold uppercase tracking-[0.15em] text-black shadow-lg hover:bg-orange-400 transition-colors"
+          >
+            {isAr ? 'تتبع' : 'TRACK'}
+          </button>
+        </div>
+
+        {/* Stats Box */}
+        <div className="mt-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-4 py-4">
+          <div className="grid grid-cols-3 items-center text-center">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.1em] text-zinc-500 font-medium">{isAr ? 'نقاط' : 'POINTS'}</p>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-white">{pointsTotal}</p>
+            </div>
+            <div className="flex items-center justify-center">
+              <img src="/logo/icon-black.png" alt="DNA" className="h-8 w-8 opacity-60 dark:hidden" />
+              <img src="/logo/logo-white.png" alt="DNA" className="h-8 w-8 opacity-60 hidden dark:block" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.1em] text-zinc-500 font-medium">{isAr ? 'جلسات' : 'SESSIONS'}</p>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-white">{sessionsCompleted}</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-300/40 dark:border-white/10 bg-zinc-100/80 dark:bg-zinc-900/70">
-          <div className="aspect-[4/3] w-full bg-gradient-to-br from-zinc-300 via-zinc-200 to-zinc-100 dark:from-zinc-800 dark:via-zinc-900 dark:to-zinc-950">
-            {data.user.avatar_url && (
-              <img src={data.user.avatar_url} alt="" className="h-full w-full object-cover" />
-            )}
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center justify-center">
-          <span className="rounded-full border border-zinc-300/60 bg-white/90 px-4 py-1 text-xs font-semibold uppercase text-zinc-700">
-            {(data.profile?.sport || (isAr ? 'رياضة غير محددة' : 'Undefined sport')).toString()}
+        {/* WHO I AM Section */}
+        <div className="relative mt-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-7">
+          <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-900 dark:text-white">
+            {isAr ? 'من أنا' : 'WHO I AM'}
           </span>
+          <p className="text-[12px] leading-relaxed text-zinc-700 dark:text-zinc-300 text-center">
+            {data.profile?.bio || (isAr ? 'لم يتم إضافة نبذة بعد.' : 'No bio yet.')}
+          </p>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-          <div className="rounded-xl bg-zinc-900 text-white py-3">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'نقاط' : 'Points'}</p>
-            <p className="text-lg font-semibold">{pointsTotal}</p>
-          </div>
-          <div className="rounded-xl bg-zinc-900 text-white py-3">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'جلسات' : 'Sessions'}</p>
-            <p className="text-lg font-semibold">{sessionsCompleted}</p>
-          </div>
-          <div className="rounded-xl bg-zinc-900 text-white py-3">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'مستوى' : 'Level'}</p>
-            <p className="text-lg font-semibold">{currentLevel?.level_order || 0}</p>
-          </div>
-        </div>
-      </div>
+        {/* PROGRAM Section */}
+        <div className="relative mt-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-7">
+        <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-900 dark:text-white">
+          {isAr ? 'البرنامج' : 'PROGRAM'}
+        </span>
+        
+        {currentLevel ? (
+          <div className="space-y-4">
+            {/* Level Info */}
+            <div>
+              <p className="text-sm font-bold text-zinc-900 dark:text-white">{isAr ? `المستوى ${currentLevel.level_order}` : `LEVEL ${currentLevel.level_order}`}</p>
+              <p className="text-[10px] text-orange-500 uppercase tracking-wider">{isAr ? 'قيد التقدم' : 'IN PROGRESS'}</p>
+            </div>
 
-      {!readOnly && !profileComplete && (
-        <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 text-sm text-orange-800 dark:border-orange-900/40 dark:bg-orange-950/40 dark:text-orange-200">
-          {isAr ? 'يرجى إكمال الملف الشخصي لطلب الاختبار البدني.' : 'Complete your profile to request the physical test.'}
-        </div>
-      )}
+            {/* Stats Pills */}
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-zinc-400 dark:border-zinc-600 px-3 py-1 text-[10px] text-zinc-700 dark:text-zinc-300">
+                {isAr ? 'حضور' : 'Attended'} : {sessionsCompleted}
+              </span>
+              <span className="rounded-full border border-zinc-400 dark:border-zinc-600 px-3 py-1 text-[10px] text-zinc-700 dark:text-zinc-300">
+                {isAr ? 'ملاحظات' : 'Notes'} : {notesCount}
+              </span>
+              <span className="rounded-full border border-zinc-400 dark:border-zinc-600 px-3 py-1 text-[10px] text-zinc-700 dark:text-zinc-300">
+                {isAr ? 'نقاط' : 'POINT'} : {pointsTotal}
+              </span>
+            </div>
 
-      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-          {isAr ? 'من أنا' : 'Who I am'}
-        </h3>
-        <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-          {data.profile?.bio || (isAr ? 'لم يتم إضافة نبذة بعد.' : 'No bio yet.')}
-        </p>
-      </div>
-
-      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-          {isAr ? 'البرنامج' : 'Program'}
-        </h3>
-        {assignmentLabel ? (
-          <div className="space-y-3">
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">{assignmentLabel}</p>
-            {programLevels.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3">
-                {programLevels.map((level) => (
-                  <div
-                    key={level.id}
-                    className={`group relative overflow-hidden rounded-2xl border ${currentLevel?.id === level.id ? 'border-orange-400 shadow-lg shadow-orange-500/20' : 'border-zinc-200 dark:border-zinc-800'} bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900 shadow-sm`}
-                  >
-                    <div className="flex items-stretch gap-3 p-3">
-                      <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-zinc-200/70 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900">
-                        {level.image_url ? (
-                          <img src={level.image_url} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-zinc-400">
-                            {isAr ? 'بدون صورة' : 'No image'}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">
-                          {isAr ? `المستوى ${level.level_order}` : `Level ${level.level_order}`}
-                        </p>
-                        <p className={`text-sm font-semibold truncate ${currentLevel?.id === level.id ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-800 dark:text-zinc-100'}`}>
-                          {isAr ? level.name_ar || level.name : level.name}
-                        </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-zinc-500">
-                          <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200/70 dark:border-zinc-800 px-2 py-0.5">
-                            {isAr ? 'جلسات' : 'Sessions'}: {level.min_sessions}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200/70 dark:border-zinc-800 px-2 py-0.5">
-                            {isAr ? 'نقاط' : 'Points'}: {level.min_points}
-                          </span>
-                        </div>
-                        <div className="mt-3">
-                          <div className="space-y-2">
-                            <div>
-                              <div className="flex items-center justify-between text-[10px] text-zinc-500">
-                                <span>{isAr ? 'تقدم الجلسات' : 'Sessions progress'}</span>
-                                <span>{sessionsCompleted}/{level.min_sessions}</span>
-                              </div>
-                              <div className="mt-1 h-2 w-full rounded-full bg-zinc-200/70 dark:bg-zinc-800 overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${currentLevel?.id === level.id ? 'bg-orange-500' : 'bg-zinc-900'}`}
-                                  style={{ width: `${level.min_sessions > 0 ? Math.min(100, (sessionsCompleted / level.min_sessions) * 100) : 0}%` }}
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <div className="flex items-center justify-between text-[10px] text-zinc-500">
-                                <span>{isAr ? 'تقدم النقاط' : 'Points progress'}</span>
-                                <span>{pointsTotal}/{level.min_points}</span>
-                              </div>
-                              <div className="mt-1 h-2 w-full rounded-full bg-zinc-200/70 dark:bg-zinc-800 overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${currentLevel?.id === level.id ? 'bg-orange-500' : 'bg-zinc-900'}`}
-                                  style={{ width: `${level.min_points > 0 ? Math.min(100, (pointsTotal / level.min_points) * 100) : 0}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {currentLevel?.id === level.id && (
-                      <div className="absolute top-2 right-2 rounded-full bg-orange-500 text-white px-2 py-0.5 text-[10px] font-semibold">
-                        {isAr ? 'المرحلة الحالية' : 'Current'}
-                      </div>
-                    )}
+            {/* Level Card with Progress */}
+            <div className="flex gap-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-white to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 p-3">
+              <div className="h-20 w-20 rounded-xl overflow-hidden bg-zinc-300 dark:bg-zinc-700 flex-shrink-0">
+                {currentLevel.image_url ? (
+                  <img src={currentLevel.image_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-zinc-500 text-xs">
+                    {isAr ? 'صورة' : 'IMG'}
                   </div>
-                ))}
+                )}
               </div>
-            ) : (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {isAr ? 'لا توجد مستويات بعد.' : 'No levels yet.'}
-              </p>
-            )}
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{isAr ? 'التقدم' : 'PROGRESS'}</p>
+                  <p className="text-sm font-bold text-zinc-900 dark:text-white">{Math.min(totalProgress, 100)}%</p>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-[9px] text-zinc-500">
+                    <span>{isAr ? 'إجمالي الجلسات' : 'TOTAL SESSION'}</span>
+                    <span>{Math.min(sessionProgress, 100)}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-300 dark:bg-zinc-700 overflow-hidden">
+                    <div className="h-full rounded-full bg-orange-500" style={{ width: `${Math.min(sessionProgress, 100)}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-[9px] text-zinc-500">
+                    <span>{isAr ? 'إجمالي النقاط' : 'TOTAL POINT'}</span>
+                    <span>{Math.min(pointProgress, 100)}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-300 dark:bg-zinc-700 overflow-hidden">
+                    <div className="h-full rounded-full bg-orange-500" style={{ width: `${Math.min(pointProgress, 100)}%` }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* View Player Card Link */}
+            <button
+              type="button"
+              onClick={() => router.push(`/${locale}/dashboard/player-card${isAdminView && userId ? `?user_id=${userId}` : ''}`)}
+              className="text-orange-500 text-[11px] font-medium hover:text-orange-400 flex items-center gap-1"
+            >
+              {isAr ? 'عرض بطاقة اللاعب' : 'View player card'}
+              <span>→</span>
+            </button>
           </div>
         ) : (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-zinc-500 text-center">
             {isAr ? 'لم يتم تعيين برنامج بعد.' : 'No program assigned yet.'}
           </p>
         )}
-      </div>
+        </div>
 
-      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-          {isAr ? 'الإنجازات' : 'Achievements'}
-        </h3>
-        {achievements.length === 0 ? (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {isAr ? 'لا توجد إنجازات بعد.' : 'No achievements yet.'}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 gap-3">
-            {achievements.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-                <div className="h-12 w-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex items-center justify-center">
-                  {item.icon_url ? (
-                    <img src={item.icon_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-[10px] font-semibold text-zinc-400">{isAr ? 'بدون' : 'N/A'}</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-                    {isAr ? item.title_ar || item.title : item.title}
-                  </p>
-                  {item.description && (
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {item.description}
-                    </p>
-                  )}
-                </div>
-                <span className="text-[10px] text-zinc-400 whitespace-nowrap">
-                  {formatDate(item.awarded_at, locale)}
-                </span>
+        {/* Insight Section - Health Tests */}
+        <div className="relative mt-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-7">
+          <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-900 dark:text-white">
+            {isAr ? 'مؤشرات' : 'Insight'}
+          </span>
+          {latestTest && latestTest.status === 'completed' ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <RadialInsight label={isAr ? 'السرعة' : 'SPEED'} value={latestTest?.speed_score} />
+                <RadialInsight label={isAr ? 'الرشاقة' : 'AGILITY'} value={latestTest?.agility_score} />
+                <RadialInsight label={isAr ? 'القوة' : 'POWER'} value={latestTest?.power_score} />
               </div>
-            ))}
+              <div className="grid grid-cols-4 gap-2">
+                <RadialInsight label={isAr ? 'التوازن' : 'BALANCE'} value={latestTest?.balance_score} />
+                <RadialInsight label={isAr ? 'رد الفعل' : 'REACT'} value={latestTest?.reaction_score} />
+                <RadialInsight label={isAr ? 'التناسق' : 'COORD'} value={latestTest?.coordination_score} />
+                <RadialInsight label={isAr ? 'المرونة' : 'FLEX'} value={latestTest?.flexibility_score} />
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-500 text-center py-4">
+              {isAr ? 'لا يوجد اختبار بدني مكتمل بعد.' : 'No completed physical test yet.'}
+            </p>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => router.push(`/${locale}/dashboard/profile/achievements${isAdminView && userId ? `?user_id=${userId}` : ''}`)}
+            className="flex items-center justify-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-white to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 py-3 text-sm font-medium text-zinc-900 dark:text-white hover:from-zinc-100 hover:to-zinc-200 dark:hover:from-zinc-700 dark:hover:to-zinc-800 transition-colors"
+          >
+            <Award className="h-4 w-4 text-orange-500" />
+            {isAr ? 'الإنجازات' : 'Achievement'}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push(`/${locale}/dashboard/profile/assessment${isAdminView && userId ? `?user_id=${userId}` : ''}`)}
+            className="flex items-center justify-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-white to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 py-3 text-sm font-medium text-zinc-900 dark:text-white hover:from-zinc-100 hover:to-zinc-200 dark:hover:from-zinc-700 dark:hover:to-zinc-800 transition-colors"
+          >
+            <Activity className="h-4 w-4 text-orange-500" />
+            {isAr ? 'التقییم' : 'Assessment'}
+          </button>
+        </div>
+
+        {/* Update Profile Section */}
+        {(!readOnly || isAdminView) && (
+          <div className="mt-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-white to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setProfileFormOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white"
+            >
+              <span>{isAr ? 'تحديث الملف الشخصي' : 'Update profile'}</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${profileFormOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {profileFormOpen && (
+              <div className="px-4 pb-4 space-y-3">
+                <input
+                  value={form.sport}
+                  onChange={(e) => setForm((prev) => ({ ...prev, sport: e.target.value }))}
+                  placeholder={isAr ? 'الرياضة' : 'Sport'}
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500"
+                />
+                <input
+                  value={form.position}
+                  onChange={(e) => setForm((prev) => ({ ...prev, position: e.target.value }))}
+                  placeholder={isAr ? 'المركز' : 'Position'}
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500"
+                />
+                <textarea
+                  value={form.bio}
+                  onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
+                  placeholder={isAr ? 'نبذة اللاعب' : 'Player bio'}
+                  rows={3}
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500"
+                />
+                <textarea
+                  value={form.goals}
+                  onChange={(e) => setForm((prev) => ({ ...prev, goals: e.target.value }))}
+                  placeholder={isAr ? 'الأهداف' : 'Goals'}
+                  rows={2}
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="w-full rounded-xl bg-orange-500 text-black py-2.5 text-sm font-bold hover:bg-orange-600 disabled:opacity-60"
+                >
+                  {saving ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ الملف' : 'Save profile')}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {canAwardAchievement && (
-          <div className="pt-2 space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'اختر الإنجاز' : 'Select achievement'}
-              </label>
-              <select
-                value={awardAchievementId}
-                onChange={(event) => setAwardAchievementId(event.target.value)}
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-              >
-                <option value="">{isAr ? 'اختر الإنجاز' : 'Select achievement'}</option>
-                {achievementsCatalog.map((achievement) => (
-                  <option key={achievement.id} value={achievement.id}>
-                    {isAr ? achievement.title_ar || achievement.title : achievement.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'ملاحظة' : 'Note'}
-              </label>
-              <textarea
-                value={awardNote}
-                onChange={(event) => setAwardNote(event.target.value)}
-                rows={2}
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-              />
-            </div>
+        {/* Admin: Assign Program */}
+        {isAdminView && (
+          <div className="mt-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-white to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 p-4 space-y-3">
+            <h3 className="text-sm font-medium text-zinc-900 dark:text-white">{isAr ? 'تعيين برنامج' : 'Assign program'}</h3>
+            <select
+              value={assignmentForm.program_id}
+              onChange={(e) => setAssignmentForm({ program_id: e.target.value, age_group_id: '' })}
+              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white"
+            >
+              <option value="">{isAr ? 'اختر البرنامج' : 'Select program'}</option>
+              {programs.map((program) => (
+                <option key={program.id} value={program.id}>{isAr ? program.name_ar || program.name : program.name}</option>
+              ))}
+            </select>
+            <select
+              value={assignmentForm.age_group_id}
+              onChange={(e) => setAssignmentForm((prev) => ({ ...prev, age_group_id: e.target.value }))}
+              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white"
+              disabled={!assignmentForm.program_id}
+            >
+              <option value="">{isAr ? 'اختر الفئة' : 'Select age group'}</option>
+              {ageGroups.map((group) => (
+                <option key={group.id} value={group.id}>{isAr ? group.name_ar || group.name : group.name} ({group.min_age}-{group.max_age})</option>
+              ))}
+            </select>
             <button
               type="button"
-              onClick={handleAwardAchievement}
-              disabled={awarding || !awardAchievementId}
+              onClick={handleAssignProgram}
+              disabled={assigning}
               className="w-full rounded-xl bg-emerald-600 text-white py-2 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
             >
-              {awarding ? (isAr ? 'جاري الإرسال...' : 'Awarding...') : (isAr ? 'منح الإنجاز' : 'Award achievement')}
+              {assigning ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ البرنامج' : 'Save assignment')}
             </button>
           </div>
         )}
+
+        {/* Footer */}
+        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.2em] text-zinc-600">
+          {isAr ? 'اكتشف قدراتك الطبيعية' : 'DISCOVER NATURAL ABILITY'}
+        </p>
       </div>
-
-      {isAdminView && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setHealthTestOpen((prev) => !prev)}
-            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100"
-          >
-            <span>{isAr ? 'الاختبار البدني' : 'Physical Test'}</span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${healthTestOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {healthTestOpen && (
-            <div className="px-4 pb-4 space-y-3">
-              {requestStatus ? (
-                <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
-                  <div className="flex items-center gap-2">
-                    {requestStatus.status === 'pending' && <Clock className="h-4 w-4 text-orange-500" />}
-                    {requestStatus.status === 'approved' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-                    {requestStatus.status === 'rejected' && <XCircle className="h-4 w-4 text-red-500" />}
-                    <span className="font-medium">
-                      {requestStatus.status === 'pending' && (isAr ? 'طلب قيد الانتظار' : 'Request pending')}
-                      {requestStatus.status === 'approved' && (isAr ? 'تم قبول الطلب' : 'Request approved')}
-                      {requestStatus.status === 'rejected' && (isAr ? 'تم رفض الطلب' : 'Request rejected')}
-                    </span>
-                  </div>
-                  <p>{isAr ? 'تاريخ الطلب:' : 'Requested:'} {formatDate(requestStatus.requested_at, locale)}</p>
-                  {requestStatus.scheduled_at && (
-                    <p>{isAr ? 'وقت الاختبار:' : 'Scheduled:'} {formatDate(requestStatus.scheduled_at, locale)}</p>
-                  )}
-                  {requestStatus.review_notes && (
-                    <p className="text-red-600 dark:text-red-400">{requestStatus.review_notes}</p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {isAr ? 'لا يوجد طلب نشط.' : 'No active request.'}
-                </p>
-              )}
-
-              {(profileComplete && !activeRequest && (!readOnly || isAdminView)) && (
-                <button
-                  type="button"
-                  onClick={handleRequestTest}
-                  disabled={requesting}
-                  className="w-full rounded-xl bg-orange-500 text-white py-2 text-sm font-semibold hover:bg-orange-600 disabled:opacity-60"
-                >
-                  {requesting
-                    ? (isAr ? 'جاري الإرسال...' : 'Submitting...')
-                    : (isAr ? 'طلب اختبار بدني' : 'Request physical test')}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {isAdminView && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setMedalRequestOpen((prev) => !prev)}
-            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100"
-          >
-            <span>{isAr ? 'طلبات الميداليات' : 'Medal requests'}</span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${medalRequestOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {medalRequestOpen && (
-            <div className="px-4 pb-4 space-y-3">
-              {medalRequest ? (
-                <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">
-                      {medalRequest.medal_type} · {medalRequest.status}
-                    </span>
-                  </div>
-                  <p>{isAr ? 'تاريخ الطلب:' : 'Requested:'} {formatDate(medalRequest.requested_date, locale)}</p>
-                  <p>{isAr ? 'تاريخ التسليم:' : 'Delivery:'} {formatDate(medalRequest.delivery_date, locale)}</p>
-                </div>
-              ) : (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {isAr ? 'لا توجد طلبات بعد.' : 'No requests yet.'}
-                </p>
-              )}
-
-              {canRequestMedal && (
-                <div className="pt-2 space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                      {isAr ? 'نوع الميدالية' : 'Medal type'}
-                    </label>
-                    <select
-                      value={medalForm.medal_type}
-                      onChange={(event) => setMedalForm((prev) => ({ ...prev, medal_type: event.target.value }))}
-                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-                    >
-                      <option value="">{isAr ? 'اختر نوع الميدالية' : 'Select medal type'}</option>
-                      {medalOptions.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                      {isAr ? 'الإنجاز' : 'Achievement'}
-                    </label>
-                    <textarea
-                      value={medalForm.achievement_description}
-                      onChange={(event) => setMedalForm((prev) => ({ ...prev, achievement_description: event.target.value }))}
-                      rows={3}
-                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRequestMedal}
-                    disabled={medalSubmitting}
-                    className="w-full rounded-xl bg-orange-500 text-white py-2 text-sm font-semibold hover:bg-orange-600 disabled:opacity-60"
-                  >
-                    {medalSubmitting
-                        ? (isAr ? 'جاري الإرسال...' : 'Submitting...')
-                        : (isAr ? 'إرسال الطلب' : 'Submit request')}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {latestTest && latestTest.status === 'completed' && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-              {isAr ? 'نتائج الاختبار' : 'Test Results'}
-            </h3>
-            <div className="flex items-center gap-2">
-              {canSeeAllTests && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAllTests((prev) => !prev);
-                    if (!showAllTests && allTests.length === 0) {
-                      fetchAllTests();
-                    }
-                  }}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-                  title={isAr ? 'عرض جميع النتائج' : 'Show all results'}
-                  aria-label={isAr ? 'عرض جميع النتائج' : 'Show all results'}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              )}
-              <span className="text-xs text-zinc-500">{formatDate(latestTest.test_date || latestTest.scheduled_at, locale)}</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 text-xs text-zinc-600 dark:text-zinc-400">
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'طول' : 'Height'}</p>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{latestTest.height || '-'} cm</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'وزن' : 'Weight'}</p>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{latestTest.weight || '-'} kg</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'ضغط' : 'Blood'} </p>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{latestTest.blood_pressure || '-'}</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'نبض' : 'Heart'} </p>
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{latestTest.heart_rate || '-'} bpm</p>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
-              {isAr ? 'مؤشرات' : 'Insight'}
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <RadialInsight
-                label={isAr ? 'السرعة' : 'Speed'}
-                value={latestTest.speed_score}
-              />
-              <RadialInsight
-                label={isAr ? 'الرشاقة' : 'Agility'}
-                value={latestTest.agility_score}
-              />
-              <RadialInsight
-                label={isAr ? 'القوة' : 'Power'}
-                value={latestTest.power_score}
-              />
-            </div>
-          </div>
-
-          {canSeeTestReviewNotes && latestTest.notes && (
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 p-3">
-              <p className="text-[10px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-                {isAr ? 'ملاحظة الاختبار' : 'Test note'}
-              </p>
-              <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300">
-                {latestTest.notes}
-              </p>
-            </div>
-          )}
-
-          {canSeeAllTests && showAllTests && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
-                  {isAr ? 'كل نتائج الاختبارات' : 'All test results'}
-                </p>
-                {allTestsLoading && (
-                  <span className="text-[10px] text-zinc-400">{isAr ? 'جاري التحميل...' : 'Loading...'}</span>
-                )}
-              </div>
-              {allTests.length === 0 && !allTestsLoading ? (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {isAr ? 'لا توجد نتائج بعد.' : 'No results yet.'}
-                </p>
-              ) : (
-                allTests.map((test) => (
-                  <div key={test.id} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-950/40 p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
-                        {formatDate(test.test_date || test.scheduled_at, locale)}
-                      </p>
-                      <span className="text-[10px] text-zinc-400">{isAr ? 'مكتمل' : 'Completed'}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-xs text-zinc-600 dark:text-zinc-400">
-                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'طول' : 'Height'}</p>
-                        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{test.height || '-'} cm</p>
-                      </div>
-                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'وزن' : 'Weight'}</p>
-                        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{test.weight || '-'} kg</p>
-                      </div>
-                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'ضغط' : 'Blood'}</p>
-                        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{test.blood_pressure || '-'}</p>
-                      </div>
-                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
-                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'نبض' : 'Heart'}</p>
-                        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{test.heart_rate || '-'} bpm</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <RadialInsight label={isAr ? 'السرعة' : 'Speed'} value={test.speed_score} />
-                      <RadialInsight label={isAr ? 'الرشاقة' : 'Agility'} value={test.agility_score} />
-                      <RadialInsight label={isAr ? 'القوة' : 'Power'} value={test.power_score} />
-                    </div>
-                    {canSeeTestReviewNotes && test.notes && (
-                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 p-3">
-                        <p className="text-[10px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-                          {isAr ? 'ملاحظة الاختبار' : 'Test note'}
-                        </p>
-                        <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300">
-                          {test.notes}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-
-      {(!readOnly || isAdminView) && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setProfileFormOpen((prev) => !prev)}
-            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100"
-          >
-            <span>{isAr ? 'تحديث الملف الشخصي' : 'Update profile'}</span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${profileFormOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {profileFormOpen && (
-            <div className="px-4 pb-4 space-y-4">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                    {isAr ? 'الرياضة' : 'Sport'}
-                  </label>
-                  <input
-                    value={form.sport}
-                    onChange={(event) => setForm((prev) => ({ ...prev, sport: event.target.value }))}
-                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-                    placeholder={isAr ? 'مثال: كرة القدم' : 'e.g. Football'}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                    {isAr ? 'المركز' : 'Position'}
-                  </label>
-                  <input
-                    value={form.position}
-                    onChange={(event) => setForm((prev) => ({ ...prev, position: event.target.value }))}
-                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                    {isAr ? 'نبذة اللاعب' : 'Player bio'}
-                  </label>
-                  <textarea
-                    value={form.bio}
-                    onChange={(event) => setForm((prev) => ({ ...prev, bio: event.target.value }))}
-                    rows={3}
-                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                    {isAr ? 'الأهداف' : 'Goals'}
-                  </label>
-                  <textarea
-                    value={form.goals}
-                    onChange={(event) => setForm((prev) => ({ ...prev, goals: event.target.value }))}
-                    rows={2}
-                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-                  />
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleSaveProfile}
-                disabled={saving}
-                className="w-full rounded-xl bg-zinc-900 text-white py-2 text-sm font-semibold hover:bg-zinc-800 disabled:opacity-60"
-              >
-                {saving ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ الملف' : 'Save profile')}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {isAdminView && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
-          <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-            {isAr ? 'تعيين برنامج' : 'Assign program'}
-          </h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'البرنامج' : 'Program'}
-              </label>
-              <select
-                value={assignmentForm.program_id}
-                onChange={(event) =>
-                  setAssignmentForm({ program_id: event.target.value, age_group_id: '' })
-                }
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-              >
-                <option value="">{isAr ? 'اختر البرنامج' : 'Select program'}</option>
-                {programs.map((program) => (
-                  <option key={program.id} value={program.id}>
-                    {isAr ? program.name_ar || program.name : program.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'الفئة العمرية' : 'Age group'}
-              </label>
-              <select
-                value={assignmentForm.age_group_id}
-                onChange={(event) =>
-                  setAssignmentForm((prev) => ({ ...prev, age_group_id: event.target.value }))
-                }
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-                disabled={!assignmentForm.program_id}
-              >
-                <option value="">{isAr ? 'اختر الفئة' : 'Select age group'}</option>
-                {ageGroups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {isAr ? group.name_ar || group.name : group.name} ({group.min_age}-{group.max_age})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleAssignProgram}
-            disabled={assigning}
-            className="w-full rounded-xl bg-emerald-600 text-white py-2 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {assigning ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ البرنامج' : 'Save assignment')}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

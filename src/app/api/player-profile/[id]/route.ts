@@ -27,8 +27,9 @@ const fetchProfileData = async (userId: string) => {
   }
 
   const latestTestResult = await pool.query(
-    `SELECT id, status, requested_at, scheduled_at, test_date, height, weight,
-            blood_pressure, heart_rate, notes, review_notes, speed_score, agility_score, power_score
+        `SELECT id, status, requested_at, scheduled_at, test_date, height, weight,
+          blood_pressure, heart_rate, notes, review_notes, speed_score, agility_score, power_score,
+          balance_score, reaction_score, coordination_score, flexibility_score
      FROM health_tests
      WHERE user_id = $1
      ORDER BY requested_at DESC NULLS LAST, created_at DESC

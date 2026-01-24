@@ -26,6 +26,10 @@ interface HealthTestItem {
   speed_score?: number | null;
   agility_score?: number | null;
   power_score?: number | null;
+  balance_score?: number | null;
+  reaction_score?: number | null;
+  coordination_score?: number | null;
+  flexibility_score?: number | null;
 }
 
 interface ResultForm {
@@ -37,6 +41,10 @@ interface ResultForm {
   speed_score: string;
   agility_score: string;
   power_score: string;
+  balance_score: string;
+  reaction_score: string;
+  coordination_score: string;
+  flexibility_score: string;
 }
 
 const formatDate = (value?: string | null, locale?: string) => {
@@ -148,6 +156,10 @@ export default function HealthTestsContent() {
           speed_score: test.speed_score?.toString() || '',
           agility_score: test.agility_score?.toString() || '',
           power_score: test.power_score?.toString() || '',
+          balance_score: test.balance_score?.toString() || '',
+          reaction_score: test.reaction_score?.toString() || '',
+          coordination_score: test.coordination_score?.toString() || '',
+          flexibility_score: test.flexibility_score?.toString() || '',
         };
       });
       setScheduleById(scheduleSeed);
@@ -299,7 +311,23 @@ export default function HealthTestsContent() {
                       <div class="line"></div>
                     </div>
                     <div class="field">
+                      <div class="label">${isAr ? 'التوازن' : 'Balance'}</div>
+                      <div class="line"></div>
+                    </div>
+                    <div class="field">
                       <div class="label">${isAr ? 'القوة' : 'Power'}</div>
+                      <div class="line"></div>
+                    </div>
+                    <div class="field">
+                      <div class="label">${isAr ? 'رد الفعل' : 'Reaction'}</div>
+                      <div class="line"></div>
+                    </div>
+                    <div class="field">
+                      <div class="label">${isAr ? 'التناسق' : 'Coordination'}</div>
+                      <div class="line"></div>
+                    </div>
+                    <div class="field">
+                      <div class="label">${isAr ? 'المرونة' : 'Flexibility'}</div>
                       <div class="line"></div>
                     </div>
                   </div>
@@ -616,11 +644,15 @@ export default function HealthTestsContent() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {[
                     { key: 'speed_score', label: isAr ? 'سرعة' : 'Speed' },
                     { key: 'agility_score', label: isAr ? 'رشاقة' : 'Agility' },
+                    { key: 'balance_score', label: isAr ? 'توازن' : 'Balance' },
                     { key: 'power_score', label: isAr ? 'قوة' : 'Power' },
+                    { key: 'reaction_score', label: isAr ? 'رد الفعل' : 'Reaction' },
+                    { key: 'coordination_score', label: isAr ? 'تناسق' : 'Coordination' },
+                    { key: 'flexibility_score', label: isAr ? 'مرونة' : 'Flexibility' },
                   ].map((item) => (
                     <div key={item.key} className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 space-y-2">
                       <div className="flex items-center justify-between text-xs text-zinc-500">
@@ -682,6 +714,10 @@ export default function HealthTestsContent() {
                         speed_score: toNumber(result.speed_score),
                         agility_score: toNumber(result.agility_score),
                         power_score: toNumber(result.power_score),
+                        balance_score: toNumber(result.balance_score),
+                        reaction_score: toNumber(result.reaction_score),
+                        coordination_score: toNumber(result.coordination_score),
+                        flexibility_score: toNumber(result.flexibility_score),
                       })
                     }
                     disabled={savingId === test.id}
@@ -720,7 +756,7 @@ export default function HealthTestsContent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <RadialStat
                     label={isAr ? 'سرعة' : 'Speed'}
                     value={test.speed_score}
@@ -732,9 +768,29 @@ export default function HealthTestsContent() {
                     accent="text-blue-500"
                   />
                   <RadialStat
+                    label={isAr ? 'توازن' : 'Balance'}
+                    value={test.balance_score}
+                    accent="text-purple-500"
+                  />
+                  <RadialStat
                     label={isAr ? 'قوة' : 'Power'}
                     value={test.power_score}
                     accent="text-orange-500"
+                  />
+                  <RadialStat
+                    label={isAr ? 'رد الفعل' : 'Reaction'}
+                    value={test.reaction_score}
+                    accent="text-rose-500"
+                  />
+                  <RadialStat
+                    label={isAr ? 'تناسق' : 'Coordination'}
+                    value={test.coordination_score}
+                    accent="text-sky-500"
+                  />
+                  <RadialStat
+                    label={isAr ? 'مرونة' : 'Flexibility'}
+                    value={test.flexibility_score}
+                    accent="text-teal-500"
                   />
                 </div>
               </div>

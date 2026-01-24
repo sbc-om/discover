@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
-import type { OverlayScrollbarsOptions } from 'overlayscrollbars';
+import type { Options as OverlayScrollbarsOptions } from 'overlayscrollbars';
 
 interface ScrollAreaProps {
   children: ReactNode;

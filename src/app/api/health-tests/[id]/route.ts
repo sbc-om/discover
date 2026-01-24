@@ -34,6 +34,10 @@ export async function PATCH(
       speed_score,
       agility_score,
       power_score,
+      balance_score,
+      reaction_score,
+      coordination_score,
+      flexibility_score,
     } = body;
 
     const updates: string[] = [];
@@ -98,6 +102,10 @@ export async function PATCH(
     if (speed_score !== undefined) setField('speed_score', speed_score || null);
     if (agility_score !== undefined) setField('agility_score', agility_score || null);
     if (power_score !== undefined) setField('power_score', power_score || null);
+    if (balance_score !== undefined) setField('balance_score', balance_score || null);
+    if (reaction_score !== undefined) setField('reaction_score', reaction_score || null);
+    if (coordination_score !== undefined) setField('coordination_score', coordination_score || null);
+    if (flexibility_score !== undefined) setField('flexibility_score', flexibility_score || null);
 
     if (updates.length === 0) {
       return NextResponse.json({ message: 'No updates provided' }, { status: 400 });

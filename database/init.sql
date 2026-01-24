@@ -114,6 +114,10 @@ CREATE TABLE IF NOT EXISTS health_tests (
     speed_score INT,
     agility_score INT,
     power_score INT,
+    balance_score INT,
+    reaction_score INT,
+    coordination_score INT,
+    flexibility_score INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -114,6 +114,10 @@ export interface HealthTest {
   speedScore?: number;
   agilityScore?: number;
   powerScore?: number;
+  balanceScore?: number;
+  reactionScore?: number;
+  coordinationScore?: number;
+  flexibilityScore?: number;
   createdAt: Date;
   updatedAt: Date;
 }
