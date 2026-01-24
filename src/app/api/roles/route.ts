@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { requireRole } from '@/lib/session';
 
-// GET all roles (Admin only)
+// GET all roles (Admin or Academy Manager)
 export async function GET(request: Request) {
   try {
-    await requireRole(['admin']);
+    const session = await requireRole(['admin', 'academy_manager']);
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -33,10 +33,20 @@ export async function GET(request: Request) {
     const params: any[] = [];
     let paramIndex = 1;
 
+    const whereClauses: string[] = [];
+
+    if (session.roleName !== 'admin') {
+      whereClauses.push(`r.name IN ('player', 'coach')`);
+    }
+
     if (search) {
-      query += ` WHERE (r.name_en ILIKE $${paramIndex} OR r.name_ar ILIKE $${paramIndex} OR r.name ILIKE $${paramIndex})`;
+      whereClauses.push(`(r.name_en ILIKE $${paramIndex} OR r.name_ar ILIKE $${paramIndex} OR r.name ILIKE $${paramIndex})`);
       params.push(`%${search}%`);
       paramIndex++;
+    }
+
+    if (whereClauses.length > 0) {
+      query += ` WHERE ${whereClauses.join(' AND ')}`;
     }
 
     query += ` GROUP BY r.id`;

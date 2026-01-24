@@ -94,6 +94,10 @@ export default function UsersContent() {
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [currentAcademyId, setCurrentAcademyId] = useState<string | null>(null);
+  const [currentAcademyName, setCurrentAcademyName] = useState<string | null>(null);
+  const [presetRoleName, setPresetRoleName] = useState<'player' | 'coach' | null>(null);
   const [sortField, setSortField] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showModal, setShowModal] = useState(false);
@@ -123,6 +127,24 @@ export default function UsersContent() {
     fetchRoles();
     fetchAcademies();
   }, [page, limit, search, roleFilter, sortField, sortOrder]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+        if (response.ok) {
+          setCurrentUserRole(data.roleName || null);
+          setCurrentAcademyId(data.academyId || null);
+          setCurrentAcademyName(data.academyName || null);
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -182,6 +204,35 @@ export default function UsersContent() {
     return { firstName, lastName };
   };
 
+  const isAcademyManager = currentUserRole === 'academy_manager';
+
+  const getRoleIdByName = (roleName: string) =>
+    roles.find((role) => role.name === roleName)?.id || '';
+
+  const openCreateWithRole = (roleName: 'player' | 'coach') => {
+    resetForm();
+    setPresetRoleName(roleName);
+    setShowModal(true);
+  };
+
+  useEffect(() => {
+    if (!isAcademyManager) return;
+    setFormData((prev) => ({
+      ...prev,
+      academy_id: currentAcademyId || ''
+    }));
+  }, [isAcademyManager, currentAcademyId]);
+
+  useEffect(() => {
+    if (!presetRoleName) return;
+    const roleId = getRoleIdByName(presetRoleName);
+    if (!roleId) return;
+    setFormData((prev) => ({
+      ...prev,
+      role_id: roleId
+    }));
+  }, [presetRoleName, roles]);
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -235,8 +286,19 @@ export default function UsersContent() {
       const url = editingUser ? `/api/users/${editingUser.id}` : '/api/users';
       const method = editingUser ? 'PUT' : 'POST';
       const { firstName, lastName } = splitFullName(fullName);
+      const enforcedRoleId = isAcademyManager && presetRoleName
+        ? getRoleIdByName(presetRoleName)
+        : formData.role_id;
+
+      if (isAcademyManager && !enforcedRoleId) {
+        showToast('error', isAr ? 'حدد نوع المستخدم أولاً' : 'Select user type first');
+        return;
+      }
+
       const payload = {
         ...formData,
+        role_id: enforcedRoleId,
+        academy_id: isAcademyManager ? (currentAcademyId || formData.academy_id) : formData.academy_id,
         first_name: firstName,
         last_name: lastName
       };
@@ -306,6 +368,7 @@ export default function UsersContent() {
   const handleEdit = (user: User) => {
     setFullName(`${user.first_name} ${user.last_name}`.trim());
     setEditingUser(user);
+    setPresetRoleName(null);
     setAvatarPreview(user.avatar_url || null);
     setFormData({
       email: user.email,
@@ -326,6 +389,7 @@ export default function UsersContent() {
     setFullName('');
     setAvatarFile(null);
     setAvatarPreview(null);
+    setPresetRoleName(null);
     setFormData({
       email: '',
       password: '',
@@ -333,7 +397,7 @@ export default function UsersContent() {
       last_name: '',
       phone: '',
       role_id: '',
-      academy_id: '',
+      academy_id: isAcademyManager ? (currentAcademyId || '') : '',
       preferred_language: 'en',
       is_active: true
     });
@@ -369,6 +433,13 @@ export default function UsersContent() {
     });
   };
 
+  const selectedRole = roles.find((role) => role.id === formData.role_id) || null;
+  const selectedRoleLabel = selectedRole
+    ? (isAr ? selectedRole.name_ar || selectedRole.name_en : selectedRole.name_en)
+    : presetRoleName
+      ? (isAr ? (presetRoleName === 'player' ? 'لاعب' : 'مدرب') : (presetRoleName === 'player' ? 'Player' : 'Coach'))
+      : (isAr ? 'اختر نوع المستخدم' : 'Select user type');
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -382,16 +453,35 @@ export default function UsersContent() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">{total} total users</p>
           </div>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25 transition-all text-sm"
-        >
-          <UserPlus className="w-4 h-4" />
-          Add User
-        </button>
+        {isAcademyManager ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => openCreateWithRole('player')}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-medium shadow-lg shadow-emerald-500/25 transition-all text-sm"
+            >
+              <UserPlus className="w-4 h-4" />
+              {isAr ? 'إضافة لاعب' : 'Add Player'}
+            </button>
+            <button
+              onClick={() => openCreateWithRole('coach')}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 transition-all text-sm"
+            >
+              <UserPlus className="w-4 h-4" />
+              {isAr ? 'إضافة مدرب' : 'Add Coach'}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25 transition-all text-sm"
+          >
+            <UserPlus className="w-4 h-4" />
+            {isAr ? 'إضافة مستخدم' : 'Add User'}
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -891,41 +981,53 @@ export default function UsersContent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Role
+                      {isAr ? 'الدور' : 'Role'}
                     </label>
-                    <select
-                      value={formData.role_id}
-                      onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all"
-                      required
-                    >
-                      <option value="">Select role</option>
-                      {roles.map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name_en}
-                        </option>
-                      ))}
-                    </select>
+                    {isAcademyManager ? (
+                      <div className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white">
+                        {selectedRoleLabel}
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.role_id}
+                        onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all"
+                        required
+                      >
+                        <option value="">{isAr ? 'اختر الدور' : 'Select role'}</option>
+                        {roles.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {isAr ? role.name_ar || role.name_en : role.name_en}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
 
                 {/* Academy */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Academy
+                    {isAr ? 'الأكاديمية' : 'Academy'}
                   </label>
-                  <select
-                    value={formData.academy_id}
-                    onChange={(e) => setFormData({ ...formData, academy_id: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all"
-                  >
-                    <option value="">No academy</option>
-                    {academies.map((academy) => (
-                      <option key={academy.id} value={academy.id}>
-                        {academy.name}
-                      </option>
-                    ))}
-                  </select>
+                  {isAcademyManager ? (
+                    <div className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white">
+                      {currentAcademyName || (isAr ? 'غير محدد' : 'Not set')}
+                    </div>
+                  ) : (
+                    <select
+                      value={formData.academy_id}
+                      onChange={(e) => setFormData({ ...formData, academy_id: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all"
+                    >
+                      <option value="">{isAr ? 'بدون أكاديمية' : 'No academy'}</option>
+                      {academies.map((academy) => (
+                        <option key={academy.id} value={academy.id}>
+                          {isAr ? academy.name_ar || academy.name : academy.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                       {/* Active Status */}

@@ -3,11 +3,11 @@ import pool from '@/lib/db';
 import { requireRole } from '@/lib/session';
 import { hashPassword } from '@/lib/auth';
 
-// GET all users (Admin only)
+// GET users (Admin or Academy Manager)
 export async function GET(request: Request) {
   try {
-    // Check if user is admin
-    await requireRole(['admin']);
+    // Check if user is admin or academy manager
+    const session = await requireRole(['admin', 'academy_manager']);
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -37,6 +37,28 @@ export async function GET(request: Request) {
 
     const params: any[] = [];
     let paramIndex = 1;
+
+    if (session.roleName !== 'admin') {
+      const academyResult = await pool.query(
+        'SELECT academy_id FROM users WHERE id = $1',
+        [session.userId]
+      );
+      const academyId = academyResult.rows[0]?.academy_id;
+      if (!academyId) {
+        return NextResponse.json({
+          users: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            pages: 0,
+          },
+        });
+      }
+      query += ` AND u.academy_id = $${paramIndex}`;
+      params.push(academyId);
+      paramIndex++;
+    }
 
     if (search) {
       query += ` AND (u.email ILIKE $${paramIndex} OR u.first_name ILIKE $${paramIndex} OR u.last_name ILIKE $${paramIndex})`;
@@ -79,10 +101,10 @@ export async function GET(request: Request) {
   }
 }
 
-// POST create new user (Admin only)
+// POST create new user (Admin or Academy Manager)
 export async function POST(request: Request) {
   try {
-    const session = await requireRole(['admin']);
+    const session = await requireRole(['admin', 'academy_manager']);
 
     const body = await request.json();
     const {
@@ -121,10 +143,39 @@ export async function POST(request: Request) {
     // Hash password
     const password_hash = await hashPassword(password);
 
-    if (academy_id) {
+    let enforcedAcademyId = academy_id || null;
+    if (session.roleName !== 'admin') {
+      const academyResult = await pool.query(
+        'SELECT academy_id FROM users WHERE id = $1',
+        [session.userId]
+      );
+      const managerAcademyId = academyResult.rows[0]?.academy_id;
+      if (!managerAcademyId) {
+        return NextResponse.json(
+          { message: 'Academy not found' },
+          { status: 400 }
+        );
+      }
+
+      const roleResult = await pool.query(
+        'SELECT name FROM roles WHERE id = $1',
+        [role_id]
+      );
+      const roleName = roleResult.rows[0]?.name;
+      if (!roleName || !['player', 'coach'].includes(roleName)) {
+        return NextResponse.json(
+          { message: 'Invalid role for academy manager' },
+          { status: 400 }
+        );
+      }
+
+      enforcedAcademyId = managerAcademyId;
+    }
+
+    if (enforcedAcademyId) {
       const academyExists = await pool.query(
         'SELECT id FROM academies WHERE id = $1',
-        [academy_id]
+        [enforcedAcademyId]
       );
       if (academyExists.rows.length === 0) {
         return NextResponse.json(
@@ -140,7 +191,7 @@ export async function POST(request: Request) {
         (email, password_hash, first_name, last_name, phone, role_id, academy_id, preferred_language, is_active, created_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id, email, first_name, last_name, phone, role_id, academy_id, preferred_language, is_active, created_at, created_by`,
-      [email, password_hash, first_name, last_name, phone, role_id, academy_id || null, preferred_language || 'en', is_active, session.userId]
+      [email, password_hash, first_name, last_name, phone, role_id, enforcedAcademyId || null, preferred_language || 'en', is_active, session.userId]
     );
 
     return NextResponse.json(
