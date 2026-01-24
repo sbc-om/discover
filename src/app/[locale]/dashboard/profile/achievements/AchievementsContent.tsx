@@ -22,6 +22,8 @@ interface AchievementOption {
   id: string;
   title: string;
   title_ar?: string | null;
+  description?: string | null;
+  icon_url?: string | null;
 }
 
 const formatDate = (value?: string | null, locale?: string) => {
@@ -186,22 +188,69 @@ export default function AchievementsContent() {
 
         {/* Award Achievement Form (Admin only) */}
         {canAwardAchievement && (
-          <div className="pt-4 border-t border-zinc-300 dark:border-zinc-700 space-y-3">
-            <p className="text-xs font-semibold text-zinc-900 dark:text-white">
+          <div className="pt-4 border-t border-zinc-300 dark:border-zinc-700 space-y-4">
+            <p className="text-sm font-bold text-zinc-900 dark:text-white">
               {isAr ? 'منح إنجاز جديد' : 'Award new achievement'}
             </p>
-            <select
-              value={awardAchievementId}
-              onChange={(e) => setAwardAchievementId(e.target.value)}
-              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white"
-            >
-              <option value="">{isAr ? 'اختر الإنجاز' : 'Select achievement'}</option>
+            
+            {/* Achievement Grid with Images */}
+            <div className="grid grid-cols-3 gap-3 max-h-64 overflow-y-auto p-1">
               {achievementsCatalog.map((achievement) => (
-                <option key={achievement.id} value={achievement.id}>
-                  {isAr ? achievement.title_ar || achievement.title : achievement.title}
-                </option>
+                <button
+                  key={achievement.id}
+                  type="button"
+                  onClick={() => setAwardAchievementId(achievement.id)}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${
+                    awardAchievementId === achievement.id
+                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                      : 'border-zinc-200 dark:border-zinc-700 hover:border-orange-300 dark:hover:border-orange-600 bg-white dark:bg-zinc-800'
+                  }`}
+                >
+                  <div className="h-14 w-14 rounded-xl overflow-hidden bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-700 dark:to-zinc-600 flex items-center justify-center">
+                    {achievement.icon_url ? (
+                      <img src={achievement.icon_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <Award className="h-7 w-7 text-orange-500" />
+                    )}
+                  </div>
+                  <span className="text-xs text-zinc-700 dark:text-zinc-300 text-center line-clamp-2 leading-tight font-medium">
+                    {isAr ? achievement.title_ar || achievement.title : achievement.title}
+                  </span>
+                </button>
               ))}
-            </select>
+            </div>
+
+            {/* Selected Achievement Preview */}
+            {awardAchievementId && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                {(() => {
+                  const selected = achievementsCatalog.find(a => a.id === awardAchievementId);
+                  if (!selected) return null;
+                  return (
+                    <>
+                      <div className="h-12 w-12 rounded-xl overflow-hidden bg-white dark:bg-zinc-800 flex items-center justify-center">
+                        {selected.icon_url ? (
+                          <img src={selected.icon_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <Award className="h-6 w-6 text-orange-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                          {isAr ? selected.title_ar || selected.title : selected.title}
+                        </p>
+                        {selected.description && (
+                          <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-1">
+                            {selected.description}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
             <textarea
               value={awardNote}
               onChange={(e) => setAwardNote(e.target.value)}
@@ -213,7 +262,7 @@ export default function AchievementsContent() {
               type="button"
               onClick={handleAwardAchievement}
               disabled={awarding || !awardAchievementId}
-              className="w-full rounded-xl bg-orange-500 text-black py-2.5 text-sm font-bold hover:bg-orange-600 disabled:opacity-60"
+              className="w-full rounded-xl bg-orange-500 text-white py-3 text-sm font-bold hover:bg-orange-600 disabled:opacity-60 transition shadow-md"
             >
               {awarding ? (isAr ? 'جاري الإرسال...' : 'Awarding...') : (isAr ? 'منح الإنجاز' : 'Award achievement')}
             </button>
