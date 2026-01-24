@@ -64,7 +64,7 @@ export async function GET() {
         return NextResponse.json({ role: 'academy_manager', stats: null, academy: null });
       }
 
-      const [academyInfo, coachesResult, playersResult, programsResult, testsResult, medalsResult] = await Promise.all([
+      const [academyInfo, coachesResult, playersResult, programsResult, testsResult, medalsResult, usersResult] = await Promise.all([
         pool.query(
           `SELECT id, name, name_ar, city, is_active, logo_url
            FROM academies
@@ -104,6 +104,12 @@ export async function GET() {
            JOIN users u ON u.id = mr.user_id
            WHERE u.academy_id = $1 AND mr.status = 'pending'`,
           [academyId]
+        ),
+        pool.query(
+          `SELECT COUNT(*)::int as count
+           FROM users
+           WHERE academy_id = $1`,
+          [academyId]
         )
       ]);
 
@@ -115,6 +121,7 @@ export async function GET() {
           programs: programsResult.rows[0]?.count || 0,
           pendingHealthTests: testsResult.rows[0]?.count || 0,
           pendingMedalRequests: medalsResult.rows[0]?.count || 0,
+          users: usersResult.rows[0]?.count || 0,
         },
         academy: academyInfo.rows[0] || null,
       });

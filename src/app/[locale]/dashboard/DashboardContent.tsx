@@ -200,6 +200,7 @@ export default function DashboardContent() {
           <StatCard icon={Building2} label={isAr ? 'البرامج' : 'Programs'} value={data.stats.programs || 0} />
           <StatCard icon={ClipboardList} label={isAr ? 'طلبات الفحص' : 'Health Test Requests'} value={data.stats.pendingHealthTests} />
           <StatCard icon={Award} label={isAr ? 'طلبات الميداليات' : 'Medal Requests'} value={data.stats.pendingMedalRequests} />
+          <StatCard icon={Users} label={isAr ? 'إجمالي المستخدمين' : 'Total Users'} value={data.stats.users || 0} />
         </div>
       </div>
     );
