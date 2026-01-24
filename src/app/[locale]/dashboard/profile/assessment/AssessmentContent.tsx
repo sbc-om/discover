@@ -267,13 +267,14 @@ export default function AssessmentContent() {
               </div>
 
               {/* Performance Metrics */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <RadialInsight label={isAr ? 'السرعة' : 'Speed'} value={latestTest.speed_score} />
                 <RadialInsight label={isAr ? 'الرشاقة' : 'Agility'} value={latestTest.agility_score} />
                 <RadialInsight label={isAr ? 'القوة' : 'Power'} value={latestTest.power_score} />
                 <RadialInsight label={isAr ? 'التوازن' : 'Balance'} value={latestTest.balance_score} />
                 <RadialInsight label={isAr ? 'رد الفعل' : 'Reaction'} value={latestTest.reaction_score} />
                 <RadialInsight label={isAr ? 'التناسق' : 'Coord.'} value={latestTest.coordination_score} />
+                <RadialInsight label={isAr ? 'المرونة' : 'Flex.'} value={latestTest.flexibility_score} />
               </div>
 
               {canSeeTestReviewNotes && latestTest.notes && (
