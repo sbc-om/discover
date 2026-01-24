@@ -30,12 +30,14 @@ export default function LoginForm({ locale }: LoginFormProps) {
         body: JSON.stringify({ email, password })
       });
 
+      const data = await res.json().catch(() => ({}));
+      
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data?.message || 'Login failed');
       }
 
-      router.push(`/${locale}/dashboard`);
+      // Force a full page navigation to ensure server-side session is read
+      window.location.href = `/${locale}/dashboard`;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

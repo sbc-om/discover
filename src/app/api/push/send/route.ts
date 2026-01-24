@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import webpush from 'web-push';
 import pool from '@/lib/db';
-import { requireRole } from '@/lib/session';
+import { requireRole, getSession } from '@/lib/session';
 
 function getVapidConfig() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
@@ -19,6 +19,7 @@ function getVapidConfig() {
 export async function POST(request: Request) {
   try {
     await requireRole(['admin']);
+    const session = await getSession();
 
     const vapid = getVapidConfig();
     if (!vapid) {
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
       body: message.trim(),
       icon: '/logo/icon-black.png',
       badge: '/logo/icon-black.png',
-      url: '/dashboard/messages'
+      url: '/dashboard/notifications'
     });
 
     const sendResults = await Promise.allSettled(
@@ -84,6 +85,17 @@ export async function POST(request: Request) {
 
     const successCount = sendResults.filter(r => r.status === 'fulfilled').length;
     const failureCount = sendResults.length - successCount;
+
+    // Save in-app notifications for all target users (as messages)
+    const messageContent = message.trim();
+    const senderId = session?.userId || null;
+    
+    // Insert messages for each user (even if push failed, they should see in-app)
+    await pool.query(
+      `INSERT INTO messages (sender_id, receiver_id, subject, content, is_read)
+       SELECT $1, unnest($2::uuid[]), $3, $4, false`,
+      [senderId, userIds, 'New message', messageContent]
+    );
 
     return NextResponse.json({
       message: 'Notifications sent',

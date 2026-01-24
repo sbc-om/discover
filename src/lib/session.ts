@@ -4,7 +4,6 @@ import { verifyToken, type JWTPayload } from './auth';
 export async function getSession(): Promise<JWTPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token');
-
   if (!token) {
     return null;
   }

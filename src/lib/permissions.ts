@@ -133,14 +133,14 @@ export async function getAccessibleMenuItems() {
       return [];
     }
 
-    // Admin sees all modules
+    // Admin sees all modules except player_profile (only players see their profile)
     if (session.roleName === 'admin') {
       const { rows } = await pool.query(
         `SELECT 
           m.id, m.name, m.name_ar, m.name_en, 
           m.icon, m.route, m.display_order
         FROM modules m
-        WHERE m.is_active = true AND m.route IS NOT NULL
+        WHERE m.is_active = true AND m.route IS NOT NULL AND m.name != 'player_profile'
         ORDER BY m.display_order`
       );
       return rows;

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Bell, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useToast } from '@/components/ToastProvider';
 import useLocale from '@/hooks/useLocale';
 
@@ -160,6 +161,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [programs, setPrograms] = useState<ProgramOption[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroupOption[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [assignmentForm, setAssignmentForm] = useState({
     program_id: '',
     age_group_id: '',
@@ -175,6 +177,20 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const endpoint = useMemo(() => {
     return userId ? `/api/player-profile/${userId}` : '/api/player-profile';
   }, [userId]);
+
+  // Fetch unread notification count for players
+  const fetchUnreadCount = async () => {
+    if (isAdminView) return;
+    try {
+      const response = await fetch('/api/notifications?unread_only=true');
+      const data = await response.json();
+      if (response.ok) {
+        setUnreadCount(data.unread_count || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -237,6 +253,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
 
   useEffect(() => {
     fetchProfile();
+    fetchUnreadCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endpoint]);
 
@@ -368,12 +385,19 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="h-9 w-9 rounded-full border border-zinc-300/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 flex items-center justify-center"
-            >
-              <Bell className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
-            </button>
+            {!isAdminView && (
+              <Link
+                href={`/${locale}/dashboard/notifications`}
+                className="relative h-9 w-9 rounded-full border border-zinc-300/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 flex items-center justify-center"
+              >
+                <Bell className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </Link>
+            )}
             <div className="h-10 w-10 overflow-hidden rounded-full border border-white/50 bg-zinc-200 dark:bg-zinc-800">
               {data.user.avatar_url ? (
                 <img src={data.user.avatar_url} alt="" className="h-full w-full object-cover" />

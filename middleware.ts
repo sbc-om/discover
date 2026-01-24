@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
 
 // Supported locales
 const locales = ['en', 'ar'];
@@ -47,7 +46,7 @@ export default function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
   
   if (isProtectedRoute) {
-    // Verify token for protected routes
+    // Only check token presence here to avoid edge JWT issues; server will validate.
     if (!token) {
       const locale = pathname.split('/')[1] || 'en';
       const loginUrl = new URL(`/${locale}/login`, request.url);
@@ -55,38 +54,13 @@ export default function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    const payload = verifyToken(token);
-    if (!payload) {
-      // Invalid token - clear cookie and redirect to login
-      const locale = pathname.split('/')[1] || 'en';
-      const response = NextResponse.redirect(new URL(`/${locale}/login`, request.url));
-      response.cookies.delete('auth-token');
-      return response;
-    }
-
-    const locale = pathname.split('/')[1] || 'en';
-    const isPlayer = payload.roleName === 'player';
-    const playerAllowedPath = `/${locale}/dashboard/profile`;
-
-    if (isPlayer && pathname.startsWith(`/${locale}/dashboard`) && !pathname.startsWith(playerAllowedPath)) {
-      return NextResponse.redirect(new URL(playerAllowedPath, request.url));
-    }
-
-    // Add user info to headers for use in route handlers
-    const response = localeMiddleware(request);
-    response.headers.set('x-user-id', payload.userId);
-    response.headers.set('x-user-email', payload.email);
-    response.headers.set('x-user-role', payload.roleName);
-    return response;
+    return localeMiddleware(request);
   }
 
   // Redirect authenticated users away from login page
   if (isPublicRoute && pathname.includes('/login') && token) {
-    const payload = verifyToken(token);
-    if (payload) {
-      const locale = pathname.split('/')[1] || 'en';
-      return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
-    }
+    const locale = pathname.split('/')[1] || 'en';
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
   }
 
   return localeMiddleware(request);
