@@ -221,9 +221,9 @@ export default function HealthTestsContent() {
   }
 
   const handlePrint = () => {
-    const printable = filteredTests.filter((test) => test.status === 'pending');
+    const printable = filteredTests.filter((test) => test.status === 'pending' || test.status === 'approved');
     if (printable.length === 0) {
-      showToast('error', isAr ? 'لا توجد نتائج للطباعة' : 'No results to print');
+      showToast('error', isAr ? 'لا توجد طلبات للطباعة' : 'No requests to print');
       return;
     }
 
@@ -243,6 +243,7 @@ export default function HealthTestsContent() {
             .field { display: flex; flex-direction: column; gap: 6px; }
             .line { border-bottom: 1px solid #222; height: 22px; }
             .notes { border: 1px solid #222; height: 80px; border-radius: 8px; }
+            .status { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
           </style>
         </head>
         <body>
@@ -251,6 +252,9 @@ export default function HealthTestsContent() {
             .map((test) => {
               const name = `${test.first_name} ${test.last_name}`.trim();
               const academyName = isAr ? test.academy_name_ar || test.academy_name : test.academy_name || test.academy_name_ar;
+              const statusLabel = isAr
+                ? (test.status === 'approved' ? 'تم القبول' : 'قيد الانتظار')
+                : test.status;
               return `
                 <div class="card">
                   <div class="row">
@@ -261,6 +265,8 @@ export default function HealthTestsContent() {
                       <div class="value">${academyName || '-'}</div>
                     </div>
                     <div>
+                      <div class="label" style="margin-bottom:4px;">${isAr ? 'الحالة' : 'Status'}</div>
+                      <div class="status">${statusLabel}</div>
                       <div class="label" style="margin-top:6px;">${isAr ? 'تاريخ الطلب' : 'Requested'}</div>
                       <div class="value">${formatDate(test.requested_at, locale)}</div>
                       <div class="label" style="margin-top:6px;">${isAr ? 'الموعد' : 'Scheduled'}</div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, CheckCircle2, Clock, XCircle, ChevronDown, IdCard } from 'lucide-react';
+import { Bell, CheckCircle2, Clock, XCircle, ChevronDown, IdCard, List } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ToastProvider';
 import useLocale from '@/hooks/useLocale';
@@ -215,6 +215,9 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const [awardAchievementId, setAwardAchievementId] = useState('');
   const [awardNote, setAwardNote] = useState('');
   const [awarding, setAwarding] = useState(false);
+  const [showAllTests, setShowAllTests] = useState(false);
+  const [allTests, setAllTests] = useState<HealthTestData[]>([]);
+  const [allTestsLoading, setAllTestsLoading] = useState(false);
   const [assignmentForm, setAssignmentForm] = useState({
     program_id: '',
     age_group_id: '',
@@ -235,6 +238,8 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const isAdminView = Boolean(userId);
   const canRequestMedal = isAdminView && (currentRole === 'admin' || currentRole === 'academy_manager');
   const canAwardAchievement = isAdminView && (currentRole === 'admin' || currentRole === 'academy_manager');
+  const canSeeTestReviewNotes = currentRole === 'admin' || currentRole === 'academy_manager';
+  const canSeeAllTests = currentRole === 'admin' || currentRole === 'academy_manager';
 
   const endpoint = useMemo(() => {
     return userId ? `/api/player-profile/${userId}` : '/api/player-profile';
@@ -408,6 +413,29 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
       showToast('error', error.message || (isAr ? 'تعذر إرسال الطلب' : 'Failed to request test'));
     } finally {
       setRequesting(false);
+    }
+  };
+
+  const fetchAllTests = async () => {
+    try {
+      setAllTestsLoading(true);
+      const params = new URLSearchParams();
+      if (isAdminView && userId) {
+        params.set('user_id', userId);
+      }
+      const response = await fetch(`/api/health-tests?${params.toString()}`);
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || 'Failed to load tests');
+      }
+      const completedTests = (payload.tests || []).filter(
+        (test: HealthTestData) => test.status === 'completed'
+      );
+      setAllTests(completedTests);
+    } catch (error: any) {
+      showToast('error', error.message || (isAr ? 'تعذر تحميل الاختبارات' : 'Failed to load tests'));
+    } finally {
+      setAllTestsLoading(false);
     }
   };
 
@@ -943,7 +971,25 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
             <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
               {isAr ? 'نتائج الاختبار' : 'Test Results'}
             </h3>
-            <span className="text-xs text-zinc-500">{formatDate(latestTest.test_date || latestTest.scheduled_at, locale)}</span>
+            <div className="flex items-center gap-2">
+              {canSeeAllTests && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAllTests((prev) => !prev);
+                    if (!showAllTests && allTests.length === 0) {
+                      fetchAllTests();
+                    }
+                  }}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  title={isAr ? 'عرض جميع النتائج' : 'Show all results'}
+                  aria-label={isAr ? 'عرض جميع النتائج' : 'Show all results'}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              )}
+              <span className="text-xs text-zinc-500">{formatDate(latestTest.test_date || latestTest.scheduled_at, locale)}</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-xs text-zinc-600 dark:text-zinc-400">
@@ -985,8 +1031,77 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
             </div>
           </div>
 
-          {latestTest.notes && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{latestTest.notes}</p>
+          {canSeeTestReviewNotes && latestTest.notes && (
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 p-3">
+              <p className="text-[10px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                {isAr ? 'ملاحظة الاختبار' : 'Test note'}
+              </p>
+              <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300">
+                {latestTest.notes}
+              </p>
+            </div>
+          )}
+
+          {canSeeAllTests && showAllTests && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+                  {isAr ? 'كل نتائج الاختبارات' : 'All test results'}
+                </p>
+                {allTestsLoading && (
+                  <span className="text-[10px] text-zinc-400">{isAr ? 'جاري التحميل...' : 'Loading...'}</span>
+                )}
+              </div>
+              {allTests.length === 0 && !allTestsLoading ? (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {isAr ? 'لا توجد نتائج بعد.' : 'No results yet.'}
+                </p>
+              ) : (
+                allTests.map((test) => (
+                  <div key={test.id} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-950/40 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+                        {formatDate(test.test_date || test.scheduled_at, locale)}
+                      </p>
+                      <span className="text-[10px] text-zinc-400">{isAr ? 'مكتمل' : 'Completed'}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs text-zinc-600 dark:text-zinc-400">
+                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'طول' : 'Height'}</p>
+                        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{test.height || '-'} cm</p>
+                      </div>
+                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'وزن' : 'Weight'}</p>
+                        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{test.weight || '-'} kg</p>
+                      </div>
+                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'ضغط' : 'Blood'}</p>
+                        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{test.blood_pressure || '-'}</p>
+                      </div>
+                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">{isAr ? 'نبض' : 'Heart'}</p>
+                        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{test.heart_rate || '-'} bpm</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <RadialInsight label={isAr ? 'السرعة' : 'Speed'} value={test.speed_score} />
+                      <RadialInsight label={isAr ? 'الرشاقة' : 'Agility'} value={test.agility_score} />
+                      <RadialInsight label={isAr ? 'القوة' : 'Power'} value={test.power_score} />
+                    </div>
+                    {canSeeTestReviewNotes && test.notes && (
+                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                          {isAr ? 'ملاحظة الاختبار' : 'Test note'}
+                        </p>
+                        <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300">
+                          {test.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </div>
       )}
