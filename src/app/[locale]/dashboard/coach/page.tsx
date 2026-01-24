@@ -1,5 +1,5 @@
 import ProtectedPage from '@/components/ProtectedPage';
-import CoachProgramsContent from '../programs/CoachProgramsContent';
+import CoachDashboardContent from './CoachDashboardContent';
 
 export default async function CoachProfilePage({
   params,
@@ -10,7 +10,7 @@ export default async function CoachProfilePage({
 
   return (
     <ProtectedPage locale={locale} moduleName="coach_profile">
-      <CoachProgramsContent />
+      <CoachDashboardContent />
     </ProtectedPage>
   );
 }

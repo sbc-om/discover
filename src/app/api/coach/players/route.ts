@@ -47,7 +47,9 @@ export async function GET(request: Request) {
         pa.present,
         pa.score,
         pa.notes,
-        pa.attendance_date
+        pa.attendance_date,
+        COALESCE(stats.total_sessions, 0) as total_sessions,
+        COALESCE(stats.total_points, 0) as total_points
       FROM player_programs pr
       JOIN users u ON u.id = pr.user_id
       JOIN roles r ON r.id = u.role_id
@@ -56,6 +58,13 @@ export async function GET(request: Request) {
         ON pa.user_id = u.id
         AND pa.program_id = pr.program_id
         AND pa.attendance_date = $3
+      LEFT JOIN LATERAL (
+        SELECT 
+          COUNT(*) FILTER (WHERE present = true) as total_sessions,
+          COALESCE(SUM(score), 0) as total_points
+        FROM program_attendance
+        WHERE user_id = u.id AND program_id = pr.program_id
+      ) stats ON true
       WHERE pr.program_id = $1
         AND pr.age_group_id = $2
         AND r.name = 'player'
@@ -64,7 +73,31 @@ export async function GET(request: Request) {
       [programId, ageGroupId, date]
     );
 
-    return NextResponse.json({ players: rows, date });
+    // Calculate level for each player
+    const levelsResult = await pool.query(
+      `SELECT id, level_order, min_sessions, min_points 
+       FROM program_levels 
+       WHERE program_id = $1 AND is_active = true 
+       ORDER BY level_order`,
+      [programId]
+    );
+    const levels = levelsResult.rows;
+
+    const playersWithLevel = rows.map((player: any) => {
+      let currentLevel = 1;
+      for (const level of levels) {
+        if (player.total_sessions >= level.min_sessions && player.total_points >= level.min_points) {
+          currentLevel = level.level_order;
+        }
+      }
+      return {
+        ...player,
+        level: currentLevel,
+        points: Number(player.total_points) || 0,
+      };
+    });
+
+    return NextResponse.json({ players: playersWithLevel, date });
   } catch (error: any) {
     console.error('Get coach players error:', error);
     return NextResponse.json(
