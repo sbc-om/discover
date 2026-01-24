@@ -39,6 +39,14 @@ interface HealthTestData {
   power_score?: number | null;
 }
 
+interface MedalRequestData {
+  id: string;
+  medal_type: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requested_date?: string | null;
+  delivery_date?: string | null;
+}
+
 interface ProgramOption {
   id: string;
   name: string;
@@ -99,6 +107,7 @@ interface ProfileResponse {
   profileComplete: boolean;
   latestTest?: HealthTestData | null;
   activeRequest?: HealthTestData | null;
+  medalRequest?: MedalRequestData | null;
   assignment?: AssignmentData | null;
   program_levels?: ProgramLevel[];
   messages?: PlayerMessage[];
@@ -178,13 +187,19 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const [saving, setSaving] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [medalSubmitting, setMedalSubmitting] = useState(false);
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [programs, setPrograms] = useState<ProgramOption[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroupOption[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [assignmentForm, setAssignmentForm] = useState({
     program_id: '',
     age_group_id: '',
+  });
+  const [medalForm, setMedalForm] = useState({
+    medal_type: '',
+    achievement_description: '',
   });
   const [form, setForm] = useState({
     sport: '',
@@ -194,6 +209,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   });
   const [profileFormOpen, setProfileFormOpen] = useState(false);
   const isAdminView = Boolean(userId);
+  const canRequestMedal = isAdminView && (currentRole === 'admin' || currentRole === 'academy_manager');
 
   const endpoint = useMemo(() => {
     return userId ? `/api/player-profile/${userId}` : '/api/player-profile';
@@ -277,6 +293,21 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     fetchUnreadCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endpoint]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        const payload = await response.json();
+        if (response.ok) {
+          setCurrentRole(payload.roleName || null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user role:', error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   useEffect(() => {
     if (!isAdminView) return;
@@ -370,6 +401,45 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     }
   };
 
+  const medalOptions = useMemo(() => (
+    [
+      { value: 'gold', label: isAr ? 'ذهبية' : 'Gold' },
+      { value: 'silver', label: isAr ? 'فضية' : 'Silver' },
+      { value: 'bronze', label: isAr ? 'برونزية' : 'Bronze' },
+    ]
+  ), [isAr]);
+
+  const handleRequestMedal = async () => {
+    if (!userId) return;
+    if (!medalForm.medal_type) {
+      showToast('error', isAr ? 'اختر نوع الميدالية أولاً' : 'Select a medal type first');
+      return;
+    }
+
+    try {
+      setMedalSubmitting(true);
+      const response = await fetch('/api/medal-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          medal_type: medalForm.medal_type,
+          achievement_description: medalForm.achievement_description,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || 'Failed to submit medal request');
+      }
+      setMedalForm({ medal_type: '', achievement_description: '' });
+      showToast('success', isAr ? 'تم إرسال طلب الميدالية' : 'Medal request submitted');
+    } catch (error: any) {
+      showToast('error', error.message || (isAr ? 'تعذر إرسال الطلب' : 'Failed to submit request'));
+    } finally {
+      setMedalSubmitting(false);
+    }
+  };
+
   if (loading || !data) {
     return (
       <div className="flex items-center justify-center py-20 text-zinc-500">
@@ -388,6 +458,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const programLevels = data.program_levels || [];
   const messages = data.messages || [];
   const attendance = data.attendance || [];
+  const medalRequest = data.medalRequest || null;
   const sessionsCompleted = attendance.filter((record) => record.present).length;
   const pointsTotal = attendance.reduce((sum, record) => sum + (record.score || 0), 0);
   const activeLevels = programLevels.filter((level) => level.is_active);
@@ -619,6 +690,68 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
               ? (isAr ? 'جاري الإرسال...' : 'Submitting...')
               : (isAr ? 'طلب اختبار بدني' : 'Request physical test')}
           </button>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+          {isAr ? 'طلبات الميداليات' : 'Medal requests'}
+        </h3>
+        {medalRequest ? (
+          <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">
+                {medalRequest.medal_type} · {medalRequest.status}
+              </span>
+            </div>
+            <p>{isAr ? 'تاريخ الطلب:' : 'Requested:'} {formatDate(medalRequest.requested_date, locale)}</p>
+            <p>{isAr ? 'تاريخ التسليم:' : 'Delivery:'} {formatDate(medalRequest.delivery_date, locale)}</p>
+          </div>
+        ) : (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            {isAr ? 'لا توجد طلبات بعد.' : 'No requests yet.'}
+          </p>
+        )}
+
+        {canRequestMedal && (
+          <div className="pt-2 space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                {isAr ? 'نوع الميدالية' : 'Medal type'}
+              </label>
+              <select
+                value={medalForm.medal_type}
+                onChange={(event) => setMedalForm((prev) => ({ ...prev, medal_type: event.target.value }))}
+                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+              >
+                <option value="">{isAr ? 'اختر نوع الميدالية' : 'Select medal type'}</option>
+                {medalOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                {isAr ? 'الإنجاز' : 'Achievement'}
+              </label>
+              <textarea
+                value={medalForm.achievement_description}
+                onChange={(event) => setMedalForm((prev) => ({ ...prev, achievement_description: event.target.value }))}
+                rows={3}
+                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleRequestMedal}
+              disabled={medalSubmitting}
+              className="w-full rounded-xl bg-orange-500 text-white py-2 text-sm font-semibold hover:bg-orange-600 disabled:opacity-60"
+            >
+              {medalSubmitting
+                ? (isAr ? 'جاري الإرسال...' : 'Submitting...')
+                : (isAr ? 'إرسال الطلب' : 'Submit request')}
+            </button>
+          </div>
         )}
       </div>
 

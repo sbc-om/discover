@@ -161,6 +161,7 @@ CREATE TABLE IF NOT EXISTS medal_requests (
     achievement_description TEXT,
     status VARCHAR(20) DEFAULT 'pending', -- pending, approved, rejected
     requested_date DATE DEFAULT CURRENT_DATE,
+    delivery_date DATE,
     reviewed_by UUID REFERENCES users(id),
     review_date DATE,
     review_notes TEXT,

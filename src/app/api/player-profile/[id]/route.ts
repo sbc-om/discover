@@ -57,6 +57,15 @@ const fetchProfileData = async (userId: string) => {
     [userId]
   );
 
+  const latestMedalRequestResult = await pool.query(
+    `SELECT id, medal_type, status, requested_date, delivery_date
+     FROM medal_requests
+     WHERE user_id = $1
+     ORDER BY requested_date DESC NULLS LAST, created_at DESC
+     LIMIT 1`,
+    [userId]
+  );
+
   const attendanceResult = await pool.query(
     `SELECT attendance_date, present, score, notes
      FROM program_attendance
@@ -113,6 +122,7 @@ const fetchProfileData = async (userId: string) => {
     program_levels: programLevels,
     latestTest: latestTestResult.rows[0] || null,
     activeRequest: activeRequestResult.rows[0] || null,
+    medalRequest: latestMedalRequestResult.rows[0] || null,
     messages: messagesResult.rows || [],
     attendance: attendanceResult.rows || [],
   };

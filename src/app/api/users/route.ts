@@ -29,9 +29,30 @@ export async function GET(request: Request) {
         u.is_active, u.email_verified, u.last_login, 
         u.preferred_language, u.created_at, u.avatar_url,
         u.academy_id, u.created_by,
-        r.id as role_id, r.name as role_name, r.name_ar, r.name_en
+        r.id as role_id, r.name as role_name, r.name_ar, r.name_en,
+        lvl.completed_level_order,
+        lvl.completed_level_name,
+        lvl.completed_level_name_ar
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id
+      LEFT JOIN (
+        SELECT pr.user_id,
+               MAX(pl.level_order) AS completed_level_order,
+               (ARRAY_AGG(pl.name ORDER BY pl.level_order DESC))[1] AS completed_level_name,
+               (ARRAY_AGG(pl.name_ar ORDER BY pl.level_order DESC))[1] AS completed_level_name_ar
+        FROM player_programs pr
+        JOIN program_levels pl ON pl.program_id = pr.program_id AND pl.is_active = true
+        LEFT JOIN (
+          SELECT user_id,
+                 COUNT(*) FILTER (WHERE present) AS sessions_completed,
+                 COALESCE(SUM(score), 0) AS points_total
+          FROM program_attendance
+          GROUP BY user_id
+        ) pa ON pa.user_id = pr.user_id
+        WHERE COALESCE(pa.sessions_completed, 0) >= pl.min_sessions
+          AND COALESCE(pa.points_total, 0) >= pl.min_points
+        GROUP BY pr.user_id
+      ) lvl ON lvl.user_id = u.id
       WHERE 1=1
     `;
 

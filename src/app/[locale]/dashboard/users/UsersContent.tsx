@@ -48,6 +48,9 @@ interface User {
   academy_id?: string | null;
   created_at: string;
   avatar_url?: string;
+  completed_level_order?: number | null;
+  completed_level_name?: string | null;
+  completed_level_name_ar?: string | null;
 }
 
 interface Role {
@@ -205,6 +208,7 @@ export default function UsersContent() {
   };
 
   const isAcademyManager = currentUserRole === 'academy_manager';
+  const isAdmin = currentUserRole === 'admin';
 
   const getRoleIdByName = (roleName: string) =>
     roles.find((role) => role.name === roleName)?.id || '';
@@ -440,6 +444,10 @@ export default function UsersContent() {
       ? (isAr ? (presetRoleName === 'player' ? 'لاعب' : 'مدرب') : (presetRoleName === 'player' ? 'Player' : 'Coach'))
       : (isAr ? 'اختر نوع المستخدم' : 'Select user type');
 
+  const completedPlayers = isAdmin
+    ? users.filter((user) => user.role_name === 'player' && user.completed_level_order)
+    : [];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -519,6 +527,59 @@ export default function UsersContent() {
       </div>
 
       {/* Users List */}
+      {isAdmin && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+              {isAr ? 'مكتملو المستويات' : 'Completed Levels'}
+            </h3>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {completedPlayers.length}
+            </span>
+          </div>
+          {completedPlayers.length === 0 ? (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {isAr ? 'لا يوجد لاعبون أكملوا مستوى بعد.' : 'No players have completed a level yet.'}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {completedPlayers.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/40 px-3 py-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={`h-8 w-8 rounded-full bg-gradient-to-br ${getRoleColor(user.role_name)} flex items-center justify-center text-white text-[10px] font-semibold overflow-hidden`}>
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span>{user.first_name.charAt(0)}{user.last_name.charAt(0)}</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">
+                        {user.first_name} {user.last_name}
+                      </p>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                        {isAr ? (user.completed_level_name_ar || user.completed_level_name) : (user.completed_level_name || user.completed_level_name_ar)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-semibold">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {isAr ? 'مكتمل' : 'Completed'}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      {isAr ? `المستوى ${user.completed_level_order}` : `Level ${user.completed_level_order}`}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">

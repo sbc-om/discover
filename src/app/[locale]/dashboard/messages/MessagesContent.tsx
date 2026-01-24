@@ -40,6 +40,8 @@ export default function MessagesContent() {
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [currentAcademyId, setCurrentAcademyId] = useState<string>('');
   const [search, setSearch] = useState('');
   const [selectedAcademy, setSelectedAcademy] = useState<string>('');
   const [selectedRole, setSelectedRole] = useState<string>('');
@@ -48,6 +50,7 @@ export default function MessagesContent() {
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
+    fetchCurrentUser();
     fetchAcademies();
     fetchRoles();
     fetchSubscribers();
@@ -57,7 +60,24 @@ export default function MessagesContent() {
     fetchSubscribers();
   }, [selectedAcademy, selectedRole]);
 
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      const data = await response.json();
+      if (response.ok) {
+        setCurrentRole(data.roleName || null);
+        setCurrentAcademyId(data.academyId || '');
+        if (data.roleName === 'academy_manager' && data.academyId) {
+          setSelectedAcademy(data.academyId);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+    }
+  };
+
   const fetchAcademies = async () => {
+    if (currentRole === 'academy_manager') return;
     try {
       const response = await fetch('/api/academies?limit=1000');
       const data = await response.json();
@@ -85,7 +105,8 @@ export default function MessagesContent() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (selectedAcademy) params.append('academyId', selectedAcademy);
+      const academyParam = currentRole === 'academy_manager' ? currentAcademyId : selectedAcademy;
+      if (academyParam) params.append('academyId', academyParam);
       if (selectedRole) params.append('roleId', selectedRole);
       
       const response = await fetch(`/api/push/subscribers?${params.toString()}`);
@@ -186,18 +207,20 @@ export default function MessagesContent() {
               />
             </div>
             
-            <select
-              value={selectedAcademy}
-              onChange={(e) => setSelectedAcademy(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-            >
-              <option value="">{isAr ? 'جميع الأكاديميات' : 'All Academies'}</option>
-              {academies.map((academy) => (
-                <option key={academy.id} value={academy.id}>
-                  {isAr ? academy.name_ar || academy.name : academy.name}
-                </option>
-              ))}
-            </select>
+            {currentRole !== 'academy_manager' && (
+              <select
+                value={selectedAcademy}
+                onChange={(e) => setSelectedAcademy(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+              >
+                <option value="">{isAr ? 'جميع الأكاديميات' : 'All Academies'}</option>
+                {academies.map((academy) => (
+                  <option key={academy.id} value={academy.id}>
+                    {isAr ? academy.name_ar || academy.name : academy.name}
+                  </option>
+                ))}
+              </select>
+            )}
             
             <select
               value={selectedRole}

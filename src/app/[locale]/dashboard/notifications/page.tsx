@@ -9,7 +9,7 @@ export default async function NotificationsPage({
   const { locale } = await params;
 
   return (
-    <ProtectedPage locale={locale} moduleName="player_profile">
+    <ProtectedPage locale={locale} moduleName="messages">
       <NotificationsContent />
     </ProtectedPage>
   );

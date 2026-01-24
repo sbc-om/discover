@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { requireRole } from '@/lib/session';
 
-// GET users with active push subscriptions (Admin only)
+// GET users with active push subscriptions (Admin or Academy Manager)
 export async function GET(request: Request) {
   try {
-    await requireRole(['admin']);
+    const session = await requireRole(['admin', 'academy_manager']);
 
     const { searchParams } = new URL(request.url);
     const academyId = searchParams.get('academyId');
@@ -26,7 +26,19 @@ export async function GET(request: Request) {
     const params: any[] = [];
     let paramIndex = 1;
 
-    if (academyId) {
+    if (session.roleName !== 'admin') {
+      const academyResult = await pool.query(
+        'SELECT academy_id FROM users WHERE id = $1',
+        [session.userId]
+      );
+      const managerAcademyId = academyResult.rows[0]?.academy_id;
+      if (!managerAcademyId) {
+        return NextResponse.json({ users: [] });
+      }
+      query += ` AND u.academy_id = $${paramIndex}`;
+      params.push(managerAcademyId);
+      paramIndex++;
+    } else if (academyId) {
       query += ` AND u.academy_id = $${paramIndex}`;
       params.push(academyId);
       paramIndex++;

@@ -15,7 +15,20 @@ export async function GET(request: Request) {
     const targetUserId = searchParams.get('user_id') || session.userId;
 
     if (targetUserId !== session.userId && session.roleName !== 'admin') {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      if (session.roleName !== 'academy_manager') {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
+
+      const [actorResult, targetResult] = await Promise.all([
+        pool.query('SELECT academy_id FROM users WHERE id = $1', [session.userId]),
+        pool.query('SELECT academy_id FROM users WHERE id = $1', [targetUserId])
+      ]);
+      const actorAcademyId = actorResult.rows[0]?.academy_id;
+      const targetAcademyId = targetResult.rows[0]?.academy_id;
+
+      if (!actorAcademyId || actorAcademyId !== targetAcademyId) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
     }
 
     let query = `

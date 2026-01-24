@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import webpush from 'web-push';
 import pool from '@/lib/db';
-import { requireRole, getSession } from '@/lib/session';
+import { requireRole } from '@/lib/session';
 
 function getVapidConfig() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
@@ -15,11 +15,10 @@ function getVapidConfig() {
   return { publicKey, privateKey, subject };
 }
 
-// POST send push notifications (Admin only)
+// POST send push notifications (Admin or Academy Manager)
 export async function POST(request: Request) {
   try {
-    await requireRole(['admin']);
-    const session = await getSession();
+    const session = await requireRole(['admin', 'academy_manager']);
 
     const vapid = getVapidConfig();
     if (!vapid) {
@@ -38,6 +37,25 @@ export async function POST(request: Request) {
 
     if (!message || !message.trim()) {
       return NextResponse.json({ message: 'Message is required' }, { status: 400 });
+    }
+
+    if (session?.roleName === 'academy_manager') {
+      const academyResult = await pool.query(
+        'SELECT academy_id FROM users WHERE id = $1',
+        [session.userId]
+      );
+      const managerAcademyId = academyResult.rows[0]?.academy_id;
+      if (!managerAcademyId) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
+
+      const allowedResult = await pool.query(
+        'SELECT COUNT(*)::int as count FROM users WHERE id = ANY($1) AND academy_id = $2',
+        [userIds, managerAcademyId]
+      );
+      if ((allowedResult.rows[0]?.count || 0) !== userIds.length) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
     }
 
     webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
@@ -88,7 +106,7 @@ export async function POST(request: Request) {
 
     // Save in-app notifications for all target users (as messages)
     const messageContent = message.trim();
-    const senderId = session?.userId || null;
+    const senderId = session.userId || null;
     
     // Insert messages for each user (even if push failed, they should see in-app)
     await pool.query(
