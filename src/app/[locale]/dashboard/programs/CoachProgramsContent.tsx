@@ -19,6 +19,7 @@ interface Program {
   name: string;
   name_ar?: string | null;
   description?: string | null;
+  image_url?: string | null;
   age_groups?: AgeGroup[];
 }
 
@@ -47,6 +48,7 @@ export default function CoachProgramsContent() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [messageDrafts, setMessageDrafts] = useState<Record<string, string>>({});
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [messageOpenId, setMessageOpenId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const saveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -213,25 +215,47 @@ export default function CoachProgramsContent() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {programs.map((program) => (
-                <button
-                  key={program.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedProgramId(program.id);
-                    const firstGroup = program.age_groups?.[0];
-                    setSelectedAgeGroupId(firstGroup?.id || '');
-                  }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-                    selectedProgramId === program.id
-                      ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-200'
-                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300'
-                  }`}
-                >
-                  {isAr ? program.name_ar || program.name : program.name}
-                </button>
-              ))}
+            <div className="-mx-4 px-4">
+              <div className="flex gap-4 overflow-x-auto pb-2">
+                {programs.map((program) => {
+                  const isActive = selectedProgramId === program.id;
+                  return (
+                    <button
+                      key={program.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedProgramId(program.id);
+                        const firstGroup = program.age_groups?.[0];
+                        setSelectedAgeGroupId(firstGroup?.id || '');
+                      }}
+                      className="flex flex-col items-center gap-2 min-w-[96px]"
+                    >
+                      <div
+                        className={`h-16 w-16 rounded-full border-2 overflow-hidden flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 ${
+                          isActive
+                            ? 'border-orange-500 ring-2 ring-orange-200 dark:ring-orange-900/40'
+                            : 'border-zinc-200 dark:border-zinc-700'
+                        }`}
+                      >
+                        {program.image_url ? (
+                          <img src={program.image_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-[10px] font-semibold text-zinc-400">
+                            {isAr ? 'برنامج' : 'Program'}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        className={`text-xs font-semibold text-center ${
+                          isActive ? 'text-orange-600 dark:text-orange-300' : 'text-zinc-600 dark:text-zinc-300'
+                        }`}
+                      >
+                        {isAr ? program.name_ar || program.name : program.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {selectedProgram && (
@@ -257,7 +281,7 @@ export default function CoachProgramsContent() {
       </div>
 
       {selectedAgeGroup && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
           <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
             <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
               <Users className="h-4 w-4" />
@@ -279,10 +303,10 @@ export default function CoachProgramsContent() {
           ) : (
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {players.map((player) => (
-                <div key={player.id} className="p-4 space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div key={player.id} className="p-4 space-y-4">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                      <div className="h-12 w-12 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                         {player.avatar_url ? (
                           <img src={player.avatar_url} alt="" className="h-full w-full object-cover" />
                         ) : (
@@ -300,7 +324,8 @@ export default function CoachProgramsContent() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex flex-wrap items-center gap-3">
                       <button
                         type="button"
                         onClick={() =>
@@ -321,8 +346,9 @@ export default function CoachProgramsContent() {
                       >
                         {player.present ? (isAr ? 'حاضر' : 'Present') : (isAr ? 'غائب' : 'Absent')}
                       </button>
+
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">0</span>
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400">0</span>
                         <input
                           type="range"
                           min={0}
@@ -338,13 +364,25 @@ export default function CoachProgramsContent() {
                               return next;
                             })
                           }
-                          className="w-24 accent-orange-500"
+                          className="w-28 accent-orange-500"
                         />
-                        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 min-w-[1.5rem] text-center">
+                        <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 min-w-[2rem] text-center">
                           {player.score ?? 0}
                         </span>
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">10</span>
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400">10</span>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMessageOpenId((prev) => (prev === player.id ? null : player.id))
+                        }
+                        className="h-9 w-9 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-blue-500 hover:border-blue-300 dark:hover:border-blue-700 flex items-center justify-center"
+                        aria-label={isAr ? 'إرسال رسالة' : 'Send message'}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </button>
+
                       {savingId === player.id && (
                         <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500">
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -353,9 +391,9 @@ export default function CoachProgramsContent() {
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-col md:flex-row gap-2">
-                    <input
-                      type="text"
+
+                  <div className="w-full">
+                    <textarea
                       value={player.notes || ''}
                       onChange={(e) =>
                         setPlayers((prev) => {
@@ -367,35 +405,44 @@ export default function CoachProgramsContent() {
                           return next;
                         })
                       }
+                      rows={2}
                       placeholder={isAr ? 'ملاحظات المدرب' : 'Coach notes'}
-                      className="flex-1 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm"
+                      className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm"
                     />
-                    <div className="flex-1 flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-zinc-400" />
-                      <input
-                        type="text"
-                        value={messageDrafts[player.id] || ''}
-                        onChange={(e) =>
-                          setMessageDrafts((prev) => ({ ...prev, [player.id]: e.target.value }))
-                        }
-                        placeholder={isAr ? 'رسالة للاعب' : 'Message to player'}
-                        className="flex-1 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleSendMessage(player.id)}
-                        disabled={sendingId === player.id || !(messageDrafts[player.id]?.trim())}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-500 text-white text-xs font-semibold disabled:opacity-50"
-                      >
-                        {sendingId === player.id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Send className="h-3 w-3" />
-                        )}
-                        {isAr ? 'إرسال' : 'Send'}
-                      </button>
-                    </div>
                   </div>
+
+                  {messageOpenId === player.id && (
+                    <div className="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 p-3 space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-300">
+                        <MessageSquare className="h-3 w-3" />
+                        {isAr ? 'رسالة للاعب' : 'Message to player'}
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={messageDrafts[player.id] || ''}
+                          onChange={(e) =>
+                            setMessageDrafts((prev) => ({ ...prev, [player.id]: e.target.value }))
+                          }
+                          placeholder={isAr ? 'اكتب الرسالة هنا' : 'Type your message'}
+                          className="flex-1 px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-white dark:bg-zinc-900 text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSendMessage(player.id)}
+                          disabled={sendingId === player.id || !(messageDrafts[player.id]?.trim())}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-500 text-white text-xs font-semibold disabled:opacity-50"
+                        >
+                          {sendingId === player.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Send className="h-3 w-3" />
+                          )}
+                          {isAr ? 'إرسال' : 'Send'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

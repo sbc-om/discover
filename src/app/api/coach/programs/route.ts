@@ -17,7 +17,7 @@ export async function GET() {
     }
 
     const programsResult = await pool.query(
-      `SELECT id, name, name_ar, description, academy_id
+      `SELECT id, name, name_ar, description, academy_id, image_url
        FROM programs
        WHERE academy_id = $1 AND is_active = true
        ORDER BY created_at DESC`,
