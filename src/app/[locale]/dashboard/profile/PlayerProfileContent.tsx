@@ -320,18 +320,17 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
           </div>
         </div>
 
-        {/* TRACK Button */}
-        <div className="-mt-5 flex items-center justify-center relative z-10">
-          <button
-            type="button"
-            className="rounded-full border-2 border-zinc-900 bg-orange-500 px-10 py-2 text-[12px] font-bold uppercase tracking-[0.15em] text-black shadow-lg hover:bg-orange-400 transition-colors"
-          >
-            {isAr ? 'تتبع' : 'TRACK'}
-          </button>
-        </div>
-
         {/* Stats Box */}
-        <div className="mt-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-4 py-4">
+        <div className="mt-3 relative z-0 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-4 pt-8 pb-4">
+          {/* TRACK Button */}
+          <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-10">
+            <button
+              type="button"
+              className="rounded-full border-2 border-zinc-900 bg-orange-500 px-10 py-2 text-[12px] font-bold uppercase tracking-[0.15em] text-black shadow-lg hover:bg-orange-400 transition-colors"
+            >
+              {isAr ? 'تتبع' : 'TRACK'}
+            </button>
+          </div>
           <div className="grid grid-cols-3 items-center text-center">
             <div>
               <p className="text-[10px] uppercase tracking-[0.1em] text-zinc-500 font-medium">{isAr ? 'نقاط' : 'POINTS'}</p>
@@ -349,8 +348,8 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         </div>
 
         {/* WHO I AM Section */}
-        <div className="relative mt-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-7">
-          <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-900 dark:text-white">
+        <div className="relative mt-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-10">
+          <span className="absolute -top-6 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-900 dark:text-white shadow-sm">
             {isAr ? 'من أنا' : 'WHO I AM'}
           </span>
           <p className="text-[12px] leading-relaxed text-zinc-700 dark:text-zinc-300 text-center">
@@ -359,8 +358,8 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         </div>
 
         {/* PROGRAM Section */}
-        <div className="relative mt-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-7">
-        <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-900 dark:text-white">
+        <div className="relative mt-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-10">
+        <span className="absolute -top-6 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-900 dark:text-white shadow-sm">
           {isAr ? 'البرنامج' : 'PROGRAM'}
         </span>
         
@@ -440,23 +439,15 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         </div>
 
         {/* Insight Section - Health Tests */}
-        <div className="relative mt-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-7">
-          <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-900 dark:text-white">
+        <div className="relative mt-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-10">
+          <span className="absolute -top-6 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-900 dark:text-white shadow-sm">
             {isAr ? 'مؤشرات' : 'Insight'}
           </span>
           {latestTest && latestTest.status === 'completed' ? (
-            <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-2">
-                <RadialInsight label={isAr ? 'السرعة' : 'SPEED'} value={latestTest?.speed_score} />
-                <RadialInsight label={isAr ? 'الرشاقة' : 'AGILITY'} value={latestTest?.agility_score} />
-                <RadialInsight label={isAr ? 'القوة' : 'POWER'} value={latestTest?.power_score} />
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                <RadialInsight label={isAr ? 'التوازن' : 'BALANCE'} value={latestTest?.balance_score} />
-                <RadialInsight label={isAr ? 'رد الفعل' : 'REACT'} value={latestTest?.reaction_score} />
-                <RadialInsight label={isAr ? 'التناسق' : 'COORD'} value={latestTest?.coordination_score} />
-                <RadialInsight label={isAr ? 'المرونة' : 'FLEX'} value={latestTest?.flexibility_score} />
-              </div>
+            <div className="grid grid-cols-3 gap-3">
+              <RadialInsight label={isAr ? 'السرعة' : 'SPEED'} value={latestTest?.speed_score} />
+              <RadialInsight label={isAr ? 'الرشاقة' : 'AGILITY'} value={latestTest?.agility_score} />
+              <RadialInsight label={isAr ? 'القوة' : 'POWER'} value={latestTest?.power_score} />
             </div>
           ) : (
             <p className="text-xs text-zinc-500 text-center py-4">
