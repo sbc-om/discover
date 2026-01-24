@@ -241,7 +241,7 @@ export default function UsersContent() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        showToast('error', 'File size must be less than 5MB');
+        showToast('error', isAr ? 'حجم الملف يجب أن يكون أقل من 5MB' : 'File size must be less than 5MB');
         return;
       }
       setAvatarFile(file);
@@ -271,12 +271,12 @@ export default function UsersContent() {
       if (response.ok) {
         return data.avatarUrl;
       } else {
-        showToast('error', data.message || 'Failed to upload avatar');
+        showToast('error', data.message || (isAr ? 'تعذر رفع الصورة' : 'Failed to upload avatar'));
         return null;
       }
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      showToast('error', 'Failed to upload avatar');
+      showToast('error', isAr ? 'تعذر رفع الصورة' : 'Failed to upload avatar');
       return null;
     } finally {
       setUploadingAvatar(false);
@@ -332,11 +332,11 @@ export default function UsersContent() {
         resetForm();
         fetchUsers();
       } else {
-        showToast('error', result.message || 'Failed to save user');
+        showToast('error', result.message || (isAr ? 'تعذر حفظ المستخدم' : 'Failed to save user'));
       }
     } catch (error) {
       console.error('Error saving user:', error);
-      showToast('error', 'Failed to save user');
+      showToast('error', isAr ? 'تعذر حفظ المستخدم' : 'Failed to save user');
     }
   };
 
@@ -348,11 +348,11 @@ export default function UsersContent() {
         return true;
       } else {
         const data = await response.json();
-        setDeleteError(data.message || 'Failed to delete user');
+        setDeleteError(data.message || (isAr ? 'تعذر حذف المستخدم' : 'Failed to delete user'));
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      setDeleteError('Failed to delete user');
+      setDeleteError(isAr ? 'تعذر حذف المستخدم' : 'Failed to delete user');
     }
     return false;
   };
@@ -430,7 +430,7 @@ export default function UsersContent() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(isAr ? 'ar' : 'en', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -457,8 +457,10 @@ export default function UsersContent() {
             <UsersIcon className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Users</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{total} total users</p>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">{isAr ? 'المستخدمون' : 'Users'}</h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              {isAr ? `إجمالي ${total} مستخدم` : `${total} total users`}
+            </p>
           </div>
         </div>
         {isAcademyManager ? (
@@ -498,7 +500,7 @@ export default function UsersContent() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <input
             type="text"
-            placeholder="Search users..."
+            placeholder={isAr ? 'ابحث عن المستخدمين...' : 'Search users...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
@@ -511,14 +513,14 @@ export default function UsersContent() {
             onChange={(e) => setRoleFilter(e.target.value)}
             className="w-full pl-10 pr-9 py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all hover:border-zinc-300 dark:hover:border-zinc-700"
           >
-            <option value="" className="bg-white dark:bg-zinc-900">🎯 All Roles</option>
+            <option value="" className="bg-white dark:bg-zinc-900">{isAr ? '🎯 كل الأدوار' : '🎯 All Roles'}</option>
             {roles.map((role) => (
               <option key={role.id} value={role.name} className="bg-white dark:bg-zinc-900">
                 {role.name === 'admin' && '👑'}
                 {role.name === 'coach' && '⚽'}
                 {role.name === 'player' && '🏃'}
                 {role.name === 'academy_manager' && '🎓'}
-                {' '}{role.name_en}
+                {' '}{isAr ? role.name_ar || role.name_en : role.name_en}
               </option>
             ))}
           </select>
@@ -588,7 +590,7 @@ export default function UsersContent() {
         ) : users.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <UsersIcon className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3" />
-            <p className="text-zinc-500 dark:text-zinc-400">No users found</p>
+            <p className="text-zinc-500 dark:text-zinc-400">{isAr ? 'لا يوجد مستخدمون' : 'No users found'}</p>
           </div>
         ) : (
           <>
@@ -602,7 +604,7 @@ export default function UsersContent() {
                       onClick={() => handleSort('first_name')}
                     >
                       <div className="flex items-center gap-1.5">
-                        User
+                        {isAr ? 'المستخدم' : 'User'}
                         {getSortIcon('first_name')}
                       </div>
                     </th>
@@ -611,17 +613,17 @@ export default function UsersContent() {
                       onClick={() => handleSort('email')}
                     >
                       <div className="flex items-center gap-1.5">
-                        Contact
+                        {isAr ? 'التواصل' : 'Contact'}
                         {getSortIcon('email')}
                       </div>
                     </th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Role</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{isAr ? 'الدور' : 'Role'}</th>
                     <th 
                       className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
                       onClick={() => handleSort('is_active')}
                     >
                       <div className="flex items-center gap-1.5">
-                        Status
+                        {isAr ? 'الحالة' : 'Status'}
                         {getSortIcon('is_active')}
                       </div>
                     </th>
@@ -630,11 +632,11 @@ export default function UsersContent() {
                       onClick={() => handleSort('created_at')}
                     >
                       <div className="flex items-center gap-1.5">
-                        Joined
+                        {isAr ? 'تاريخ الانضمام' : 'Joined'}
                         {getSortIcon('created_at')}
                       </div>
                     </th>
-                    <th className="text-right px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Actions</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{isAr ? 'الإجراءات' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -661,7 +663,7 @@ export default function UsersContent() {
                             {user.email_verified && (
                               <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
                                 <CheckCircle2 className="w-2.5 h-2.5" />
-                                Verified
+                                {isAr ? 'موثق' : 'Verified'}
                               </p>
                             )}
                           </div>
@@ -684,7 +686,7 @@ export default function UsersContent() {
                       <td className="px-6 py-3">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role_name)}`}>
                           <Shield className="w-3 h-3" />
-                          {user.name_en || user.role_name}
+                            {isAr ? user.name_ar || user.name_en || user.role_name : user.name_en || user.role_name}
                         </span>
                       </td>
                       <td className="px-6 py-3">
@@ -694,9 +696,9 @@ export default function UsersContent() {
                             : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                         }`}>
                           {user.is_active ? (
-                            <><CheckCircle2 className="w-3 h-3" /> Active</>
+                            <><CheckCircle2 className="w-3 h-3" /> {isAr ? 'نشط' : 'Active'}</>
                           ) : (
-                            <><XCircle className="w-3 h-3" /> Inactive</>
+                            <><XCircle className="w-3 h-3" /> {isAr ? 'غير نشط' : 'Inactive'}</>
                           )}
                         </span>
                       </td>
@@ -761,7 +763,7 @@ export default function UsersContent() {
                         {user.first_name} {user.last_name}
                       </p>
                       <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getRoleBadgeColor(user.role_name)}`}>
-                        {user.name_en || user.role_name}
+                        {isAr ? user.name_ar || user.name_en || user.role_name : user.name_en || user.role_name}
                       </span>
                     </div>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>
@@ -805,11 +807,13 @@ export default function UsersContent() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Showing <span className="font-semibold text-zinc-900 dark:text-white">{((page - 1) * limit) + 1}</span> to <span className="font-semibold text-zinc-900 dark:text-white">{Math.min(page * limit, total)}</span> of <span className="font-semibold text-zinc-900 dark:text-white">{total}</span> users
+                {isAr
+                  ? `عرض ${((page - 1) * limit) + 1} إلى ${Math.min(page * limit, total)} من أصل ${total} مستخدم`
+                  : `Showing ${((page - 1) * limit) + 1} to ${Math.min(page * limit, total)} of ${total} users`}
               </p>
               <div className="h-5 w-px bg-zinc-300 dark:bg-zinc-700" />
               <div className="flex items-center gap-2">
-                <label className="text-sm text-zinc-600 dark:text-zinc-400">Per page:</label>
+                <label className="text-sm text-zinc-600 dark:text-zinc-400">{isAr ? 'لكل صفحة:' : 'Per page:'}</label>
                 <select
                   value={limit}
                   onChange={(e) => {
@@ -832,7 +836,7 @@ export default function UsersContent() {
                 disabled={page === 1}
                 className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
               >
-                First
+                {isAr ? 'الأول' : 'First'}
               </button>
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -883,7 +887,7 @@ export default function UsersContent() {
                 disabled={page === totalPages}
                 className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
               >
-                Last
+                {isAr ? 'الأخير' : 'Last'}
               </button>
             </div>
           </div>
@@ -892,10 +896,10 @@ export default function UsersContent() {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete user?"
-        description={deleteTarget ? `This will permanently remove ${deleteTarget.first_name} ${deleteTarget.last_name}.` : undefined}
-        confirmText="Delete User"
-        cancelText="Cancel"
+        title={isAr ? 'حذف المستخدم؟' : 'Delete user?'}
+        description={deleteTarget ? (isAr ? `سيتم حذف ${deleteTarget.first_name} ${deleteTarget.last_name} نهائياً.` : `This will permanently remove ${deleteTarget.first_name} ${deleteTarget.last_name}.`) : undefined}
+        confirmText={isAr ? 'حذف المستخدم' : 'Delete User'}
+        cancelText={isAr ? 'إلغاء' : 'Cancel'}
         onClose={() => {
           setDeleteTarget(null);
           setDeleteError(null);
@@ -926,7 +930,7 @@ export default function UsersContent() {
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
                   <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                    {editingUser ? 'Edit User' : 'Add New User'}
+                    {editingUser ? (isAr ? 'تعديل المستخدم' : 'Edit User') : (isAr ? 'إضافة مستخدم جديد' : 'Add New User')}
                   </h2>
                   <button
                     onClick={() => setShowModal(false)}
@@ -975,14 +979,14 @@ export default function UsersContent() {
                 {/* Full Name */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Full Name
+                    {isAr ? 'الاسم الكامل' : 'Full Name'}
                   </label>
                   <input
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
-                    placeholder="John Doe"
+                    placeholder={isAr ? 'الاسم الكامل' : 'John Doe'}
                     required
                   />
                 </div>
@@ -990,14 +994,14 @@ export default function UsersContent() {
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Email
+                    {isAr ? 'البريد الإلكتروني' : 'Email'}
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
-                    placeholder="john@example.com"
+                    placeholder={isAr ? 'example@domain.com' : 'john@example.com'}
                     required
                   />
                 </div>
@@ -1005,7 +1009,7 @@ export default function UsersContent() {
                 {/* Password */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Password {editingUser && <span className="text-zinc-400">(leave empty to keep current)</span>}
+                    {isAr ? 'كلمة المرور' : 'Password'} {editingUser && <span className="text-zinc-400">{isAr ? '(اتركه فارغاً للاحتفاظ بالحالي)' : '(leave empty to keep current)'}</span>}
                   </label>
                   <div className="relative">
                     <input
@@ -1030,14 +1034,14 @@ export default function UsersContent() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Phone
+                      {isAr ? 'رقم الهاتف' : 'Phone'}
                     </label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
-                      placeholder="+1234567890"
+                      placeholder={isAr ? '+968XXXXXXXX' : '+1234567890'}
                     />
                   </div>
                   <div>
@@ -1106,7 +1110,7 @@ export default function UsersContent() {
                             }`}
                           />
                         </button>
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">Active User</span>
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">{isAr ? 'مستخدم نشط' : 'Active User'}</span>
                       </div>
                     </div>
                   </OverlayScrollbarsComponent>
@@ -1118,7 +1122,7 @@ export default function UsersContent() {
                       onClick={() => setShowModal(false)}
                       className="flex-1 px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     >
-                      Cancel
+                      {isAr ? 'إلغاء' : 'Cancel'}
                     </button>
                     <button
                       type="submit"
@@ -1128,10 +1132,10 @@ export default function UsersContent() {
                       {uploadingAvatar ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Uploading...
+                          {isAr ? 'جارٍ الرفع...' : 'Uploading...'}
                         </>
                       ) : (
-                        editingUser ? 'Update User' : 'Create User'
+                        editingUser ? (isAr ? 'تحديث المستخدم' : 'Update User') : (isAr ? 'إنشاء مستخدم' : 'Create User')
                       )}
                     </button>
                   </div>

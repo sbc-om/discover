@@ -90,7 +90,11 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
               type="button"
               onClick={scrollPrev}
               className="h-9 w-9 shrink-0 rounded-full border-2 border-zinc-900/20 dark:border-white/10 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5 hover:border-orange-500/50 hover:bg-orange-50 dark:hover:bg-zinc-800 shadow-sm"
-              aria-label={isRTL ? 'scroll right' : 'scroll left'}
+              aria-label={
+                isRTL
+                  ? (isAr ? 'تمرير لليمين' : 'Scroll right')
+                  : (isAr ? 'تمرير لليسار' : 'Scroll left')
+              }
             >
               {isRTL ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
@@ -136,7 +140,11 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
               type="button"
               onClick={scrollNext}
               className="h-9 w-9 shrink-0 rounded-full border-2 border-zinc-900/20 dark:border-white/10 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5 hover:border-orange-500/50 hover:bg-orange-50 dark:hover:bg-zinc-800 shadow-sm"
-              aria-label={isRTL ? 'scroll left' : 'scroll right'}
+              aria-label={
+                isRTL
+                  ? (isAr ? 'تمرير لليسار' : 'Scroll left')
+                  : (isAr ? 'تمرير لليمين' : 'Scroll right')
+              }
             >
               {isRTL ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </button>

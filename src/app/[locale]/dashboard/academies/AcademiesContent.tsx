@@ -6,6 +6,7 @@ import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import ModalPortal from '@/components/ModalPortal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useToast } from '@/components/ToastProvider';
+import useLocale from '@/hooks/useLocale';
 import {
   Building2,
   Plus,
@@ -52,6 +53,8 @@ interface Manager {
 }
 
 export default function AcademiesContent() {
+  const { locale } = useLocale();
+  const isAr = locale === 'ar';
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,11 +230,11 @@ export default function AcademiesContent() {
         fetchManagers();
       } else {
         const data = await response.json();
-        showToast('error', data.message || 'Failed to save academy');
+        showToast('error', data.message || (isAr ? 'تعذر حفظ الأكاديمية' : 'Failed to save academy'));
       }
     } catch (error) {
       console.error('Error saving academy:', error);
-      showToast('error', 'Failed to save academy');
+      showToast('error', isAr ? 'تعذر حفظ الأكاديمية' : 'Failed to save academy');
     }
   };
 
@@ -262,11 +265,11 @@ export default function AcademiesContent() {
         return true;
       } else {
         const data = await response.json();
-        setDeleteError(data.message || 'Failed to delete academy');
+        setDeleteError(data.message || (isAr ? 'تعذر حذف الأكاديمية' : 'Failed to delete academy'));
       }
     } catch (error) {
       console.error('Error deleting academy:', error);
-      setDeleteError('Failed to delete academy');
+      setDeleteError(isAr ? 'تعذر حذف الأكاديمية' : 'Failed to delete academy');
     }
     return false;
   };
@@ -308,8 +311,10 @@ export default function AcademiesContent() {
             <Building2 className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Academies</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{total} total academies</p>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">{isAr ? 'الأكاديميات' : 'Academies'}</h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              {isAr ? `إجمالي ${total} أكاديمية` : `${total} total academies`}
+            </p>
           </div>
         </div>
         {isAdmin && (
@@ -321,7 +326,7 @@ export default function AcademiesContent() {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25 transition-all text-sm"
           >
             <Plus className="w-4 h-4" />
-            Add Academy
+            {isAr ? 'إضافة أكاديمية' : 'Add Academy'}
           </button>
         )}
       </div>
@@ -332,7 +337,7 @@ export default function AcademiesContent() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <input
             type="text"
-            placeholder="Search academies..."
+            placeholder={isAr ? 'ابحث عن الأكاديمية...' : 'Search academies...'}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -352,7 +357,7 @@ export default function AcademiesContent() {
         ) : academies.length === 0 ? (
           <div className="text-center py-20">
             <Building2 className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
-            <p className="text-zinc-500 dark:text-zinc-400">No academies found</p>
+            <p className="text-zinc-500 dark:text-zinc-400">{isAr ? 'لا توجد أكاديميات' : 'No academies found'}</p>
           </div>
         ) : (
           <>
@@ -366,13 +371,13 @@ export default function AcademiesContent() {
                         onClick={() => handleSort('name')}
                         className="flex items-center gap-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider hover:text-zinc-900 dark:hover:text-white"
                       >
-                        Academy
+                        {isAr ? 'الأكاديمية' : 'Academy'}
                         {getSortIcon('name')}
                       </button>
                     </th>
                     <th className="text-left px-6 py-4">
                       <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Manager
+                        {isAr ? 'المدير' : 'Manager'}
                       </span>
                     </th>
                     <th className="text-left px-6 py-4">
@@ -380,24 +385,24 @@ export default function AcademiesContent() {
                         onClick={() => handleSort('city')}
                         className="flex items-center gap-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider hover:text-zinc-900 dark:hover:text-white"
                       >
-                        Location
+                        {isAr ? 'الموقع' : 'Location'}
                         {getSortIcon('city')}
                       </button>
                     </th>
                     <th className="text-left px-6 py-4">
                       <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Users
+                        {isAr ? 'المستخدمون' : 'Users'}
                       </span>
                     </th>
                     <th className="text-left px-6 py-4">
                       <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Status
+                        {isAr ? 'الحالة' : 'Status'}
                       </span>
                     </th>
                     {isAdmin && (
                       <th className="text-right px-6 py-4">
                         <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                          Actions
+                          {isAr ? 'الإجراءات' : 'Actions'}
                         </span>
                       </th>
                     )}
@@ -437,14 +442,14 @@ export default function AcademiesContent() {
                             <p className="text-xs text-zinc-500">{academy.manager_email}</p>
                           </div>
                         ) : (
-                          <span className="text-sm text-zinc-400">No manager</span>
+                          <span className="text-sm text-zinc-400">{isAr ? 'بدون مدير' : 'No manager'}</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5">
                           <MapPin className="w-4 h-4 text-zinc-400" />
                           <span className="text-sm text-zinc-600 dark:text-zinc-300">
-                            {[academy.city, academy.country].filter(Boolean).join(', ') || 'Not set'}
+                            {[academy.city, academy.country].filter(Boolean).join(', ') || (isAr ? 'غير محدد' : 'Not set')}
                           </span>
                         </div>
                       </td>
@@ -460,12 +465,12 @@ export default function AcademiesContent() {
                         {academy.is_active ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                             <CheckCircle2 className="w-3 h-3" />
-                            Active
+                            {isAr ? 'نشط' : 'Active'}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
                             <XCircle className="w-3 h-3" />
-                            Inactive
+                            {isAr ? 'غير نشط' : 'Inactive'}
                           </span>
                         )}
                       </td>
@@ -517,7 +522,7 @@ export default function AcademiesContent() {
                       )}
                       {academy.manager_first_name && (
                         <p className="text-xs text-zinc-400 mt-1">
-                          Manager: {academy.manager_first_name} {academy.manager_last_name}
+                          {isAr ? 'المدير:' : 'Manager:'} {academy.manager_first_name} {academy.manager_last_name}
                         </p>
                       )}
                     </div>
@@ -530,11 +535,11 @@ export default function AcademiesContent() {
                   <div className="flex items-center gap-4 mb-3 text-sm text-zinc-600 dark:text-zinc-400">
                     <div className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
-                      {[academy.city, academy.country].filter(Boolean).join(', ') || 'Not set'}
+                      {[academy.city, academy.country].filter(Boolean).join(', ') || (isAr ? 'غير محدد' : 'Not set')}
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
-                      {academy.user_count} users
+                      {isAr ? `${academy.user_count} مستخدم` : `${academy.user_count} users`}
                     </div>
                   </div>
                   {isAdmin && (
@@ -543,7 +548,7 @@ export default function AcademiesContent() {
                         onClick={() => handleEdit(academy)}
                         className="flex-1 px-3 py-2 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
                       >
-                        Edit
+                        {isAr ? 'تعديل' : 'Edit'}
                       </button>
                       <button
                         onClick={() => {
@@ -565,10 +570,10 @@ export default function AcademiesContent() {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete academy?"
-        description={deleteTarget ? `This will permanently remove ${deleteTarget.name}.` : undefined}
-        confirmText="Delete Academy"
-        cancelText="Cancel"
+        title={isAr ? 'حذف الأكاديمية؟' : 'Delete academy?'}
+        description={deleteTarget ? (isAr ? `سيتم حذف ${deleteTarget.name} نهائياً.` : `This will permanently remove ${deleteTarget.name}.`) : undefined}
+        confirmText={isAr ? 'حذف الأكاديمية' : 'Delete Academy'}
+        cancelText={isAr ? 'إلغاء' : 'Cancel'}
         onClose={() => {
           setDeleteTarget(null);
           setDeleteError(null);
@@ -584,11 +589,13 @@ export default function AcademiesContent() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Showing <span className="font-semibold text-zinc-900 dark:text-white">{((page - 1) * limit) + 1}</span> to <span className="font-semibold text-zinc-900 dark:text-white">{Math.min(page * limit, total)}</span> of <span className="font-semibold text-zinc-900 dark:text-white">{total}</span> academies
+                {isAr
+                  ? `عرض ${((page - 1) * limit) + 1} إلى ${Math.min(page * limit, total)} من أصل ${total} أكاديمية`
+                  : `Showing ${((page - 1) * limit) + 1} to ${Math.min(page * limit, total)} of ${total} academies`}
               </p>
               <div className="h-5 w-px bg-zinc-300 dark:bg-zinc-700" />
               <div className="flex items-center gap-2">
-                <label className="text-sm text-zinc-600 dark:text-zinc-400">Per page:</label>
+                <label className="text-sm text-zinc-600 dark:text-zinc-400">{isAr ? 'لكل صفحة:' : 'Per page:'}</label>
                 <select
                   value={limit}
                   onChange={(e) => {
@@ -610,7 +617,7 @@ export default function AcademiesContent() {
                 disabled={page === 1}
                 className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
               >
-                First
+                {isAr ? 'الأول' : 'First'}
               </button>
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -661,7 +668,7 @@ export default function AcademiesContent() {
                 disabled={page === totalPages}
                 className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
               >
-                Last
+                {isAr ? 'الأخير' : 'Last'}
               </button>
             </div>
           </div>
@@ -689,7 +696,7 @@ export default function AcademiesContent() {
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
                   <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                    {editingAcademy ? 'Edit Academy' : 'Add New Academy'}
+                    {editingAcademy ? (isAr ? 'تعديل الأكاديمية' : 'Edit Academy') : (isAr ? 'إضافة أكاديمية جديدة' : 'Add New Academy')}
                   </h2>
                   <button
                     onClick={() => setShowModal(false)}
@@ -737,27 +744,27 @@ export default function AcademiesContent() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                          Name (English)
+                          {isAr ? 'الاسم (بالإنجليزية)' : 'Name (English)'}
                         </label>
                         <input
                           type="text"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                          placeholder="Academy name"
+                          placeholder={isAr ? 'اسم الأكاديمية' : 'Academy name'}
                           required
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                          Name (Arabic)
+                          {isAr ? 'الاسم (بالعربية)' : 'Name (Arabic)'}
                         </label>
                         <input
                           type="text"
                           value={formData.name_ar}
                           onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
                           className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                          placeholder="اسم الأكاديمية"
+                          placeholder={isAr ? 'اسم الأكاديمية' : 'Academy name in Arabic'}
                           dir="rtl"
                         />
                       </div>
@@ -766,14 +773,14 @@ export default function AcademiesContent() {
                     {/* Description */}
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                        Description
+                        {isAr ? 'الوصف' : 'Description'}
                       </label>
                       <textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={3}
                         className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 resize-none"
-                        placeholder="Academy description..."
+                        placeholder={isAr ? 'وصف الأكاديمية...' : 'Academy description...'}
                       />
                     </div>
 
@@ -781,26 +788,26 @@ export default function AcademiesContent() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                          City
+                          {isAr ? 'المدينة' : 'City'}
                         </label>
                         <input
                           type="text"
                           value={formData.city}
                           onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                           className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                          placeholder="City"
+                          placeholder={isAr ? 'المدينة' : 'City'}
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                          Country
+                          {isAr ? 'الدولة' : 'Country'}
                         </label>
                         <input
                           type="text"
                           value={formData.country}
                           onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                           className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                          placeholder="Country"
+                          placeholder={isAr ? 'الدولة' : 'Country'}
                         />
                       </div>
                     </div>
@@ -808,28 +815,28 @@ export default function AcademiesContent() {
                     {/* Address */}
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                        Address
+                        {isAr ? 'العنوان' : 'Address'}
                       </label>
                       <input
                         type="text"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                        placeholder="Full address"
+                        placeholder={isAr ? 'العنوان الكامل' : 'Full address'}
                       />
                     </div>
 
                     {/* Manager */}
                     <div>
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                        Academy Manager
+                        {isAr ? 'مدير الأكاديمية' : 'Academy Manager'}
                       </label>
                       <select
                         value={formData.manager_id}
                         onChange={(e) => setFormData({ ...formData, manager_id: e.target.value })}
                         className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer"
                       >
-                        <option value="">Select manager (optional)</option>
+                        <option value="">{isAr ? 'اختر المدير (اختياري)' : 'Select manager (optional)'}</option>
                         {managers.map((manager) => (
                           <option key={manager.id} value={manager.id}>
                             {manager.first_name} {manager.last_name} ({manager.email})
@@ -858,7 +865,9 @@ export default function AcademiesContent() {
                           }`}
                         />
                       </button>
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">Active Academy</span>
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                        {isAr ? 'أكاديمية نشطة' : 'Active Academy'}
+                      </span>
                     </div>
                     </div>
                   </OverlayScrollbarsComponent>
@@ -870,7 +879,7 @@ export default function AcademiesContent() {
                       onClick={() => setShowModal(false)}
                       className="flex-1 px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     >
-                      Cancel
+                      {isAr ? 'إلغاء' : 'Cancel'}
                     </button>
                     <button
                       type="submit"
@@ -880,10 +889,10 @@ export default function AcademiesContent() {
                       {uploadingLogo ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Uploading...
+                          {isAr ? 'جارٍ الرفع...' : 'Uploading...'}
                         </>
                       ) : (
-                        editingAcademy ? 'Update Academy' : 'Create Academy'
+                        editingAcademy ? (isAr ? 'تحديث الأكاديمية' : 'Update Academy') : (isAr ? 'إنشاء الأكاديمية' : 'Create Academy')
                       )}
                     </button>
                   </div>

@@ -79,7 +79,7 @@ export default function CoachProgramsContent() {
       const response = await fetch('/api/coach/programs');
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to load programs');
+        throw new Error(data.message || (isAr ? 'تعذر تحميل البرامج' : 'Failed to load programs'));
       }
       setPrograms(data.programs || []);
       if (data.programs?.length) {
@@ -103,7 +103,7 @@ export default function CoachProgramsContent() {
       const response = await fetch(`/api/coach/players?${params.toString()}`);
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to load players');
+        throw new Error(data.message || (isAr ? 'تعذر تحميل اللاعبين' : 'Failed to load players'));
       }
       setPlayers(data.players || []);
     } catch (error: any) {
@@ -145,7 +145,7 @@ export default function CoachProgramsContent() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to save');
+        throw new Error(data.message || (isAr ? 'تعذر الحفظ' : 'Failed to save'));
       }
       showToast('success', isAr ? 'تم الحفظ' : 'Saved');
     } catch (error: any) {
@@ -181,7 +181,7 @@ export default function CoachProgramsContent() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to send');
+        throw new Error(data.message || (isAr ? 'تعذر إرسال الرسالة' : 'Failed to send message'));
       }
       setMessageDrafts((prev) => ({ ...prev, [playerId]: '' }));
       showToast('success', isAr ? 'تم إرسال الرسالة' : 'Message sent');
@@ -220,7 +220,7 @@ export default function CoachProgramsContent() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to award');
+        throw new Error(data.message || (isAr ? 'تعذر منح الإنجاز' : 'Failed to award achievement'));
       }
       setAwardSelections((prev) => ({ ...prev, [playerId]: '' }));
       setAwardNotes((prev) => ({ ...prev, [playerId]: '' }));

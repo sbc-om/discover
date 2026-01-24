@@ -6,6 +6,7 @@ import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import ModalPortal from '@/components/ModalPortal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useToast } from '@/components/ToastProvider';
+import useLocale from '@/hooks/useLocale';
 import {
   Shield,
   ShieldPlus,
@@ -56,6 +57,8 @@ interface Role {
 }
 
 export default function RolesContent() {
+  const { locale } = useLocale();
+  const isAr = locale === 'ar';
   const [roles, setRoles] = useState<Role[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,11 +214,11 @@ export default function RolesContent() {
         fetchRoles();
       } else {
         const data = await response.json();
-        showToast('error', data.message || 'Failed to save role');
+        showToast('error', data.message || (isAr ? 'تعذر حفظ الدور' : 'Failed to save role'));
       }
     } catch (error) {
       console.error('Error saving role:', error);
-      showToast('error', 'Failed to save role');
+      showToast('error', isAr ? 'تعذر حفظ الدور' : 'Failed to save role');
     }
   };
 
@@ -236,11 +239,11 @@ export default function RolesContent() {
         fetchRoles();
       } else {
         const data = await response.json();
-        showToast('error', data.message || 'Failed to update permissions');
+        showToast('error', data.message || (isAr ? 'تعذر تحديث الصلاحيات' : 'Failed to update permissions'));
       }
     } catch (error) {
       console.error('Error updating permissions:', error);
-      showToast('error', 'Failed to update permissions');
+      showToast('error', isAr ? 'تعذر تحديث الصلاحيات' : 'Failed to update permissions');
     }
   };
 
@@ -249,18 +252,18 @@ export default function RolesContent() {
       const response = await fetch(`/api/roles/${id}`, { method: 'DELETE' });
       if (response.ok) {
         fetchRoles();
-        showToast('success', 'Role deleted successfully');
+        showToast('success', isAr ? 'تم حذف الدور بنجاح' : 'Role deleted successfully');
         return true;
       } else {
         const data = await response.json();
-        const errorMsg = data.message || 'Failed to delete role';
+        const errorMsg = data.message || (isAr ? 'تعذر حذف الدور' : 'Failed to delete role');
         setDeleteError(errorMsg);
         showToast('error', errorMsg);
       }
     } catch (error) {
       console.error('Error deleting role:', error);
-      setDeleteError('Failed to delete role');
-      showToast('error', 'Failed to delete role');
+      setDeleteError(isAr ? 'تعذر حذف الدور' : 'Failed to delete role');
+      showToast('error', isAr ? 'تعذر حذف الدور' : 'Failed to delete role');
     }
     return false;
   };
@@ -330,8 +333,10 @@ export default function RolesContent() {
             <Shield className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Roles</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{total} total roles</p>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">{isAr ? 'الأدوار' : 'Roles'}</h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              {isAr ? `إجمالي ${total} دور` : `${total} total roles`}
+            </p>
           </div>
         </div>
         <button
@@ -342,7 +347,7 @@ export default function RolesContent() {
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25 transition-all text-sm"
         >
           <ShieldPlus className="w-4 h-4" />
-          Add Role
+          {isAr ? 'إضافة دور' : 'Add Role'}
         </button>
       </div>
 
@@ -352,7 +357,7 @@ export default function RolesContent() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <input
             type="text"
-            placeholder="Search roles..."
+            placeholder={isAr ? 'ابحث عن الأدوار...' : 'Search roles...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
@@ -369,7 +374,7 @@ export default function RolesContent() {
         ) : roles.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Shield className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3" />
-            <p className="text-zinc-500 dark:text-zinc-400">No roles found</p>
+            <p className="text-zinc-500 dark:text-zinc-400">{isAr ? 'لا توجد أدوار' : 'No roles found'}</p>
           </div>
         ) : (
           <>
@@ -383,22 +388,22 @@ export default function RolesContent() {
                       onClick={() => handleSort('name_en')}
                     >
                       <div className="flex items-center gap-1.5">
-                        Role
+                        {isAr ? 'الدور' : 'Role'}
                         {getSortIcon('name_en')}
                       </div>
                     </th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Description</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{isAr ? 'الوصف' : 'Description'}</th>
                     <th 
                       className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors"
                       onClick={() => handleSort('user_count')}
                     >
                       <div className="flex items-center gap-1.5">
-                        Users
+                        {isAr ? 'المستخدمون' : 'Users'}
                         {getSortIcon('user_count')}
                       </div>
                     </th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Permissions</th>
-                    <th className="text-right px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Actions</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{isAr ? 'الصلاحيات' : 'Permissions'}</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{isAr ? 'الإجراءات' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -426,7 +431,7 @@ export default function RolesContent() {
                       </td>
                       <td className="px-6 py-3">
                         <p className="text-sm text-zinc-600 dark:text-zinc-300 max-w-md truncate">
-                          {role.description || 'No description'}
+                          {role.description || (isAr ? 'بدون وصف' : 'No description')}
                         </p>
                       </td>
                       <td className="px-6 py-3">
@@ -450,7 +455,7 @@ export default function RolesContent() {
                           <button
                             onClick={() => handleManagePermissions(role.id)}
                             className="p-2 text-zinc-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="Manage Permissions"
+                            title={isAr ? 'إدارة الصلاحيات' : 'Manage Permissions'}
                           >
                             <Key className="w-4 h-4" />
                           </button>
@@ -489,10 +494,10 @@ export default function RolesContent() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-zinc-900 dark:text-white text-sm">
-                        {role.name_en}
+                        {isAr ? role.name_ar || role.name_en : role.name_en}
                       </p>
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        {role.name_ar}
+                        {isAr ? role.name_en : role.name_ar}
                       </p>
                     </div>
                   </div>
@@ -507,14 +512,14 @@ export default function RolesContent() {
                       <span className="text-sm font-semibold text-zinc-900 dark:text-white">
                         {role.user_count}
                       </span>
-                      <span className="text-xs text-zinc-500">users</span>
+                      <span className="text-xs text-zinc-500">{isAr ? 'مستخدمون' : 'users'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Key className="w-3.5 h-3.5 text-zinc-400" />
                       <span className="text-sm font-semibold text-zinc-900 dark:text-white">
                         {role.permission_count}
                       </span>
-                      <span className="text-xs text-zinc-500">perms</span>
+                      <span className="text-xs text-zinc-500">{isAr ? 'صلاحيات' : 'perms'}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -522,7 +527,7 @@ export default function RolesContent() {
                       onClick={() => handleManagePermissions(role.id)}
                       className="flex-1 px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                     >
-                      Permissions
+                      {isAr ? 'الصلاحيات' : 'Permissions'}
                     </button>
                     <button
                       onClick={() => handleEdit(role)}
@@ -553,11 +558,13 @@ export default function RolesContent() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Showing <span className="font-semibold text-zinc-900 dark:text-white">{((page - 1) * limit) + 1}</span> to <span className="font-semibold text-zinc-900 dark:text-white">{Math.min(page * limit, total)}</span> of <span className="font-semibold text-zinc-900 dark:text-white">{total}</span> roles
+                {isAr
+                  ? `عرض ${((page - 1) * limit) + 1} إلى ${Math.min(page * limit, total)} من أصل ${total} دور`
+                  : `Showing ${((page - 1) * limit) + 1} to ${Math.min(page * limit, total)} of ${total} roles`}
               </p>
               <div className="h-5 w-px bg-zinc-300 dark:bg-zinc-700" />
               <div className="flex items-center gap-2">
-                <label className="text-sm text-zinc-600 dark:text-zinc-400">Per page:</label>
+                <label className="text-sm text-zinc-600 dark:text-zinc-400">{isAr ? 'لكل صفحة:' : 'Per page:'}</label>
                 <select
                   value={limit}
                   onChange={(e) => {
@@ -579,7 +586,7 @@ export default function RolesContent() {
                 disabled={page === 1}
                 className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
               >
-                First
+                {isAr ? 'الأول' : 'First'}
               </button>
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -630,7 +637,7 @@ export default function RolesContent() {
                 disabled={page === totalPages}
                 className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-300 dark:hover:border-orange-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-zinc-200 dark:disabled:hover:border-zinc-700 transition-colors text-sm font-medium"
               >
-                Last
+                {isAr ? 'الأخير' : 'Last'}
               </button>
             </div>
           </div>
@@ -639,10 +646,10 @@ export default function RolesContent() {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete role?"
-        description={deleteTarget ? `This will permanently remove the ${deleteTarget.name_en || deleteTarget.name} role.` : undefined}
-        confirmText="Delete Role"
-        cancelText="Cancel"
+        title={isAr ? 'حذف الدور؟' : 'Delete role?'}
+        description={deleteTarget ? (isAr ? `سيتم حذف دور ${deleteTarget.name_ar || deleteTarget.name_en || deleteTarget.name} نهائياً.` : `This will permanently remove the ${deleteTarget.name_en || deleteTarget.name} role.`) : undefined}
+        confirmText={isAr ? 'حذف الدور' : 'Delete Role'}
+        cancelText={isAr ? 'إلغاء' : 'Cancel'}
         onClose={() => {
           setDeleteTarget(null);
           setDeleteError(null);
@@ -660,7 +667,7 @@ export default function RolesContent() {
               {/* Header */}
               <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                  {editingRole ? 'Edit Role' : 'Add New Role'}
+                  {editingRole ? (isAr ? 'تعديل الدور' : 'Edit Role') : (isAr ? 'إضافة دور جديد' : 'Add New Role')}
                 </h2>
                 <button
                   onClick={() => {
@@ -680,7 +687,7 @@ export default function RolesContent() {
                 <form id="role-modal-form" onSubmit={handleSubmit} className="p-6 space-y-5">
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                      Role Name (System) <span className="text-orange-500">*</span>
+                      {isAr ? 'اسم الدور (النظام)' : 'Role Name (System)'} <span className="text-orange-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -689,16 +696,18 @@ export default function RolesContent() {
                       className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       required
                       disabled={!!editingRole}
-                      placeholder="admin, coach, player"
+                      placeholder={isAr ? 'admin, coach, player' : 'admin, coach, player'}
                     />
                     {editingRole && (
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">System name cannot be changed</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {isAr ? 'لا يمكن تغيير اسم النظام' : 'System name cannot be changed'}
+                      </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                      Name (English) <span className="text-orange-500">*</span>
+                      {isAr ? 'الاسم (بالإنجليزية)' : 'Name (English)'} <span className="text-orange-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -706,13 +715,13 @@ export default function RolesContent() {
                       onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
                       className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                       required
-                      placeholder="Administrator"
+                      placeholder={isAr ? 'Administrator' : 'Administrator'}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                      Name (Arabic) <span className="text-orange-500">*</span>
+                      {isAr ? 'الاسم (بالعربية)' : 'Name (Arabic)'} <span className="text-orange-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -720,19 +729,19 @@ export default function RolesContent() {
                       onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
                       className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                       required
-                      placeholder="مدير النظام"
+                      placeholder={isAr ? 'مدير النظام' : 'System Administrator'}
                       dir="rtl"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Description</label>
+                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">{isAr ? 'الوصف' : 'Description'}</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
                       rows={3}
-                      placeholder="Describe the role and its responsibilities..."
+                      placeholder={isAr ? 'صف الدور ومسؤولياته...' : 'Describe the role and its responsibilities...'}
                     />
                   </div>
                 </form>
@@ -748,14 +757,14 @@ export default function RolesContent() {
                   }}
                   className="flex-1 px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 >
-                  Cancel
+                  {isAr ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
                   form="role-modal-form"
                   className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-all"
                 >
-                  {editingRole ? 'Update Role' : 'Create Role'}
+                  {editingRole ? (isAr ? 'تحديث الدور' : 'Update Role') : (isAr ? 'إنشاء دور' : 'Create Role')}
                 </button>
               </div>
             </div>
@@ -769,7 +778,7 @@ export default function RolesContent() {
               {/* Header */}
               <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                  Manage Permissions
+                  {isAr ? 'إدارة الصلاحيات' : 'Manage Permissions'}
                 </h2>
                 <button
                   onClick={() => {
@@ -811,7 +820,9 @@ export default function RolesContent() {
                             {allSelected ? <Unlock className="w-5 h-5 text-white" /> : <Lock className="w-5 h-5 text-white" />}
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{module.module_name_en}</h3>
+                            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">
+                              {isAr ? module.module_name_ar || module.module_name_en : module.module_name_en}
+                            </h3>
                           </div>
                         </div>
                         <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
@@ -839,7 +850,7 @@ export default function RolesContent() {
                                   className="w-5 h-5 text-orange-600 bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
                                 />
                                 <span className="flex-1 text-sm font-semibold text-zinc-700 dark:text-zinc-200 capitalize">
-                                  {permission.action}
+                                  {isAr ? permission.name_ar || permission.name_en : permission.name_en || permission.name_ar}
                                 </span>
                               </label>
                             );
@@ -862,14 +873,14 @@ export default function RolesContent() {
                   }}
                   className="flex-1 px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 >
-                  Cancel
+                  {isAr ? 'إلغاء' : 'Cancel'}
                 </button>
                 <button
                   onClick={handlePermissionSubmit}
                   className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-all flex items-center justify-center gap-2"
                 >
                   <Check className="w-4 h-4" />
-                  Save Permissions ({selectedPermissions.length})
+                  {isAr ? `حفظ الصلاحيات (${selectedPermissions.length})` : `Save Permissions (${selectedPermissions.length})`}
                 </button>
               </div>
             </div>
