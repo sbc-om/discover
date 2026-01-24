@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, CheckCircle2, Clock, XCircle, ChevronDown } from 'lucide-react';
+import { Bell, CheckCircle2, Clock, XCircle, ChevronDown, IdCard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ToastProvider';
 import useLocale from '@/hooks/useLocale';
@@ -208,6 +208,8 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     goals: '',
   });
   const [profileFormOpen, setProfileFormOpen] = useState(false);
+  const [healthTestOpen, setHealthTestOpen] = useState(true);
+  const [medalRequestOpen, setMedalRequestOpen] = useState(true);
   const isAdminView = Boolean(userId);
   const canRequestMedal = isAdminView && (currentRole === 'admin' || currentRole === 'academy_manager');
 
@@ -490,6 +492,17 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
               type="button"
               onClick={() =>
                 router.push(
+                  `/${locale}/dashboard/player-card${isAdminView && userId ? `?user_id=${userId}` : ''}`
+                )
+              }
+              className="relative h-9 w-9 rounded-full border border-zinc-300/50 dark:border-white/10 bg-white/80 dark:bg-zinc-900/80 flex items-center justify-center"
+            >
+              <IdCard className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
                   `/${locale}/dashboard/notifications${isAdminView && userId ? `?user_id=${userId}` : ''}`
                 )
               }
@@ -649,111 +662,133 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         )}
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-          {isAr ? 'الاختبار البدني' : 'Physical Test'}
-        </h3>
-        {requestStatus ? (
-          <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
-            <div className="flex items-center gap-2">
-              {requestStatus.status === 'pending' && <Clock className="h-4 w-4 text-orange-500" />}
-              {requestStatus.status === 'approved' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-              {requestStatus.status === 'rejected' && <XCircle className="h-4 w-4 text-red-500" />}
-              <span className="font-medium">
-                {requestStatus.status === 'pending' && (isAr ? 'طلب قيد الانتظار' : 'Request pending')}
-                {requestStatus.status === 'approved' && (isAr ? 'تم قبول الطلب' : 'Request approved')}
-                {requestStatus.status === 'rejected' && (isAr ? 'تم رفض الطلب' : 'Request rejected')}
-              </span>
-            </div>
-            <p>{isAr ? 'تاريخ الطلب:' : 'Requested:'} {formatDate(requestStatus.requested_at, locale)}</p>
-            {requestStatus.scheduled_at && (
-              <p>{isAr ? 'وقت الاختبار:' : 'Scheduled:'} {formatDate(requestStatus.scheduled_at, locale)}</p>
-            )}
-            {requestStatus.review_notes && (
-              <p className="text-red-600 dark:text-red-400">{requestStatus.review_notes}</p>
-            )}
-          </div>
-        ) : (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {isAr ? 'لا يوجد طلب نشط.' : 'No active request.'}
-          </p>
-        )}
-
-        {(profileComplete && !activeRequest && (!readOnly || isAdminView)) && (
+      {isAdminView && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
           <button
             type="button"
-            onClick={handleRequestTest}
-            disabled={requesting}
-            className="w-full rounded-xl bg-orange-500 text-white py-2 text-sm font-semibold hover:bg-orange-600 disabled:opacity-60"
+            onClick={() => setHealthTestOpen((prev) => !prev)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100"
           >
-            {requesting
-              ? (isAr ? 'جاري الإرسال...' : 'Submitting...')
-              : (isAr ? 'طلب اختبار بدني' : 'Request physical test')}
+            <span>{isAr ? 'الاختبار البدني' : 'Physical Test'}</span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${healthTestOpen ? 'rotate-180' : ''}`} />
           </button>
-        )}
-      </div>
+          {healthTestOpen && (
+            <div className="px-4 pb-4 space-y-3">
+              {requestStatus ? (
+                <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  <div className="flex items-center gap-2">
+                    {requestStatus.status === 'pending' && <Clock className="h-4 w-4 text-orange-500" />}
+                    {requestStatus.status === 'approved' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                    {requestStatus.status === 'rejected' && <XCircle className="h-4 w-4 text-red-500" />}
+                    <span className="font-medium">
+                      {requestStatus.status === 'pending' && (isAr ? 'طلب قيد الانتظار' : 'Request pending')}
+                      {requestStatus.status === 'approved' && (isAr ? 'تم قبول الطلب' : 'Request approved')}
+                      {requestStatus.status === 'rejected' && (isAr ? 'تم رفض الطلب' : 'Request rejected')}
+                    </span>
+                  </div>
+                  <p>{isAr ? 'تاريخ الطلب:' : 'Requested:'} {formatDate(requestStatus.requested_at, locale)}</p>
+                  {requestStatus.scheduled_at && (
+                    <p>{isAr ? 'وقت الاختبار:' : 'Scheduled:'} {formatDate(requestStatus.scheduled_at, locale)}</p>
+                  )}
+                  {requestStatus.review_notes && (
+                    <p className="text-red-600 dark:text-red-400">{requestStatus.review_notes}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {isAr ? 'لا يوجد طلب نشط.' : 'No active request.'}
+                </p>
+              )}
 
-      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-          {isAr ? 'طلبات الميداليات' : 'Medal requests'}
-        </h3>
-        {medalRequest ? (
-          <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">
-                {medalRequest.medal_type} · {medalRequest.status}
-              </span>
+              {(profileComplete && !activeRequest && (!readOnly || isAdminView)) && (
+                <button
+                  type="button"
+                  onClick={handleRequestTest}
+                  disabled={requesting}
+                  className="w-full rounded-xl bg-orange-500 text-white py-2 text-sm font-semibold hover:bg-orange-600 disabled:opacity-60"
+                >
+                  {requesting
+                    ? (isAr ? 'جاري الإرسال...' : 'Submitting...')
+                    : (isAr ? 'طلب اختبار بدني' : 'Request physical test')}
+                </button>
+              )}
             </div>
-            <p>{isAr ? 'تاريخ الطلب:' : 'Requested:'} {formatDate(medalRequest.requested_date, locale)}</p>
-            <p>{isAr ? 'تاريخ التسليم:' : 'Delivery:'} {formatDate(medalRequest.delivery_date, locale)}</p>
-          </div>
-        ) : (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {isAr ? 'لا توجد طلبات بعد.' : 'No requests yet.'}
-          </p>
-        )}
+          )}
+        </div>
+      )}
 
-        {canRequestMedal && (
-          <div className="pt-2 space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'نوع الميدالية' : 'Medal type'}
-              </label>
-              <select
-                value={medalForm.medal_type}
-                onChange={(event) => setMedalForm((prev) => ({ ...prev, medal_type: event.target.value }))}
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-              >
-                <option value="">{isAr ? 'اختر نوع الميدالية' : 'Select medal type'}</option>
-                {medalOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+      {isAdminView && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setMedalRequestOpen((prev) => !prev)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100"
+          >
+            <span>{isAr ? 'طلبات الميداليات' : 'Medal requests'}</span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${medalRequestOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {medalRequestOpen && (
+            <div className="px-4 pb-4 space-y-3">
+              {medalRequest ? (
+                <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">
+                      {medalRequest.medal_type} · {medalRequest.status}
+                    </span>
+                  </div>
+                  <p>{isAr ? 'تاريخ الطلب:' : 'Requested:'} {formatDate(medalRequest.requested_date, locale)}</p>
+                  <p>{isAr ? 'تاريخ التسليم:' : 'Delivery:'} {formatDate(medalRequest.delivery_date, locale)}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {isAr ? 'لا توجد طلبات بعد.' : 'No requests yet.'}
+                </p>
+              )}
+
+              {canRequestMedal && (
+                <div className="pt-2 space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                      {isAr ? 'نوع الميدالية' : 'Medal type'}
+                    </label>
+                    <select
+                      value={medalForm.medal_type}
+                      onChange={(event) => setMedalForm((prev) => ({ ...prev, medal_type: event.target.value }))}
+                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+                    >
+                      <option value="">{isAr ? 'اختر نوع الميدالية' : 'Select medal type'}</option>
+                      {medalOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                      {isAr ? 'الإنجاز' : 'Achievement'}
+                    </label>
+                    <textarea
+                      value={medalForm.achievement_description}
+                      onChange={(event) => setMedalForm((prev) => ({ ...prev, achievement_description: event.target.value }))}
+                      rows={3}
+                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRequestMedal}
+                    disabled={medalSubmitting}
+                    className="w-full rounded-xl bg-orange-500 text-white py-2 text-sm font-semibold hover:bg-orange-600 disabled:opacity-60"
+                  >
+                    {medalSubmitting
+                        ? (isAr ? 'جاري الإرسال...' : 'Submitting...')
+                        : (isAr ? 'إرسال الطلب' : 'Submit request')}
+                  </button>
+                </div>
+              )}
             </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                {isAr ? 'الإنجاز' : 'Achievement'}
-              </label>
-              <textarea
-                value={medalForm.achievement_description}
-                onChange={(event) => setMedalForm((prev) => ({ ...prev, achievement_description: event.target.value }))}
-                rows={3}
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleRequestMedal}
-              disabled={medalSubmitting}
-              className="w-full rounded-xl bg-orange-500 text-white py-2 text-sm font-semibold hover:bg-orange-600 disabled:opacity-60"
-            >
-              {medalSubmitting
-                ? (isAr ? 'جاري الإرسال...' : 'Submitting...')
-                : (isAr ? 'إرسال الطلب' : 'Submit request')}
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {latestTest && latestTest.status === 'completed' && (
         <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">

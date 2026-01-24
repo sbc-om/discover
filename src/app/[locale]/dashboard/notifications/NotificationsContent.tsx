@@ -67,9 +67,12 @@ export default function NotificationsContent() {
   const handleMarkAsRead = async (id: string) => {
     try {
       setMarkingId(id);
-      const response = await fetch(`/api/notifications/${id}`, {
-        method: 'PUT',
-      });
+      const response = await fetch(
+        `/api/notifications/${id}${targetUserId ? `?user_id=${targetUserId}` : ''}`,
+        {
+          method: 'PUT',
+        }
+      );
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || 'Failed to mark as read');
@@ -87,9 +90,12 @@ export default function NotificationsContent() {
   const handleMarkAllAsRead = async () => {
     try {
       setMarkingAll(true);
-      const response = await fetch('/api/notifications/read-all', {
-        method: 'POST',
-      });
+      const response = await fetch(
+        `/api/notifications/read-all${targetUserId ? `?user_id=${targetUserId}` : ''}`,
+        {
+          method: 'POST',
+        }
+      );
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || 'Failed to mark all as read');
