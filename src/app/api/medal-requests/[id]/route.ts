@@ -14,27 +14,67 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { status, delivery_date, review_notes } = body || {};
+    const { status, delivery_date, review_notes, shipping_date, tracking_number } = body || {};
 
-    if (!['approved', 'rejected'].includes(status)) {
+    const validStatuses = ['pending', 'approved', 'rejected', 'preparing', 'shipped', 'delivered'];
+    if (!validStatuses.includes(status)) {
       return NextResponse.json({ message: 'Invalid status' }, { status: 400 });
     }
 
-    if (status === 'approved' && !delivery_date) {
-      return NextResponse.json({ message: 'Delivery date is required' }, { status: 400 });
+    // Build dynamic update query
+    const updates: string[] = ['status = $1', 'updated_at = CURRENT_TIMESTAMP'];
+    const values: any[] = [status];
+    let paramIndex = 2;
+
+    // Add delivery_date if provided
+    if (delivery_date !== undefined) {
+      updates.push(`delivery_date = $${paramIndex}`);
+      values.push(delivery_date || null);
+      paramIndex++;
     }
+
+    // Add review fields for approval/rejection
+    if (['approved', 'rejected'].includes(status)) {
+      updates.push(`review_date = CURRENT_DATE`);
+      updates.push(`reviewed_by = $${paramIndex}`);
+      values.push(session.userId);
+      paramIndex++;
+    }
+
+    // Add review_notes if provided
+    if (review_notes !== undefined) {
+      updates.push(`review_notes = $${paramIndex}`);
+      values.push(review_notes || null);
+      paramIndex++;
+    }
+
+    // Add shipping fields
+    if (shipping_date !== undefined) {
+      updates.push(`shipping_date = $${paramIndex}`);
+      values.push(shipping_date || null);
+      paramIndex++;
+    }
+
+    if (tracking_number !== undefined) {
+      updates.push(`tracking_number = $${paramIndex}`);
+      values.push(tracking_number || null);
+      paramIndex++;
+    }
+
+    // Mark delivered_at timestamp
+    if (status === 'delivered') {
+      updates.push(`delivered_at = CURRENT_TIMESTAMP`);
+    }
+
+    values.push(id);
 
     const { rows } = await pool.query(
       `UPDATE medal_requests
-       SET status = $1,
-           delivery_date = $2,
-           review_notes = $3,
-           review_date = CURRENT_DATE,
-           reviewed_by = $4,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = $5
-       RETURNING id, medal_type, achievement_description, status, requested_date, delivery_date, review_date, review_notes`,
-      [status, delivery_date || null, review_notes || null, session.userId, id]
+       SET ${updates.join(', ')}
+       WHERE id = $${paramIndex}
+       RETURNING id, medal_type, achievement_description, status, requested_date, delivery_date, 
+                 review_date, review_notes, shipping_date, tracking_number, delivered_at`,
+      values
     );
 
     if (rows.length === 0) {

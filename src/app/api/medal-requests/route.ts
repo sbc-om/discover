@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     let query = `
       SELECT 
         mr.id, mr.medal_type, mr.achievement_description, mr.status, mr.requested_date, mr.delivery_date,
+        mr.shipping_date, mr.tracking_number, mr.delivered_at, mr.review_notes,
         u.id as user_id, u.first_name, u.last_name, u.avatar_url,
         a.id as academy_id, a.name as academy_name, a.name_ar as academy_name_ar
       FROM medal_requests mr
