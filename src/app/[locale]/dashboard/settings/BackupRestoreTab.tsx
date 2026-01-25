@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Database, FolderSync, Download, Upload, Loader2, Check, AlertCircle, FileText, Calendar } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 import useLocale from '@/hooks/useLocale';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 interface BackupInfo {
   filename: string;
@@ -22,6 +23,12 @@ export default function BackupRestoreTab() {
   const [filesRestoreLoading, setFilesRestoreLoading] = useState(false);
   const [backupList, setBackupList] = useState<BackupInfo[]>([]);
   const [loadingList, setLoadingList] = useState(false);
+  
+  // Confirm dialog states
+  const [showDbRestoreConfirm, setShowDbRestoreConfirm] = useState(false);
+  const [showFilesRestoreConfirm, setShowFilesRestoreConfirm] = useState(false);
+  const [pendingDbFile, setPendingDbFile] = useState<File | null>(null);
+  const [pendingFilesFile, setPendingFilesFile] = useState<File | null>(null);
 
   const handleDatabaseBackup = async () => {
     setDbBackupLoading(true);
@@ -53,21 +60,14 @@ export default function BackupRestoreTab() {
     }
   };
 
-  const handleDatabaseRestore = async (file: File) => {
-    if (!file) return;
+  const handleDatabaseRestore = async () => {
+    if (!pendingDbFile) return;
 
-    const confirmed = confirm(
-      isAr 
-        ? 'تحذير: سيتم استبدال جميع البيانات الحالية. هل أنت متأكد؟'
-        : 'Warning: This will replace all current data. Are you sure?'
-    );
-
-    if (!confirmed) return;
-
+    setShowDbRestoreConfirm(false);
     setDbRestoreLoading(true);
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', pendingDbFile);
 
       const response = await fetch('/api/backup/database/restore', {
         method: 'POST',
@@ -119,21 +119,14 @@ export default function BackupRestoreTab() {
     }
   };
 
-  const handleFilesRestore = async (file: File) => {
-    if (!file) return;
+  const handleFilesRestore = async () => {
+    if (!pendingFilesFile) return;
 
-    const confirmed = confirm(
-      isAr 
-        ? 'تحذير: سيتم استبدال الملفات الحالية. هل أنت متأكد؟'
-        : 'Warning: This will replace current files. Are you sure?'
-    );
-
-    if (!confirmed) return;
-
+    setShowFilesRestoreConfirm(false);
     setFilesRestoreLoading(true);
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', pendingFilesFile);
 
       const response = await fetch('/api/backup/files/restore', {
         method: 'POST',
@@ -229,7 +222,10 @@ export default function BackupRestoreTab() {
                     accept=".sql"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) handleDatabaseRestore(file);
+                      if (file) {
+                        setPendingDbFile(file);
+                        setShowDbRestoreConfirm(true);
+                      }
                       e.target.value = '';
                     }}
                     disabled={dbRestoreLoading}
@@ -314,7 +310,10 @@ export default function BackupRestoreTab() {
                     accept=".tar.gz,.tgz,.zip"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) handleFilesRestore(file);
+                      if (file) {
+                        setPendingFilesFile(file);
+                        setShowFilesRestoreConfirm(true);
+                      }
                       e.target.value = '';
                     }}
                     disabled={filesRestoreLoading}
@@ -368,6 +367,43 @@ export default function BackupRestoreTab() {
           </li>
         </ul>
       </div>
+
+      {/* Confirm Dialogs */}
+      <ConfirmDialog
+        open={showDbRestoreConfirm}
+        title={isAr ? 'استعادة قاعدة البيانات؟' : 'Restore Database?'}
+        description={
+          isAr
+            ? 'تحذير: سيتم حذف جميع الجداول الحالية واستبدالها بالنسخة الاحتياطية. هذا الإجراء لا يمكن التراجع عنه.'
+            : 'Warning: This will drop all existing tables and replace them with the backup. This action cannot be undone.'
+        }
+        confirmText={isAr ? 'استعادة البيانات' : 'Restore Database'}
+        cancelText={isAr ? 'إلغاء' : 'Cancel'}
+        onClose={() => {
+          setShowDbRestoreConfirm(false);
+          setPendingDbFile(null);
+        }}
+        onConfirm={handleDatabaseRestore}
+        loading={dbRestoreLoading}
+      />
+
+      <ConfirmDialog
+        open={showFilesRestoreConfirm}
+        title={isAr ? 'استعادة الملفات؟' : 'Restore Files?'}
+        description={
+          isAr
+            ? 'تحذير: سيتم استبدال جميع الملفات الحالية بالنسخة الاحتياطية. قد يؤدي هذا إلى فقدان الملفات الجديدة.'
+            : 'Warning: This will replace all current files with the backup. This may result in loss of newer files.'
+        }
+        confirmText={isAr ? 'استعادة الملفات' : 'Restore Files'}
+        cancelText={isAr ? 'إلغاء' : 'Cancel'}
+        onClose={() => {
+          setShowFilesRestoreConfirm(false);
+          setPendingFilesFile(null);
+        }}
+        onConfirm={handleFilesRestore}
+        loading={filesRestoreLoading}
+      />
     </div>
   );
 }
