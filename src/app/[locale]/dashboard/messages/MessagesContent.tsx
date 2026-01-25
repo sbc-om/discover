@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Send, Loader2, User } from 'lucide-react';
+import { Search, Send, Loader2, User, Bell } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 import useLocale from '@/hooks/useLocale';
 
@@ -16,6 +16,7 @@ interface SubscriberUser {
   role_id: string | null;
   academy_id: string | null;
   academy_name: string | null;
+  has_push_subscription: boolean;
 }
 
 interface Academy {
@@ -53,11 +54,11 @@ export default function MessagesContent() {
     fetchCurrentUser();
     fetchAcademies();
     fetchRoles();
-    fetchSubscribers();
+    fetchUsers();
   }, []);
 
   useEffect(() => {
-    fetchSubscribers();
+    fetchUsers();
   }, [selectedAcademy, selectedRole]);
 
   const fetchCurrentUser = async () => {
@@ -101,7 +102,7 @@ export default function MessagesContent() {
     }
   };
 
-  const fetchSubscribers = async () => {
+  const fetchUsers = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -109,7 +110,7 @@ export default function MessagesContent() {
       if (academyParam) params.append('academyId', academyParam);
       if (selectedRole) params.append('roleId', selectedRole);
       
-      const response = await fetch(`/api/push/subscribers?${params.toString()}`);
+      const response = await fetch(`/api/messaging/users?${params.toString()}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -274,12 +275,22 @@ export default function MessagesContent() {
                         <User className="w-5 h-5 text-zinc-400" />
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                        {user.first_name} {user.last_name}
-                      </p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                          {user.first_name} {user.last_name}
+                        </p>
+                        {user.has_push_subscription && (
+                          <span title={isAr ? 'مفعّل للإشعارات' : 'Push notifications enabled'}>
+                            <Bell className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                         {user.email}
+                      </p>
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500 capitalize">
+                        {isAr ? (user.role_name === 'admin' ? 'مدير' : user.role_name === 'academy_manager' ? 'مدير أكاديمية' : user.role_name === 'coach' ? 'مدرب' : user.role_name === 'player' ? 'لاعب' : user.role_name) : user.role_name}
                       </p>
                     </div>
                   </label>
