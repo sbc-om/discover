@@ -46,6 +46,16 @@ interface Achievement {
   icon_url?: string | null;
 }
 
+interface ActivityLog {
+  id: string;
+  playerId: string;
+  playerName: string;
+  type: 'attendance' | 'score' | 'message' | 'achievement';
+  action: string;
+  value?: string | number;
+  timestamp: Date;
+}
+
 export default function CoachDashboardContent() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
@@ -74,6 +84,23 @@ export default function CoachDashboardContent() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loadingAchievements, setLoadingAchievements] = useState(false);
   const [awardingAchievement, setAwardingAchievement] = useState(false);
+  
+  // Activity Log
+  const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
+  const [showActivityPanel, setShowActivityPanel] = useState(false);
+  
+  const addActivity = (playerId: string, playerName: string, type: ActivityLog['type'], action: string, value?: string | number) => {
+    const newActivity: ActivityLog = {
+      id: `${Date.now()}_${Math.random()}`,
+      playerId,
+      playerName,
+      type,
+      action,
+      value,
+      timestamp: new Date()
+    };
+    setActivityLog(prev => [newActivity, ...prev]);
+  };
 
   const selectedProgram = useMemo(
     () => programs.find((p) => p.id === selectedProgramId) || null,
@@ -147,6 +174,8 @@ export default function CoachDashboardContent() {
   useEffect(() => {
     if (selectedProgramId && selectedAgeGroupId) {
       fetchPlayers(selectedProgramId, selectedAgeGroupId, selectedDate);
+      // Clear activity log when changing session
+      setActivityLog([]);
     }
   }, [selectedProgramId, selectedAgeGroupId, selectedDate]);
 
@@ -181,7 +210,19 @@ export default function CoachDashboardContent() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
-      // Silent - no toast notification
+      
+      const player = players.find(p => p.id === playerId);
+      const achievement = achievements.find(a => a.id === achievementId);
+      if (player && achievement) {
+        addActivity(
+          playerId,
+          `${player.first_name} ${player.last_name}`,
+          'achievement',
+          isAr ? 'حصل على إنجاز' : 'Received achievement',
+          isAr ? achievement.title_ar || achievement.title : achievement.title
+        );
+      }
+      
       setAchievementOpenId(null);
     } catch (error: any) {
       showToast('error', error.message || (isAr ? 'تعذر منح الإنجاز' : 'Failed to award achievement'));
@@ -199,13 +240,37 @@ export default function CoachDashboardContent() {
 
   const togglePresent = (playerId: string) => {
     setPlayers((prev) =>
-      prev.map((p) => (p.id === playerId ? { ...p, present: !p.present } : p))
+      prev.map((p) => {
+        if (p.id === playerId) {
+          const newPresent = !p.present;
+          addActivity(
+            playerId,
+            `${p.first_name} ${p.last_name}`,
+            'attendance',
+            newPresent ? (isAr ? 'تم تسجيل الحضور' : 'Marked as present') : (isAr ? 'تم تسجيل الغياب' : 'Marked as absent')
+          );
+          return { ...p, present: newPresent };
+        }
+        return p;
+      })
     );
   };
 
   const updateScore = (playerId: string, score: number) => {
     setPlayers((prev) =>
-      prev.map((p) => (p.id === playerId ? { ...p, score } : p))
+      prev.map((p) => {
+        if (p.id === playerId) {
+          addActivity(
+            playerId,
+            `${p.first_name} ${p.last_name}`,
+            'score',
+            isAr ? `حصل على ${score} نقطة` : `Received ${score} points`,
+            score
+          );
+          return { ...p, score: (p.score || 0) + score, points: (p.points || 0) + score };
+        }
+        return p;
+      })
     );
   };
 
@@ -253,9 +318,20 @@ export default function CoachDashboardContent() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
+      
+      const player = players.find(p => p.id === playerId);
+      if (player) {
+        addActivity(
+          playerId,
+          `${player.first_name} ${player.last_name}`,
+          'message',
+          isAr ? 'تم إرسال رسالة' : 'Message sent',
+          content.substring(0, 50) + (content.length > 50 ? '...' : '')
+        );
+      }
+      
       setMessageDrafts((prev) => ({ ...prev, [playerId]: '' }));
       setMessageOpenId(null);
-      // Silent - no toast notification
     } catch (error: any) {
       showToast('error', error.message || (isAr ? 'تعذر إرسال الرسالة' : 'Failed to send'));
     } finally {
@@ -269,16 +345,119 @@ export default function CoachDashboardContent() {
 
   return (
     <div className="space-y-4 pb-24 md:pb-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {isAr ? 'الجلسة:' : 'Session:'} {new Date(selectedDate).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-          </p>
+      {/* Session Header - Enhanced */}
+      <div className="rounded-2xl border-2 border-orange-200 dark:border-orange-900/40 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-orange-600 dark:text-orange-400">{isAr ? 'جلسة التدريب' : 'Training Session'}</h1>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                {new Date(selectedDate).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', { 
+                  weekday: 'long',
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowActivityPanel(!showActivityPanel)}
+            className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
+              showActivityPanel
+                ? 'bg-orange-500 text-white shadow-lg'
+                : 'bg-white dark:bg-zinc-800 text-orange-600 dark:text-orange-400 border border-orange-300 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30'
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            {isAr ? 'سجل الأنشطة' : 'Activity Log'}
+            {activityLog.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-orange-600 text-white text-xs font-bold">
+                {activityLog.length}
+              </span>
+            )}
+          </button>
         </div>
-        <div className="text-right">
-          <h1 className="text-lg font-bold text-orange-500">{isAr ? 'البرامج' : 'Programs'}</h1>
-          <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{isAr ? 'الحضور وتتبع التقدم' : 'Attendance & progress tracking'}</p>
+        {programLabel && (
+          <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 bg-white/50 dark:bg-zinc-800/50 px-3 py-2 rounded-lg">
+            <Award className="w-4 h-4 text-orange-500" />
+            <span className="font-semibold">{programLabel}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Activity Panel */}
+      {showActivityPanel && activityLog.length > 0 && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 max-h-96 overflow-y-auto">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-orange-500" />
+              {isAr ? 'سجل أنشطة الجلسة' : 'Session Activity Log'}
+            </h3>
+            <button
+              onClick={() => setActivityLog([])}
+              className="text-xs text-zinc-500 hover:text-red-500 transition-colors"
+            >
+              {isAr ? 'مسح الكل' : 'Clear All'}
+            </button>
+          </div>
+          <div className="space-y-2">
+            {activityLog.map((activity) => (
+              <div
+                key={activity.id}
+                className="flex items-start gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700/50 hover:border-orange-300 dark:hover:border-orange-700 transition-colors"
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  activity.type === 'attendance' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
+                  activity.type === 'score' ? 'bg-blue-100 dark:bg-blue-900/30' :
+                  activity.type === 'message' ? 'bg-indigo-100 dark:bg-indigo-900/30' :
+                  'bg-amber-100 dark:bg-amber-900/30'
+                }`}>
+                  {activity.type === 'attendance' && <Check className={`w-4 h-4 text-emerald-600 dark:text-emerald-400`} />}
+                  {activity.type === 'score' && <Plus className={`w-4 h-4 text-blue-600 dark:text-blue-400`} />}
+                  {activity.type === 'message' && <MessageSquare className={`w-4 h-4 text-indigo-600 dark:text-indigo-400`} />}
+                  {activity.type === 'achievement' && <Trophy className={`w-4 h-4 text-amber-600 dark:text-amber-400`} />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                    {activity.playerName}
+                  </p>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+                    {activity.action}
+                    {activity.value && (
+                      <span className="font-semibold text-orange-600 dark:text-orange-400">
+                        {activity.type === 'score' ? ` (+${activity.value})` : `: ${activity.value}`}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <span className="text-[10px] text-zinc-400 shrink-0">
+                  {activity.timestamp.toLocaleTimeString(isAr ? 'ar-SA' : 'en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Header - Original kept for compatibility */}
+      <div className="hidden">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {isAr ? 'الجلسة:' : 'Session:'} {new Date(selectedDate).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </p>
+          </div>
+          <div className="text-right">
+            <h1 className="text-lg font-bold text-orange-500">{isAr ? 'البرامج' : 'Programs'}</h1>
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{isAr ? 'الحضور وتتبع التقدم' : 'Attendance & progress tracking'}</p>
+          </div>
         </div>
       </div>
 
@@ -427,6 +606,8 @@ export default function CoachDashboardContent() {
               loadingAchievements={loadingAchievements}
               awardingAchievement={awardingAchievement}
               onAwardAchievement={(achievementId) => handleAwardAchievement(player.id, achievementId)}
+              // Activity log for this player
+              playerActivities={activityLog.filter(a => a.playerId === player.id)}
             />
           ))}
         </div>
@@ -475,6 +656,8 @@ interface PlayerCardProps {
   loadingAchievements: boolean;
   awardingAchievement: boolean;
   onAwardAchievement: (achievementId: string) => void;
+  // Activity log
+  playerActivities: ActivityLog[];
 }
 
 function PlayerCard({
@@ -499,11 +682,42 @@ function PlayerCard({
   loadingAchievements,
   awardingAchievement,
   onAwardAchievement,
+  playerActivities,
 }: PlayerCardProps) {
   const fullName = `${player.first_name} ${player.last_name}`;
+  const sessionScore = playerActivities.filter(a => a.type === 'score').reduce((sum, a) => sum + (Number(a.value) || 0), 0);
+  const sessionAchievements = playerActivities.filter(a => a.type === 'achievement').length;
+  const sessionMessages = playerActivities.filter(a => a.type === 'message').length;
 
   return (
     <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm hover:shadow-md transition-shadow">
+      {/* Session Summary Badge */}
+      {playerActivities.length > 0 && (
+        <div className="mb-4 flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+            {isAr ? 'أنشطة الجلسة:' : 'Session:'}
+          </span>
+          {sessionScore > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-semibold">
+              <Plus className="w-3 h-3" />
+              {sessionScore} {isAr ? 'نقطة' : 'pts'}
+            </span>
+          )}
+          {sessionAchievements > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold">
+              <Trophy className="w-3 h-3" />
+              {sessionAchievements} {isAr ? 'إنجاز' : 'achievement'}
+            </span>
+          )}
+          {sessionMessages > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-semibold">
+              <MessageSquare className="w-3 h-3" />
+              {sessionMessages} {isAr ? 'رسالة' : 'msg'}
+            </span>
+          )}
+        </div>
+      )}
+      
       {/* Main Content Row */}
       <div className="flex items-start justify-between gap-4">
         {/* Left Side - Player Info & Actions */}
@@ -609,7 +823,10 @@ function PlayerCard({
             max="10"
             value={scoreValue}
             onChange={(e) => onScoreValueChange(parseInt(e.target.value))}
-            className="w-full h-2.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-emerald-500"
+            className="w-full h-2.5 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-emerald-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
+            style={{
+              background: `linear-gradient(to right, #10b981 0%, #10b981 ${(scoreValue / 10) * 100}%, rgb(228 228 231) ${(scoreValue / 10) * 100}%, rgb(228 228 231) 100%)`
+            }}
           />
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span>0</span>

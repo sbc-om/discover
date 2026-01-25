@@ -69,8 +69,9 @@ export async function GET(request: Request) {
         AND pr.age_group_id = $2
         AND r.name = 'player'
         AND u.is_active = true
+        AND u.academy_id = $4
       ORDER BY u.first_name, u.last_name`,
-      [programId, ageGroupId, date]
+      [programId, ageGroupId, date, academyId]
     );
 
     // Calculate level for each player

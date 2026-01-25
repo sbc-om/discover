@@ -26,11 +26,18 @@ export async function POST(request: Request) {
 
     const playerAcademyId = userResult.rows[0].academy_id;
 
+    // Check if user has permission to award achievement to this player
     if (session.roleName !== 'admin') {
       const academyResult = await pool.query('SELECT academy_id FROM users WHERE id = $1', [session.userId]);
       const actorAcademyId = academyResult.rows[0]?.academy_id;
-      if (!actorAcademyId || actorAcademyId !== playerAcademyId) {
-        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      
+      // Coach and academy_manager must belong to same academy as player
+      if (!actorAcademyId) {
+        return NextResponse.json({ message: 'No academy assigned' }, { status: 403 });
+      }
+      
+      if (actorAcademyId !== playerAcademyId) {
+        return NextResponse.json({ message: 'Cannot award achievement to player from different academy' }, { status: 403 });
       }
     }
 
@@ -46,8 +53,9 @@ export async function POST(request: Request) {
     }
 
     const achievementAcademyId = achievementResult.rows[0].academy_id;
+    // If achievement is academy-specific, check it matches player's academy
     if (achievementAcademyId && achievementAcademyId !== playerAcademyId && session.roleName !== 'admin') {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ message: 'Achievement not available for this academy' }, { status: 403 });
     }
 
     const { rows } = await pool.query(

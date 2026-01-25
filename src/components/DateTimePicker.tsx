@@ -327,36 +327,38 @@ export default function DateTimePicker({
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition ${
-          disabled
-            ? 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 cursor-not-allowed opacity-60'
-            : isOpen
-            ? 'border-orange-500 bg-white dark:bg-zinc-900'
-            : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-600'
-        }`}
-      >
-        {mode === 'datetime' ? (
-          <Clock className={`h-4 w-4 ${isOpen ? 'text-orange-500' : 'text-zinc-400'}`} />
-        ) : (
-          <Calendar className={`h-4 w-4 ${isOpen ? 'text-orange-500' : 'text-zinc-400'}`} />
-        )}
-        <span className={`flex-1 text-start ${value ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400'}`}>
-          {formatDisplay()}
-        </span>
+      <div className="relative">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition ${
+            disabled
+              ? 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 cursor-not-allowed opacity-60'
+              : isOpen
+              ? 'border-orange-500 bg-white dark:bg-zinc-900'
+              : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-600'
+          }`}
+        >
+          {mode === 'datetime' ? (
+            <Clock className={`h-4 w-4 ${isOpen ? 'text-orange-500' : 'text-zinc-400'}`} />
+          ) : (
+            <Calendar className={`h-4 w-4 ${isOpen ? 'text-orange-500' : 'text-zinc-400'}`} />
+          )}
+          <span className={`flex-1 text-start ${value ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400'}`}>
+            {formatDisplay()}
+          </span>
+        </button>
         {value && !disabled && (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onChange(''); }}
-            className="text-zinc-400 hover:text-red-500"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-red-500 p-1 z-10"
           >
             <X className="h-3.5 w-3.5" />
           </button>
         )}
-      </button>
+      </div>
 
       {mounted && isOpen && createPortal(
         <div
