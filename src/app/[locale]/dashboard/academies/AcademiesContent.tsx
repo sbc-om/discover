@@ -418,7 +418,7 @@ export default function AcademiesContent() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shrink-0 overflow-hidden">
+                          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shrink-0 overflow-hidden">
                             {academy.logo_url ? (
                               <img src={academy.logo_url} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -508,7 +508,7 @@ export default function AcademiesContent() {
                   className="p-4"
                 >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shrink-0 overflow-hidden">
+                    <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shrink-0 overflow-hidden">
                       {academy.logo_url ? (
                         <img src={academy.logo_url} alt="" className="w-full h-full object-cover" />
                       ) : (

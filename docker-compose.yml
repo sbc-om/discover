@@ -77,6 +77,8 @@ services:
       - app-data:/app/data
       # Persist logs
       - logs-data:/app/logs
+      # Persist backups
+      - backups-data:/app/backups
     depends_on:
       postgres:
         condition: service_healthy
@@ -111,3 +113,6 @@ volumes:
   logs-data:
     driver: local
     name: dna-logs-data
+  backups-data:
+    driver: local
+    name: dna-backups-data
