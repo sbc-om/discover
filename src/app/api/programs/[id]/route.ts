@@ -124,13 +124,21 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, name_ar, description, description_ar, image_url, is_active } = body;
+    const { name, name_ar, description, description_ar, image_url, academy_id, is_active } = body;
 
-    // Check if new name conflicts with another program in the same academy
+    // Determine target academy_id
+    let targetAcademyId = program.academy_id;
+    
+    if (session.roleName === 'admin' && academy_id) {
+      // Admin can change academy_id
+      targetAcademyId = academy_id;
+    }
+
+    // Check if new name conflicts with another program in the target academy
     if (name) {
       const nameCheck = await pool.query(
         'SELECT id FROM programs WHERE name = $1 AND academy_id = $2 AND id != $3',
-        [name, program.academy_id, id]
+        [name, targetAcademyId, id]
       );
       if (nameCheck.rows.length > 0) {
         return NextResponse.json(
@@ -147,11 +155,12 @@ export async function PUT(
            description = COALESCE($3, description),
            description_ar = COALESCE($4, description_ar),
            image_url = COALESCE($5, image_url),
-           is_active = COALESCE($6, is_active),
+           academy_id = COALESCE($6, academy_id),
+           is_active = COALESCE($7, is_active),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7
+       WHERE id = $8
        RETURNING id, name, name_ar, description, description_ar, image_url, academy_id, is_active, updated_at`,
-      [name, name_ar, description, description_ar, image_url, is_active, id]
+      [name, name_ar, description, description_ar, image_url, targetAcademyId, is_active, id]
     );
 
     return NextResponse.json({

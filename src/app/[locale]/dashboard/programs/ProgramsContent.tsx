@@ -1406,7 +1406,7 @@ export default function ProgramsContent() {
                   </div>
                 </div>
 
-                {isAdmin && academies.length > 1 && (
+                {isAdmin && (
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                       {t('Academy', 'الأكاديمية')} *
@@ -1415,11 +1415,12 @@ export default function ProgramsContent() {
                       value={formData.academy_id}
                       onChange={(e) => setFormData({ ...formData, academy_id: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                      required
                     >
                       <option value="">{t('Select Academy', 'اختر الأكاديمية')}</option>
                       {academies.map((academy) => (
                         <option key={academy.id} value={academy.id}>
-                          {academy.name} {academy.name_ar && `(${academy.name_ar})`}
+                          {isAr ? (academy.name_ar || academy.name) : academy.name}
                         </option>
                       ))}
                     </select>
