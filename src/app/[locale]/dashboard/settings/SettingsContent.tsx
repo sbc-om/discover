@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Settings, Database, Award } from 'lucide-react';
+import { Settings, Database, Award, Type } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import BackupRestoreTab from './BackupRestoreTab';
 import AchievementsTab from './AchievementsTab';
+import TypographyTab from './TypographyTab';
 import ThemeToggle from '@/components/ThemeToggle';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 
-type TabKey = 'general' | 'achievements' | 'backup';
+type TabKey = 'general' | 'typography' | 'achievements' | 'backup';
 
 interface Tab {
   key: TabKey;
@@ -19,6 +20,7 @@ interface Tab {
 
 const tabs: Tab[] = [
   { key: 'general', labelEn: 'General', labelAr: 'عام', icon: Settings },
+  { key: 'typography', labelEn: 'Typography', labelAr: 'الخطوط', icon: Type },
   { key: 'achievements', labelEn: 'Achievements', labelAr: 'الإنجازات', icon: Award },
   { key: 'backup', labelEn: 'Backup & Restore', labelAr: 'النسخ الاحتياطي والاستعادة', icon: Database },
 ];
@@ -84,6 +86,8 @@ export default function SettingsContent() {
             </div>
           </div>
         )}
+
+        {activeTab === 'typography' && <TypographyTab />}
 
         {activeTab === 'achievements' && <AchievementsTab />}
         
