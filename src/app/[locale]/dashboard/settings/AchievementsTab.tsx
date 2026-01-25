@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Award, ImagePlus, Loader2, Plus, Edit, Trash2 } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 interface Achievement {
   id: string;
@@ -17,6 +18,7 @@ export default function AchievementsTab() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
   const { showToast } = useToast();
+  const formRef = useRef<HTMLDivElement>(null);
 
   const [roleName, setRoleName] = useState<string>('');
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -32,6 +34,8 @@ export default function AchievementsTab() {
   
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [achievementToDelete, setAchievementToDelete] = useState<Achievement | null>(null);
 
   const canManage = roleName === 'admin' || roleName === 'academy_manager';
 
@@ -139,6 +143,15 @@ export default function AchievementsTab() {
       description: achievement.description || '',
       icon_url: achievement.icon_url || '',
     });
+    
+    // Smooth scroll to form
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      });
+    }, 100);
   };
 
   const handleCancelEdit = () => {
@@ -146,14 +159,17 @@ export default function AchievementsTab() {
     setForm({ title: '', title_ar: '', description: '', icon_url: '' });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(isAr ? 'هل تريد حذف هذا الإنجاز؟' : 'Are you sure you want to delete this achievement?')) {
-      return;
-    }
+  const handleDelete = (achievement: Achievement) => {
+    setAchievementToDelete(achievement);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!achievementToDelete) return;
     
-    setDeleting(id);
+    setDeleting(achievementToDelete.id);
     try {
-      const response = await fetch(`/api/achievements?id=${id}`, {
+      const response = await fetch(`/api/achievements?id=${achievementToDelete.id}`, {
         method: 'DELETE',
       });
       const data = await response.json();
@@ -162,6 +178,8 @@ export default function AchievementsTab() {
       }
       await fetchAchievements();
       showToast('success', isAr ? 'تم حذف الإنجاز' : 'Achievement deleted');
+      setDeleteDialogOpen(false);
+      setAchievementToDelete(null);
     } catch (error: any) {
       showToast('error', error.message || (isAr ? 'تعذر الحذف' : 'Failed to delete'));
     } finally {
@@ -180,10 +198,13 @@ export default function AchievementsTab() {
   return (
     <div className="space-y-6">
       {canManage && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4">
+        <div ref={formRef} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
             <Award className="h-4 w-4" />
-            {isAr ? 'إنجاز جديد' : 'New achievement'}
+            {editingId 
+              ? (isAr ? 'تعديل الإنجاز' : 'Edit achievement')
+              : (isAr ? 'إنجاز جديد' : 'New achievement')
+            }
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
@@ -303,7 +324,7 @@ export default function AchievementsTab() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(achievement.id)}
+                      onClick={() => handleDelete(achievement)}
                       disabled={deleting === achievement.id}
                       className="p-2 text-zinc-500 hover:text-red-500 transition-colors disabled:opacity-50"
                       title={isAr ? 'حذف' : 'Delete'}
@@ -321,6 +342,24 @@ export default function AchievementsTab() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title={isAr ? 'حذف الإنجاز' : 'Delete Achievement'}
+        description={achievementToDelete 
+          ? (isAr 
+            ? `هل أنت متأكد من حذف "${achievementToDelete.title_ar || achievementToDelete.title}"؟ لا يمكن التراجع عن هذا الإجراء.`
+            : `Are you sure you want to delete "${achievementToDelete.title}"? This action cannot be undone.`)
+          : ''}
+        confirmText={isAr ? 'حذف' : 'Delete'}
+        cancelText={isAr ? 'إلغاء' : 'Cancel'}
+        onConfirm={confirmDelete}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setAchievementToDelete(null);
+        }}
+        loading={deleting !== null}
+      />
     </div>
   );
 }
