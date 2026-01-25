@@ -17,8 +17,3 @@ INSERT INTO site_settings (setting_key, setting_value) VALUES
   ('font_size_heading_3', '24'),
   ('font_size_heading_4', '20')
 ON CONFLICT (setting_key) DO NOTHING;
-
--- Grant permissions
-GRANT SELECT ON site_settings TO academy_manager, coach, player;
-GRANT ALL ON site_settings TO admin;
-GRANT USAGE, SELECT ON SEQUENCE site_settings_id_seq TO admin;
