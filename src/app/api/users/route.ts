@@ -33,7 +33,9 @@ export async function GET(request: Request) {
         r.id as role_id, r.name as role_name, r.name_ar, r.name_en,
         lvl.completed_level_order,
         lvl.completed_level_name,
-        lvl.completed_level_name_ar
+        lvl.completed_level_name_ar,
+        CASE WHEN ht.user_id IS NOT NULL THEN true ELSE false END AS has_health_test,
+        CASE WHEN pp.user_id IS NOT NULL THEN true ELSE false END AS has_program_assignment
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id
       LEFT JOIN academies a ON a.id = u.academy_id
@@ -55,6 +57,8 @@ export async function GET(request: Request) {
           AND COALESCE(pa.points_total, 0) >= pl.min_points
         GROUP BY pr.user_id
       ) lvl ON lvl.user_id = u.id
+      LEFT JOIN (SELECT DISTINCT user_id FROM health_tests) ht ON ht.user_id = u.id
+      LEFT JOIN (SELECT DISTINCT user_id FROM player_programs) pp ON pp.user_id = u.id
       WHERE 1=1
     `;
 
