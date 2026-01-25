@@ -24,6 +24,16 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build arguments for NEXT_PUBLIC variables (must be set at build time)
+ARG NEXT_PUBLIC_APP_URL=https://discovernaturalability.com
+ARG NEXT_PUBLIC_API_URL=https://discovernaturalability.com
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
+
+# Set them as environment variables for the build
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
+
 # Build the application
 RUN pnpm build
 
