@@ -360,7 +360,7 @@ $$ language 'plpgsql';
 INSERT INTO users (email, password_hash, first_name, last_name, role_id, email_verified, is_active)
 SELECT 
     'admin@dna.com',
-    '$2a$10$rQJ5qP6yF9YxH8pXvH6rVeW4Jh6oGVxQkF5YxH8pXvH6rVeW4Jh6o',
+    '$2b$10$WEZVn.jH4HieIkcyrp3lr.ffzaTSPgi/94ov/D9S8Cpde/gd74PHG',
     'System',
     'Administrator',
     (SELECT id FROM roles WHERE name = 'admin'),
