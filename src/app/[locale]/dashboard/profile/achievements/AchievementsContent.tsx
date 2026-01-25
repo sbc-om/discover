@@ -123,7 +123,7 @@ export default function AchievementsContent() {
       if (!response.ok) {
         throw new Error(payload.message || 'Failed to award achievement');
       }
-      showToast('success', isAr ? 'تم منح المدال المجازي' : 'Virtual medal awarded');
+      showToast('success', isAr ? 'تم منح الميدالية الافتراضية' : 'Virtual medal awarded');
       setAwardAchievementId('');
       setAwardNote('');
       fetchAchievements();
@@ -151,7 +151,7 @@ export default function AchievementsContent() {
       if (!response.ok) {
         throw new Error(payload.message || 'Failed to request physical medal');
       }
-      showToast('success', isAr ? 'تم إرسال طلب المدال الفيزيائي' : 'Physical medal request sent');
+      showToast('success', isAr ? 'تم إرسال طلب الميدالية الفعلية' : 'Physical medal request sent');
       setPhysicalMedalType('');
       setPhysicalMedalDescription('');
     } catch (error: any) {
@@ -234,7 +234,7 @@ export default function AchievementsContent() {
                 }`}
               >
                 <Sparkles className="h-4 w-4" />
-                {isAr ? 'مدال مجازي' : 'Virtual Medal'}
+                {isAr ? 'ميدالية افتراضية' : 'Virtual Medal'}
               </button>
               <button
                 type="button"
@@ -246,7 +246,7 @@ export default function AchievementsContent() {
                 }`}
               >
                 <Package className="h-4 w-4" />
-                {isAr ? 'مدال فيزيائي' : 'Physical Medal'}
+                {isAr ? 'ميدالية فعلية' : 'Physical Medal'}
               </button>
             </div>
 
@@ -255,7 +255,7 @@ export default function AchievementsContent() {
               <div className="space-y-4">
                 <p className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-indigo-500" />
-                  {isAr ? 'منح مدال مجازي' : 'Award Virtual Medal'}
+                  {isAr ? 'منح ميدالية افتراضية' : 'Award Virtual Medal'}
                 </p>
                 
                 {/* Achievement Grid with Images */}
@@ -330,7 +330,7 @@ export default function AchievementsContent() {
                   className="w-full rounded-xl bg-indigo-500 text-white py-3 text-sm font-bold hover:bg-indigo-600 disabled:opacity-60 transition shadow-md flex items-center justify-center gap-2"
                 >
                   <Sparkles className="h-4 w-4" />
-                  {awarding ? (isAr ? 'جاري الإرسال...' : 'Awarding...') : (isAr ? 'منح المدال المجازي' : 'Award Virtual Medal')}
+                  {awarding ? (isAr ? 'جاري الإرسال...' : 'Awarding...') : (isAr ? 'منح الميدالية الافتراضية' : 'Award Virtual Medal')}
                 </button>
               </div>
             )}
@@ -340,7 +340,7 @@ export default function AchievementsContent() {
               <div className="space-y-4">
                 <p className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                   <Package className="h-4 w-4 text-amber-500" />
-                  {isAr ? 'طلب مدال فيزيائي' : 'Request Physical Medal'}
+                  {isAr ? 'طلب ميدالية فعلية' : 'Request Physical Medal'}
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   {isAr ? 'سيتم إرسال الطلب للإدارة للمراجعة والموافقة' : 'Request will be sent to admin for review and approval'}
@@ -378,7 +378,7 @@ export default function AchievementsContent() {
                   value={physicalMedalDescription}
                   onChange={(e) => setPhysicalMedalDescription(e.target.value)}
                   rows={3}
-                  placeholder={isAr ? 'وصف الإنجاز / سبب المدال' : 'Achievement description / Medal reason'}
+                  placeholder={isAr ? 'وصف الإنجاز / سبب الميدالية' : 'Achievement description / Medal reason'}
                   className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500"
                 />
                 <button
@@ -388,7 +388,7 @@ export default function AchievementsContent() {
                   className="w-full rounded-xl bg-amber-500 text-white py-3 text-sm font-bold hover:bg-amber-600 disabled:opacity-60 transition shadow-md flex items-center justify-center gap-2"
                 >
                   <Package className="h-4 w-4" />
-                  {requestingPhysical ? (isAr ? 'جاري الإرسال...' : 'Sending...') : (isAr ? 'إرسال طلب المدال' : 'Send Medal Request')}
+                  {requestingPhysical ? (isAr ? 'جاري الإرسال...' : 'Sending...') : (isAr ? 'إرسال طلب الميدالية' : 'Send Medal Request')}
                 </button>
               </div>
             )}
