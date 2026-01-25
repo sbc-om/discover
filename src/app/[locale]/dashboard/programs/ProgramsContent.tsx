@@ -627,7 +627,7 @@ export default function ProgramsContent() {
                       <img
                         src={level.image_url}
                         alt={level.name}
-                        className="w-full h-36 object-cover rounded-xl"
+                        className="w-full aspect-square object-cover rounded-xl"
                         loading="lazy"
                       />
                     </div>
@@ -1205,7 +1205,7 @@ export default function ProgramsContent() {
                         <img
                           src={program.image_url}
                           alt={program.name}
-                          className="w-full h-36 object-cover rounded-xl"
+                          className="w-full aspect-square object-cover rounded-xl"
                           loading="lazy"
                         />
                       </div>
