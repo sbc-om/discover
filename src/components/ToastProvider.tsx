@@ -53,7 +53,7 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
                 toast.type === 'error'
                   ? 'bg-gradient-to-r from-red-600 to-rose-600'
                   : toast.type === 'success'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600'
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-500'
                   : 'bg-gradient-to-r from-zinc-700 to-zinc-800'
               }`}
             >

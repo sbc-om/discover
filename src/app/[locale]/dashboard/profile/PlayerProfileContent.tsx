@@ -557,7 +557,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
               type="button"
               onClick={handleAssignProgram}
               disabled={assigning}
-              className="w-full rounded-xl bg-emerald-600 text-white py-2 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
+              className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white py-2 text-sm font-semibold hover:from-orange-600 hover:to-amber-600 disabled:opacity-60"
             >
               {assigning ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ البرنامج' : 'Save assignment')}
             </button>

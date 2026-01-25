@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
+import { Building2, CheckCircle2, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
 import DateTimePicker from '@/components/DateTimePicker';
@@ -217,6 +217,23 @@ export default function HealthTestsContent() {
     });
   }, [tests, query, statusFilter]);
 
+  // Group tests by academy
+  const groupedByAcademy = useMemo(() => {
+    const groups: Record<string, { name: string; nameAr: string; tests: HealthTestItem[] }> = {};
+    filteredTests.forEach(test => {
+      const key = test.academy_name || 'unknown';
+      if (!groups[key]) {
+        groups[key] = {
+          name: test.academy_name || 'Unknown Academy',
+          nameAr: test.academy_name_ar || test.academy_name || 'أكاديمية غير معروفة',
+          tests: [],
+        };
+      }
+      groups[key].tests.push(test);
+    });
+    return Object.values(groups).sort((a, b) => b.tests.length - a.tests.length);
+  }, [filteredTests]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -394,9 +411,30 @@ export default function HealthTestsContent() {
         </button>
       </div>
 
-      {filteredTests.map((test) => {
+      {/* Tests List - Grouped by Academy */}
+      <div className="space-y-6">
+        {filteredTests.length === 0 ? (
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-12 text-center">
+            <Clock className="h-12 w-12 mx-auto text-zinc-300 dark:text-zinc-700" />
+            <p className="mt-4 text-zinc-500">{isAr ? 'لا توجد طلبات' : 'No requests found'}</p>
+          </div>
+        ) : groupedByAcademy.map((group) => (
+          <div key={group.name} className="space-y-3">
+            {/* Academy Header */}
+            <div className="flex items-center gap-3 px-1">
+              <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <Building2 className="h-4 w-4 text-zinc-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{isAr ? group.nameAr : group.name}</h3>
+                <p className="text-xs text-zinc-400">{group.tests.length} {isAr ? 'طلب' : 'request(s)'}</p>
+              </div>
+            </div>
+
+            {/* Academy Tests */}
+            <div className="space-y-3">
+      {group.tests.map((test) => {
         const userName = `${test.first_name} ${test.last_name}`.trim();
-        const academyName = isAr ? test.academy_name_ar || test.academy_name : test.academy_name || test.academy_name_ar;
         const result = resultsById[test.id];
         const statusLabel = isAr
           ? {
@@ -431,7 +469,6 @@ export default function HealthTestsContent() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{userName}</p>
-                  <p className="text-xs text-zinc-500">{academyName || (isAr ? 'بدون أكاديمية' : 'No academy')}</p>
                   <p className="text-[10px] text-zinc-400 mt-1">
                     {isAr ? 'طلب' : 'Requested'}: {formatDate(test.requested_at, locale)}
                   </p>
@@ -442,10 +479,10 @@ export default function HealthTestsContent() {
                   test.status === 'pending'
                     ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
                     : test.status === 'approved'
-                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
                     : test.status === 'rejected'
                     ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                 }`}>
                   {test.status === 'pending' && <Clock className="h-3 w-3" />}
                   {test.status === 'approved' && <CheckCircle2 className="h-3 w-3" />}
@@ -478,7 +515,7 @@ export default function HealthTestsContent() {
                   </label>
                   <DateTimePicker
                     value={scheduleById[test.id] || ''}
-                    onChange={(val) =>
+                    onChange={(val: string) =>
                       setScheduleById((prev) => ({ ...prev, [test.id]: val }))
                     }
                     mode="datetime"
@@ -510,7 +547,7 @@ export default function HealthTestsContent() {
                       })
                     }
                     disabled={savingId === test.id}
-                    className="rounded-xl bg-emerald-500 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:bg-emerald-600 hover:shadow-md disabled:opacity-60"
+                    className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-orange-600 hover:to-amber-600 hover:shadow-md disabled:opacity-60"
                   >
                     {isAr ? 'قبول' : 'Approve'}
                   </button>
@@ -723,7 +760,7 @@ export default function HealthTestsContent() {
                       })
                     }
                     disabled={savingId === test.id}
-                    className="rounded-xl bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 disabled:opacity-60"
+                    className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-2 text-sm font-semibold hover:from-orange-600 hover:to-amber-600 disabled:opacity-60"
                   >
                     {isAr ? 'حفظ النتائج' : 'Save results'}
                   </button>
@@ -762,12 +799,12 @@ export default function HealthTestsContent() {
                   <RadialStat
                     label={isAr ? 'سرعة' : 'Speed'}
                     value={test.speed_score}
-                    accent="text-emerald-500"
+                    accent="text-orange-500"
                   />
                   <RadialStat
                     label={isAr ? 'رشاقة' : 'Agility'}
                     value={test.agility_score}
-                    accent="text-blue-500"
+                    accent="text-amber-500"
                   />
                   <RadialStat
                     label={isAr ? 'توازن' : 'Balance'}
@@ -802,6 +839,10 @@ export default function HealthTestsContent() {
           </div>
         );
       })}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

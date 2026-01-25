@@ -101,8 +101,8 @@ export default function RolesContent() {
   const getRoleColor = (roleName: string) => {
     const colors: { [key: string]: string } = {
       admin: 'from-red-500 to-rose-600',
-      coach: 'from-blue-500 to-indigo-600',
-      player: 'from-emerald-500 to-teal-600',
+      coach: 'from-orange-500 to-amber-500',
+      player: 'from-amber-500 to-yellow-500',
       academy_manager: 'from-amber-500 to-orange-600',
     };
     return colors[roleName] || 'from-zinc-500 to-zinc-600';
@@ -111,8 +111,8 @@ export default function RolesContent() {
   const getRoleBadgeColor = (roleName: string) => {
     const colors: { [key: string]: string } = {
       admin: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-      coach: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      player: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+      coach: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+      player: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
       academy_manager: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     };
     return colors[roleName] || 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400';

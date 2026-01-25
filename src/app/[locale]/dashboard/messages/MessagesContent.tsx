@@ -203,7 +203,7 @@ export default function MessagesContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={isAr ? 'ابحث عن مستخدم...' : 'Search users...'}
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
               />
             </div>
             
@@ -211,7 +211,7 @@ export default function MessagesContent() {
               <select
                 value={selectedAcademy}
                 onChange={(e) => setSelectedAcademy(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
               >
                 <option value="">{isAr ? 'جميع الأكاديميات' : 'All Academies'}</option>
                 {academies.map((academy) => (
@@ -225,7 +225,7 @@ export default function MessagesContent() {
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+              className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
             >
               <option value="">{isAr ? 'جميع الأدوار' : 'All Roles'}</option>
               {roles.map((role) => (
@@ -248,7 +248,7 @@ export default function MessagesContent() {
           <div className="max-h-[60vh] overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
               </div>
             ) : filteredUsers.length === 0 ? (
               <div className="py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
@@ -265,7 +265,7 @@ export default function MessagesContent() {
                       type="checkbox"
                       checked={selectedIds.includes(user.id)}
                       onChange={() => toggleUser(user.id)}
-                      className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-emerald-500 focus:ring-emerald-500"
+                      className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-orange-500 focus:ring-orange-500"
                     />
                     <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
                       {user.avatar_url ? (
@@ -306,7 +306,7 @@ export default function MessagesContent() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={6}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
                 placeholder={isAr ? 'اكتب رسالتك هنا...' : 'Type your message...'}
               />
             </div>
@@ -314,7 +314,7 @@ export default function MessagesContent() {
             <button
               onClick={handleSend}
               disabled={sending || !message.trim() || selectedIds.length === 0}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               <span>{isAr ? 'إرسال إشعار' : 'Send notification'}</span>

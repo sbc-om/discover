@@ -161,7 +161,7 @@ export default function BackupRestoreTab() {
       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
         <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
               <Database className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -192,7 +192,7 @@ export default function BackupRestoreTab() {
               <button
                 onClick={handleDatabaseBackup}
                 disabled={dbBackupLoading}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
               >
                 {dbBackupLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -246,7 +246,7 @@ export default function BackupRestoreTab() {
       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
         <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
               <FolderSync className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -277,7 +277,7 @@ export default function BackupRestoreTab() {
               <button
                 onClick={handleFilesBackup}
                 disabled={filesBackupLoading}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
               >
                 {filesBackupLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -328,14 +328,14 @@ export default function BackupRestoreTab() {
       </div>
 
       {/* Best Practices */}
-      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-blue-50 to-emerald-50 dark:from-blue-950/20 dark:to-emerald-950/20 p-6">
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 p-6">
         <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-3 flex items-center gap-2">
-          <Check className="w-5 h-5 text-emerald-600" />
+          <Check className="w-5 h-5 text-orange-600" />
           {isAr ? 'أفضل الممارسات' : 'Best Practices'}
         </h3>
         <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
           <li className="flex items-start gap-2">
-            <span className="text-emerald-600 mt-0.5">•</span>
+            <span className="text-orange-600 mt-0.5">•</span>
             <span>
               {isAr 
                 ? 'قم بإنشاء نسخ احتياطية منتظمة (يومية أو أسبوعية)'
@@ -343,7 +343,7 @@ export default function BackupRestoreTab() {
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-emerald-600 mt-0.5">•</span>
+            <span className="text-orange-600 mt-0.5">•</span>
             <span>
               {isAr 
                 ? 'احفظ النسخ الاحتياطية في مواقع متعددة (سحابة، أقراص خارجية)'
@@ -351,7 +351,7 @@ export default function BackupRestoreTab() {
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-emerald-600 mt-0.5">•</span>
+            <span className="text-orange-600 mt-0.5">•</span>
             <span>
               {isAr 
                 ? 'اختبر استعادة النسخ الاحتياطية بشكل دوري'
@@ -359,7 +359,7 @@ export default function BackupRestoreTab() {
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-emerald-600 mt-0.5">•</span>
+            <span className="text-orange-600 mt-0.5">•</span>
             <span>
               {isAr 
                 ? 'قم بنسخ كل من قاعدة البيانات والملفات معاً'

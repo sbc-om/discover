@@ -463,7 +463,7 @@ export default function AcademiesContent() {
                       </td>
                       <td className="px-6 py-4">
                         {academy.is_active ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
                             <CheckCircle2 className="w-3 h-3" />
                             {isAr ? 'نشط' : 'Active'}
                           </span>
@@ -527,7 +527,7 @@ export default function AcademiesContent() {
                       )}
                     </div>
                     {academy.is_active ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
                     ) : (
                       <XCircle className="w-5 h-5 text-zinc-400 shrink-0" />
                     )}

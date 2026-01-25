@@ -40,7 +40,7 @@ const STATUS_CONFIG: Record<string, { label: string; labelAr: string; color: str
   rejected: { label: 'Rejected', labelAr: 'مرفوض', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30', icon: X },
   preparing: { label: 'Preparing', labelAr: 'قيد التحضير', color: 'text-purple-600', bgColor: 'bg-purple-100 dark:bg-purple-900/30', icon: Package },
   shipped: { label: 'Shipped', labelAr: 'تم الشحن', color: 'text-indigo-600', bgColor: 'bg-indigo-100 dark:bg-indigo-900/30', icon: Truck },
-  delivered: { label: 'Delivered', labelAr: 'تم التسليم', color: 'text-emerald-600', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30', icon: PackageCheck },
+  delivered: { label: 'Delivered', labelAr: 'تم التسليم', color: 'text-orange-600', bgColor: 'bg-orange-100 dark:bg-orange-900/30', icon: PackageCheck },
 };
 
 const MEDAL_TYPES: Record<string, { label: string; labelAr: string; gradient: string }> = {
@@ -354,7 +354,7 @@ export default function MedalRequestsContent() {
                             const isCompleted = index <= stepIndex;
                             return (
                               <div key={step} className="flex items-center flex-1">
-                                <div className={'h-2 flex-1 rounded-full ' + (isCompleted ? 'bg-emerald-500' : 'bg-zinc-200 dark:bg-zinc-700')} />
+                                <div className={'h-2 flex-1 rounded-full ' + (isCompleted ? 'bg-orange-500' : 'bg-zinc-200 dark:bg-zinc-700')} />
                                 {index < 4 && <div className="w-1" />}
                               </div>
                             );
@@ -376,7 +376,7 @@ export default function MedalRequestsContent() {
                               <label className="text-xs font-medium text-zinc-500">{isAr ? 'تاريخ التسليم المتوقع' : 'Expected Delivery'}</label>
                               <DateTimePicker
                                 value={updateForm.delivery_date}
-                                onChange={(val) => setUpdateForm(prev => ({ ...prev, delivery_date: val }))}
+                                onChange={(val: string) => setUpdateForm(prev => ({ ...prev, delivery_date: val }))}
                                 mode="date"
                                 locale={locale}
                                 placeholder={isAr ? 'اختر التاريخ' : 'Select date'}
@@ -400,7 +400,7 @@ export default function MedalRequestsContent() {
                               <label className="text-xs font-medium text-zinc-500">{isAr ? 'تاريخ الشحن' : 'Shipping Date'}</label>
                               <DateTimePicker
                                 value={updateForm.shipping_date}
-                                onChange={(val) => setUpdateForm(prev => ({ ...prev, shipping_date: val }))}
+                                onChange={(val: string) => setUpdateForm(prev => ({ ...prev, shipping_date: val }))}
                                 mode="date"
                                 locale={locale}
                                 placeholder={isAr ? 'اختر التاريخ' : 'Select date'}
@@ -412,7 +412,7 @@ export default function MedalRequestsContent() {
                           {request.status === 'pending' && (
                             <>
                               <button type="button" onClick={() => handleUpdateStatus(request.id, 'approved')} disabled={saving || !updateForm.delivery_date}
-                                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
                                 <Check className="h-4 w-4" />{isAr ? 'موافقة' : 'Approve'}
                               </button>
                               <button type="button" onClick={() => handleUpdateStatus(request.id, 'rejected')} disabled={saving}
@@ -423,7 +423,7 @@ export default function MedalRequestsContent() {
                           )}
                           {nextStatus && request.status !== 'pending' && (
                             <button type="button" onClick={() => handleUpdateStatus(request.id, nextStatus)} disabled={saving}
-                              className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                              className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
                               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                               {isAr ? 'تحويل إلى: ' + STATUS_CONFIG[nextStatus].labelAr : 'Move to: ' + STATUS_CONFIG[nextStatus].label}
                             </button>

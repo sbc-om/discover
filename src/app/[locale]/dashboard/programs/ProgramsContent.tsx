@@ -587,7 +587,7 @@ export default function ProgramsContent() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={handleAddLevel}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
             >
               <Plus className="w-5 h-5" />
               <span>Add Level</span>
@@ -639,7 +639,7 @@ export default function ProgramsContent() {
                       </div>
                     </div>
                     {level.is_active ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      <CheckCircle2 className="w-5 h-5 text-orange-500" />
                     ) : (
                       <XCircle className="w-5 h-5 text-red-500" />
                     )}
@@ -708,7 +708,7 @@ export default function ProgramsContent() {
               </p>
               <button
                 onClick={handleAddLevel}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Level
@@ -745,7 +745,7 @@ export default function ProgramsContent() {
                         )}
                       </div>
                       {ageGroup.is_active ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        <CheckCircle2 className="w-5 h-5 text-orange-500" />
                       ) : (
                         <XCircle className="w-5 h-5 text-red-500" />
                       )}
@@ -970,7 +970,7 @@ export default function ProgramsContent() {
                     type="checkbox"
                     checked={levelFormData.is_active}
                     onChange={(e) => setLevelFormData({ ...levelFormData, is_active: e.target.checked })}
-                    className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-600 text-emerald-500 focus:ring-emerald-500 transition-all"
+                    className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-600 text-orange-500 focus:ring-orange-500 transition-all"
                   />
                   <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Active</span>
                 </label>
@@ -986,7 +986,7 @@ export default function ProgramsContent() {
                 <button
                   onClick={handleSaveLevel}
                   disabled={!levelFormData.name}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {editingLevel ? 'Update' : 'Create'}
                 </button>
@@ -1146,7 +1146,7 @@ export default function ProgramsContent() {
         </h1>
         <button
           onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
         >
           <Plus className="w-5 h-5" />
           <span>Add Program</span>
@@ -1177,7 +1177,7 @@ export default function ProgramsContent() {
       {/* Programs Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
         </div>
       ) : (
         <>
@@ -1206,7 +1206,7 @@ export default function ProgramsContent() {
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
                           <Layers className="w-6 h-6 text-white" />
                         </div>
                         <div>
@@ -1217,7 +1217,7 @@ export default function ProgramsContent() {
                         </div>
                       </div>
                       {program.is_active ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        <CheckCircle2 className="w-5 h-5 text-orange-500" />
                       ) : (
                         <XCircle className="w-5 h-5 text-red-500" />
                       )}
@@ -1291,7 +1291,7 @@ export default function ProgramsContent() {
               </p>
               <button
                 onClick={handleAdd}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Program
@@ -1486,7 +1486,7 @@ export default function ProgramsContent() {
                     type="checkbox"
                     checked={formData.is_active}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-600 text-emerald-500 focus:ring-emerald-500 transition-all"
+                    className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-600 text-orange-500 focus:ring-orange-500 transition-all"
                   />
                   <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Active</span>
                 </label>
@@ -1503,7 +1503,7 @@ export default function ProgramsContent() {
               <button
                 onClick={handleSave}
                 disabled={!formData.name || (isAdmin && academies.length > 1 && !formData.academy_id)}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {editingProgram ? 'Update' : 'Create'}
               </button>

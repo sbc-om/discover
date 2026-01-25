@@ -68,16 +68,16 @@ interface Academy {
 
 const roleColors: { [key: string]: string } = {
   admin: 'from-red-500 to-rose-600',
-  coach: 'from-blue-500 to-indigo-600',
-  player: 'from-emerald-500 to-teal-600',
+  coach: 'from-orange-500 to-amber-500',
+  player: 'from-amber-500 to-yellow-500',
   academy_manager: 'from-amber-500 to-orange-600',
   default: 'from-zinc-500 to-zinc-600'
 };
 
 const roleBadgeColors: { [key: string]: string } = {
   admin: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  coach: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  player: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  coach: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  player: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   academy_manager: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   default: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
 };
@@ -467,14 +467,14 @@ export default function UsersContent() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => openCreateWithRole('player')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-medium shadow-lg shadow-emerald-500/25 transition-all text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-xl font-medium shadow-lg shadow-amber-500/25 transition-all text-sm"
             >
               <UserPlus className="w-4 h-4" />
               {isAr ? 'إضافة لاعب' : 'Add Player'}
             </button>
             <button
               onClick={() => openCreateWithRole('coach')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 transition-all text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25 transition-all text-sm"
             >
               <UserPlus className="w-4 h-4" />
               {isAr ? 'إضافة مدرب' : 'Add Coach'}
@@ -568,7 +568,7 @@ export default function UsersContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-semibold">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 px-2 py-0.5 text-[10px] font-semibold">
                       <CheckCircle2 className="w-3 h-3" />
                       {isAr ? 'مكتمل' : 'Completed'}
                     </span>
@@ -661,7 +661,7 @@ export default function UsersContent() {
                               {user.first_name} {user.last_name}
                             </p>
                             {user.email_verified && (
-                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                              <p className="text-[10px] text-orange-600 dark:text-orange-400 flex items-center gap-0.5">
                                 <CheckCircle2 className="w-2.5 h-2.5" />
                                 {isAr ? 'موثق' : 'Verified'}
                               </p>
@@ -692,7 +692,7 @@ export default function UsersContent() {
                       <td className="px-6 py-3">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                           user.is_active
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
                             : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
                         }`}>
                           {user.is_active ? (

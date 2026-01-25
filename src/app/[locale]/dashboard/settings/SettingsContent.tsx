@@ -47,7 +47,7 @@ export default function SettingsContent() {
                 className={`
                   flex items-center gap-2 px-4 py-3 font-medium text-sm whitespace-nowrap transition-colors border-b-2
                   ${isActive
-                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                    ? 'border-orange-500 text-orange-600 dark:text-orange-400'
                     : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
                   }
                 `}

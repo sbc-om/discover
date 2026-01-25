@@ -88,7 +88,7 @@ export default function NotificationRequester() {
   if (permission === 'granted') return null;
 
   return (
-    <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+    <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700 dark:border-orange-900/40 dark:bg-orange-900/20 dark:text-orange-300">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <span>
           {isAr
@@ -107,7 +107,7 @@ export default function NotificationRequester() {
               }
             }
           }}
-          className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700"
+          className="px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-medium hover:from-orange-600 hover:to-amber-600"
         >
           {isAr ? 'طلب الإذن' : 'Request permission'}
         </button>

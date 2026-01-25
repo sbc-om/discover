@@ -394,7 +394,7 @@ export default function CoachProgramsContent() {
                         }
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                           player.present
-                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+                            ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-200'
                             : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-300'
                         }`}
                       >
@@ -485,7 +485,7 @@ export default function CoachProgramsContent() {
                           type="button"
                           onClick={() => handleSendMessage(player.id)}
                           disabled={sendingId === player.id || !(messageDrafts[player.id]?.trim())}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-500 text-white text-xs font-semibold disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold disabled:opacity-50"
                         >
                           {sendingId === player.id ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -530,7 +530,7 @@ export default function CoachProgramsContent() {
                           type="button"
                           onClick={() => handleAwardAchievement(player.id)}
                           disabled={awardingId === player.id || !awardSelections[player.id]}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 text-white text-xs font-semibold disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold disabled:opacity-50"
                         >
                           {awardingId === player.id ? (
                             <Loader2 className="h-3 w-3 animate-spin" />

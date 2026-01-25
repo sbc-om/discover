@@ -108,7 +108,7 @@ const CircularProgress = ({ value, max, label, size = 80 }: { value: number; max
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            className="text-emerald-500"
+            className="text-orange-500"
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -255,7 +255,7 @@ export default function PlayerCardContent({ userId }: PlayerCardContentProps) {
                   {programName}{ageGroupName ? ` - ${ageGroupName}` : ''}
                 </p>
               </div>
-              <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-4 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <span className="rounded-full bg-orange-100 dark:bg-orange-900/30 px-4 py-1.5 text-xs font-semibold text-orange-700 dark:text-orange-400">
                 {isAr ? 'نشط' : 'Current'}
               </span>
             </div>
@@ -321,7 +321,7 @@ export default function PlayerCardContent({ userId }: PlayerCardContentProps) {
               </div>
               <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
                 <div 
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500" 
+                  className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-500 transition-all duration-500" 
                   style={{ width: `${Math.min(sessionProgress, 100)}%` }} 
                 />
               </div>
@@ -337,7 +337,7 @@ export default function PlayerCardContent({ userId }: PlayerCardContentProps) {
               </div>
               <div className="h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
                 <div 
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500" 
+                  className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-500 transition-all duration-500" 
                   style={{ width: `${Math.min(pointProgress, 100)}%` }} 
                 />
               </div>

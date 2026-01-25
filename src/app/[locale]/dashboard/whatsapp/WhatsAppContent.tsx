@@ -114,7 +114,7 @@ export default function WhatsAppContent() {
           <div className="max-h-[60vh] overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
               </div>
             ) : users.length === 0 ? (
               <div className="py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
@@ -127,7 +127,7 @@ export default function WhatsAppContent() {
                     key={user.id}
                     onClick={() => setSelectedUser(user)}
                     className={`w-full text-left p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors ${
-                      selectedUser?.id === user.id ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
+                      selectedUser?.id === user.id ? 'bg-orange-50 dark:bg-orange-900/20' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -178,7 +178,7 @@ export default function WhatsAppContent() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={6}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
                   placeholder={isAr ? 'اكتب رسالتك هنا...' : 'Type your message...'}
                 />
               </div>
@@ -186,7 +186,7 @@ export default function WhatsAppContent() {
               <button
                 onClick={handleSend}
                 disabled={sending || !message.trim() || !selectedPhone}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 <span>{isAr ? 'إرسال عبر واتساب' : 'Send via WhatsApp'}</span>

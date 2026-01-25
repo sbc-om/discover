@@ -99,42 +99,42 @@ export default function DashboardContent() {
           <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100 mb-4">
             {isAr ? 'تفاصيل الأكاديميات' : 'Academy Insights'}
           </h2>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-3">
             {data.academies?.map((academy) => (
-              <div key={academy.id} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900 shadow-lg shadow-orange-500/5">
-                <div className="relative h-32">
+              <div key={academy.id} className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900">
+                <div className="relative h-24">
                   {academy.logo_url ? (
                     <img src={academy.logo_url} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-orange-600 via-amber-500 to-amber-300" />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
-                  <div className="absolute inset-0 flex items-end justify-between px-4 pb-3">
-                    <div>
-                      <p className="text-sm font-semibold text-white drop-shadow">
+                  <div className="absolute inset-0 flex items-end justify-between px-3 pb-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-white drop-shadow truncate">
                         {isAr ? academy.name_ar || academy.name : academy.name}
                       </p>
-                      <p className="text-xs text-white/90">
+                      <p className="text-[10px] text-white/80 truncate">
                         {academy.city || (isAr ? 'بدون مدينة' : 'No city')}
                       </p>
                     </div>
-                    <span className={`text-[10px] px-2 py-1 rounded-full font-semibold backdrop-blur ${academy.is_active ? 'bg-emerald-400/90 text-white' : 'bg-white/90 text-zinc-700'}`}>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold backdrop-blur shrink-0 ${academy.is_active ? 'bg-orange-400/90 text-white' : 'bg-white/90 text-zinc-700'}`}>
                       {academy.is_active ? (isAr ? 'نشط' : 'Active') : (isAr ? 'متوقف' : 'Inactive')}
                     </span>
                   </div>
                 </div>
-                <div className="p-4">
-                  <div className="grid grid-cols-3 gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                    <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-2 text-center">
-                      <p className="font-semibold text-zinc-800 dark:text-zinc-100">{academy.players_count}</p>
+                <div className="p-2">
+                  <div className="grid grid-cols-3 gap-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                    <div className="rounded-md bg-zinc-50 dark:bg-zinc-800/60 p-1.5 text-center">
+                      <p className="font-bold text-zinc-800 dark:text-zinc-100 text-sm">{academy.players_count}</p>
                       <p>{isAr ? 'لاعب' : 'Players'}</p>
                     </div>
-                    <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-2 text-center">
-                      <p className="font-semibold text-zinc-800 dark:text-zinc-100">{academy.coaches_count}</p>
+                    <div className="rounded-md bg-zinc-50 dark:bg-zinc-800/60 p-1.5 text-center">
+                      <p className="font-bold text-zinc-800 dark:text-zinc-100 text-sm">{academy.coaches_count}</p>
                       <p>{isAr ? 'مدرب' : 'Coaches'}</p>
                     </div>
-                    <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-2 text-center">
-                      <p className="font-semibold text-zinc-800 dark:text-zinc-100">{academy.programs_count}</p>
+                    <div className="rounded-md bg-zinc-50 dark:bg-zinc-800/60 p-1.5 text-center">
+                      <p className="font-bold text-zinc-800 dark:text-zinc-100 text-sm">{academy.programs_count}</p>
                       <p>{isAr ? 'برنامج' : 'Programs'}</p>
                     </div>
                   </div>
@@ -185,7 +185,7 @@ export default function DashboardContent() {
                       </p>
                     </div>
                   </div>
-                  <span className={`text-[11px] px-3 py-1.5 rounded-full font-semibold backdrop-blur ${data.academy?.is_active ? 'bg-emerald-400/90 text-white' : 'bg-white/90 text-zinc-700'}`}>
+                  <span className={`text-[11px] px-3 py-1.5 rounded-full font-semibold backdrop-blur ${data.academy?.is_active ? 'bg-orange-400/90 text-white' : 'bg-white/90 text-zinc-700'}`}>
                     {data.academy?.is_active ? (isAr ? 'نشط' : 'Active') : (isAr ? 'متوقف' : 'Inactive')}
                   </span>
                 </div>
