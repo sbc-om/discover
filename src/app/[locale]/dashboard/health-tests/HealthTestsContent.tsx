@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
+import DateTimePicker from '@/components/DateTimePicker';
 
 interface HealthTestItem {
   id: string;
@@ -475,13 +476,14 @@ export default function HealthTestsContent() {
                   <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                     {isAr ? 'تحديد الموعد' : 'Set schedule'}
                   </label>
-                  <input
-                    type="datetime-local"
+                  <DateTimePicker
                     value={scheduleById[test.id] || ''}
-                    onChange={(event) =>
-                      setScheduleById((prev) => ({ ...prev, [test.id]: event.target.value }))
+                    onChange={(val) =>
+                      setScheduleById((prev) => ({ ...prev, [test.id]: val }))
                     }
-                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                    mode="datetime"
+                    locale={locale}
+                    placeholder={isAr ? 'اختر التاريخ والوقت' : 'Select date & time'}
                   />
                 </div>
                 <div>

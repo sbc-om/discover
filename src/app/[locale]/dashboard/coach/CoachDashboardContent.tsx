@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Award, CalendarDays, Check, ChevronDown, Filter, Loader2, MessageSquare, Plus, Save, Search, Star, Trophy, Users, X } from 'lucide-react';
+import { Award, Check, ChevronDown, Filter, Loader2, MessageSquare, Plus, Save, Search, Star, Trophy, Users, X } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
+import DateTimePicker from '@/components/DateTimePicker';
 
 interface AgeGroup {
   id: string;
@@ -324,11 +325,12 @@ export default function CoachDashboardContent() {
             {/* Date */}
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-wider text-zinc-400">{isAr ? 'تاريخ الحصة' : 'Session Date'}</label>
-              <input
-                type="date"
+              <DateTimePicker
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm"
+                onChange={(val) => setSelectedDate(val)}
+                mode="date"
+                locale={locale}
+                placeholder={isAr ? 'اختر التاريخ' : 'Select date'}
               />
             </div>
 

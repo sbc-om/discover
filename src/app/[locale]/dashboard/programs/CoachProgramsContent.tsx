@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Loader2, MessageSquare, Send, Users, Award } from 'lucide-react';
+import { Loader2, MessageSquare, Send, Users, Award } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
+import DateTimePicker from '@/components/DateTimePicker';
 
 interface AgeGroup {
   id: string;
@@ -246,14 +247,15 @@ export default function CoachProgramsContent() {
       <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
         <div className="flex flex-col md:flex-row gap-3 md:items-center">
           <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
-            <CalendarDays className="h-4 w-4" />
             {isAr ? 'التاريخ' : 'Date'}
           </div>
-          <input
-            type="date"
+          <DateTimePicker
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full md:w-auto px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm"
+            onChange={(val) => setSelectedDate(val)}
+            mode="date"
+            locale={locale}
+            placeholder={isAr ? 'اختر التاريخ' : 'Select date'}
+            className="w-full md:w-72"
           />
         </div>
 

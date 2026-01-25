@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Award, Check, Clock, Loader2, Medal, Package, PackageCheck, Send, Truck, X } from 'lucide-react';
+import { Award, Building2, Check, Clock, Loader2, Medal, Package, PackageCheck, Send, Truck, X } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
+import DateTimePicker from '@/components/DateTimePicker';
 
 interface PlayerOption {
   id: string;
@@ -109,6 +110,23 @@ export default function MedalRequestsContent() {
     if (statusFilter === 'all') return requests;
     return requests.filter(r => r.status === statusFilter);
   }, [requests, statusFilter]);
+
+  // Group requests by academy
+  const groupedByAcademy = useMemo(() => {
+    const groups: Record<string, { name: string; nameAr: string; requests: MedalRequest[] }> = {};
+    filteredRequests.forEach(req => {
+      const key = req.academy_name || 'unknown';
+      if (!groups[key]) {
+        groups[key] = {
+          name: req.academy_name || 'Unknown Academy',
+          nameAr: req.academy_name_ar || req.academy_name || 'أكاديمية غير معروفة',
+          requests: [],
+        };
+      }
+      groups[key].requests.push(req);
+    });
+    return Object.values(groups).sort((a, b) => b.requests.length - a.requests.length);
+  }, [filteredRequests]);
 
   const stats = useMemo(() => {
     const counts: Record<string, number> = { all: requests.length };
@@ -270,134 +288,162 @@ export default function MedalRequestsContent() {
         </div>
       )}
 
-      {/* Requests List */}
-      <div className="space-y-3">
+      {/* Requests List - Grouped by Academy */}
+      <div className="space-y-6">
         {filteredRequests.length === 0 ? (
           <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-12 text-center">
             <Medal className="h-12 w-12 mx-auto text-zinc-300 dark:text-zinc-700" />
             <p className="mt-4 text-zinc-500">{isAr ? 'لا توجد طلبات' : 'No requests found'}</p>
           </div>
-        ) : filteredRequests.map((request) => {
-          const statusConfig = STATUS_CONFIG[request.status] || STATUS_CONFIG.pending;
-          const StatusIcon = statusConfig.icon;
-          const medalConfig = MEDAL_TYPES[request.medal_type] || MEDAL_TYPES.gold;
-          const isExpanded = expandedId === request.id;
-          const nextStatus = getNextStatus(request.status);
-
-          return (
-            <div key={request.id} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
-              <div className="p-4 flex items-center gap-4">
-                <div className={'h-14 w-14 rounded-2xl bg-gradient-to-br ' + medalConfig.gradient + ' flex items-center justify-center shadow-lg flex-shrink-0'}>
-                  <Medal className="h-7 w-7 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-zinc-900 dark:text-white">{request.first_name} {request.last_name}</h3>
-                    <span className={'px-2 py-0.5 rounded-full text-[10px] font-bold ' + statusConfig.bgColor + ' ' + statusConfig.color}>
-                      {isAr ? statusConfig.labelAr : statusConfig.label}
-                    </span>
-                  </div>
-                  <p className="text-sm text-zinc-500">{isAr ? medalConfig.labelAr : medalConfig.label} • {formatDate(request.requested_date)}</p>
-                  {request.achievement_description && <p className="text-xs text-zinc-400 mt-1 line-clamp-1">{request.achievement_description}</p>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={'h-10 w-10 rounded-xl ' + statusConfig.bgColor + ' flex items-center justify-center'}>
-                    <StatusIcon className={'h-5 w-5 ' + statusConfig.color} />
-                  </div>
-                  {roleName === 'admin' && request.status !== 'delivered' && request.status !== 'rejected' && (
-                    <button type="button" onClick={() => setExpandedId(isExpanded ? null : request.id)}
-                      className="px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 text-xs font-medium hover:bg-zinc-200 transition">
-                      {isExpanded ? (isAr ? 'إغلاق' : 'Close') : (isAr ? 'إدارة' : 'Manage')}
-                    </button>
-                  )}
-                </div>
+        ) : groupedByAcademy.map((group) => (
+          <div key={group.name} className="space-y-3">
+            {/* Academy Header */}
+            <div className="flex items-center gap-3 px-1">
+              <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <Building2 className="h-4 w-4 text-zinc-500" />
               </div>
-
-              {request.status !== 'rejected' && (
-                <div className="px-4 pb-4">
-                  <div className="flex items-center gap-1">
-                    {['pending', 'approved', 'preparing', 'shipped', 'delivered'].map((step, index) => {
-                      const stepIndex = ['pending', 'approved', 'preparing', 'shipped', 'delivered'].indexOf(request.status);
-                      const isCompleted = index <= stepIndex;
-                      return (
-                        <div key={step} className="flex items-center flex-1">
-                          <div className={'h-2 flex-1 rounded-full ' + (isCompleted ? 'bg-emerald-500' : 'bg-zinc-200 dark:bg-zinc-700')} />
-                          {index < 4 && <div className="w-1" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    {['pending', 'approved', 'preparing', 'shipped', 'delivered'].map((step) => (
-                      <span key={step} className="text-[9px] text-zinc-400">{isAr ? STATUS_CONFIG[step].labelAr : STATUS_CONFIG[step].label}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {isExpanded && roleName === 'admin' && (
-                <div className="border-t border-zinc-100 dark:border-zinc-800 p-4 bg-zinc-50 dark:bg-zinc-800/50 space-y-4">
-                  {request.status === 'pending' && (
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-zinc-500">{isAr ? 'تاريخ التسليم المتوقع' : 'Expected Delivery'}</label>
-                        <input type="date" value={updateForm.delivery_date} onChange={(e) => setUpdateForm(prev => ({ ...prev, delivery_date: e.target.value }))}
-                          className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-zinc-500">{isAr ? 'ملاحظات' : 'Notes'}</label>
-                        <input type="text" value={updateForm.review_notes} onChange={(e) => setUpdateForm(prev => ({ ...prev, review_notes: e.target.value }))}
-                          placeholder={isAr ? 'ملاحظات...' : 'Notes...'} className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm" />
-                      </div>
-                    </div>
-                  )}
-                  {(request.status === 'approved' || request.status === 'preparing') && (
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-zinc-500">{isAr ? 'رقم التتبع' : 'Tracking Number'}</label>
-                        <input type="text" value={updateForm.tracking_number} onChange={(e) => setUpdateForm(prev => ({ ...prev, tracking_number: e.target.value }))}
-                          className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-zinc-500">{isAr ? 'تاريخ الشحن' : 'Shipping Date'}</label>
-                        <input type="date" value={updateForm.shipping_date} onChange={(e) => setUpdateForm(prev => ({ ...prev, shipping_date: e.target.value }))}
-                          className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm" />
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    {request.status === 'pending' && (
-                      <>
-                        <button type="button" onClick={() => handleUpdateStatus(request.id, 'approved')} disabled={saving || !updateForm.delivery_date}
-                          className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
-                          <Check className="h-4 w-4" />{isAr ? 'موافقة' : 'Approve'}
-                        </button>
-                        <button type="button" onClick={() => handleUpdateStatus(request.id, 'rejected')} disabled={saving}
-                          className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
-                          <X className="h-4 w-4" />{isAr ? 'رفض' : 'Reject'}
-                        </button>
-                      </>
-                    )}
-                    {nextStatus && request.status !== 'pending' && (
-                      <button type="button" onClick={() => handleUpdateStatus(request.id, nextStatus)} disabled={saving}
-                        className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
-                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                        {isAr ? 'تحويل إلى: ' + STATUS_CONFIG[nextStatus].labelAr : 'Move to: ' + STATUS_CONFIG[nextStatus].label}
-                      </button>
-                    )}
-                  </div>
-                  {(request.delivery_date || request.shipping_date || request.tracking_number) && (
-                    <div className="pt-3 border-t border-zinc-200 dark:border-zinc-700 grid gap-2 md:grid-cols-3 text-xs">
-                      {request.delivery_date && <div><span className="text-zinc-400">{isAr ? 'التسليم:' : 'Delivery:'}</span> <span className="text-zinc-700 dark:text-zinc-300">{formatDate(request.delivery_date)}</span></div>}
-                      {request.shipping_date && <div><span className="text-zinc-400">{isAr ? 'الشحن:' : 'Shipped:'}</span> <span className="text-zinc-700 dark:text-zinc-300">{formatDate(request.shipping_date)}</span></div>}
-                      {request.tracking_number && <div><span className="text-zinc-400">{isAr ? 'التتبع:' : 'Tracking:'}</span> <span className="text-zinc-700 dark:text-zinc-300 font-mono">{request.tracking_number}</span></div>}
-                    </div>
-                  )}
-                </div>
-              )}
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{isAr ? group.nameAr : group.name}</h3>
+                <p className="text-xs text-zinc-400">{group.requests.length} {isAr ? 'طلب' : 'request(s)'}</p>
+              </div>
             </div>
-          );
-        })}
+
+            {/* Academy Requests */}
+            <div className="space-y-3">
+              {group.requests.map((request) => {
+                const statusConfig = STATUS_CONFIG[request.status] || STATUS_CONFIG.pending;
+                const StatusIcon = statusConfig.icon;
+                const medalConfig = MEDAL_TYPES[request.medal_type] || MEDAL_TYPES.gold;
+                const isExpanded = expandedId === request.id;
+                const nextStatus = getNextStatus(request.status);
+
+                return (
+                  <div key={request.id} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+                    <div className="p-4 flex items-center gap-4">
+                      <div className={'h-14 w-14 rounded-2xl bg-gradient-to-br ' + medalConfig.gradient + ' flex items-center justify-center shadow-lg flex-shrink-0'}>
+                        <Medal className="h-7 w-7 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-bold text-zinc-900 dark:text-white">{request.first_name} {request.last_name}</h3>
+                          <span className={'px-2 py-0.5 rounded-full text-[10px] font-bold ' + statusConfig.bgColor + ' ' + statusConfig.color}>
+                            {isAr ? statusConfig.labelAr : statusConfig.label}
+                          </span>
+                        </div>
+                        <p className="text-sm text-zinc-500">{isAr ? medalConfig.labelAr : medalConfig.label} • {formatDate(request.requested_date)}</p>
+                        {request.achievement_description && <p className="text-xs text-zinc-400 mt-1 line-clamp-1">{request.achievement_description}</p>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={'h-10 w-10 rounded-xl ' + statusConfig.bgColor + ' flex items-center justify-center'}>
+                          <StatusIcon className={'h-5 w-5 ' + statusConfig.color} />
+                        </div>
+                        {roleName === 'admin' && request.status !== 'delivered' && request.status !== 'rejected' && (
+                          <button type="button" onClick={() => setExpandedId(isExpanded ? null : request.id)}
+                            className="px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 text-xs font-medium hover:bg-zinc-200 transition">
+                            {isExpanded ? (isAr ? 'إغلاق' : 'Close') : (isAr ? 'إدارة' : 'Manage')}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {request.status !== 'rejected' && (
+                      <div className="px-4 pb-4">
+                        <div className="flex items-center gap-1">
+                          {['pending', 'approved', 'preparing', 'shipped', 'delivered'].map((step, index) => {
+                            const stepIndex = ['pending', 'approved', 'preparing', 'shipped', 'delivered'].indexOf(request.status);
+                            const isCompleted = index <= stepIndex;
+                            return (
+                              <div key={step} className="flex items-center flex-1">
+                                <div className={'h-2 flex-1 rounded-full ' + (isCompleted ? 'bg-emerald-500' : 'bg-zinc-200 dark:bg-zinc-700')} />
+                                {index < 4 && <div className="w-1" />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between mt-1">
+                          {['pending', 'approved', 'preparing', 'shipped', 'delivered'].map((step) => (
+                            <span key={step} className="text-[9px] text-zinc-400">{isAr ? STATUS_CONFIG[step].labelAr : STATUS_CONFIG[step].label}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {isExpanded && roleName === 'admin' && (
+                      <div className="border-t border-zinc-100 dark:border-zinc-800 p-4 bg-zinc-50 dark:bg-zinc-800/50 space-y-4">
+                        {request.status === 'pending' && (
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-zinc-500">{isAr ? 'تاريخ التسليم المتوقع' : 'Expected Delivery'}</label>
+                              <DateTimePicker
+                                value={updateForm.delivery_date}
+                                onChange={(val) => setUpdateForm(prev => ({ ...prev, delivery_date: val }))}
+                                mode="date"
+                                locale={locale}
+                                placeholder={isAr ? 'اختر التاريخ' : 'Select date'}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-zinc-500">{isAr ? 'ملاحظات' : 'Notes'}</label>
+                              <input type="text" value={updateForm.review_notes} onChange={(e) => setUpdateForm(prev => ({ ...prev, review_notes: e.target.value }))}
+                                placeholder={isAr ? 'ملاحظات...' : 'Notes...'} className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm" />
+                            </div>
+                          </div>
+                        )}
+                        {(request.status === 'approved' || request.status === 'preparing') && (
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-zinc-500">{isAr ? 'رقم التتبع' : 'Tracking Number'}</label>
+                              <input type="text" value={updateForm.tracking_number} onChange={(e) => setUpdateForm(prev => ({ ...prev, tracking_number: e.target.value }))}
+                                className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm" />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-zinc-500">{isAr ? 'تاريخ الشحن' : 'Shipping Date'}</label>
+                              <DateTimePicker
+                                value={updateForm.shipping_date}
+                                onChange={(val) => setUpdateForm(prev => ({ ...prev, shipping_date: val }))}
+                                mode="date"
+                                locale={locale}
+                                placeholder={isAr ? 'اختر التاريخ' : 'Select date'}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          {request.status === 'pending' && (
+                            <>
+                              <button type="button" onClick={() => handleUpdateStatus(request.id, 'approved')} disabled={saving || !updateForm.delivery_date}
+                                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                                <Check className="h-4 w-4" />{isAr ? 'موافقة' : 'Approve'}
+                              </button>
+                              <button type="button" onClick={() => handleUpdateStatus(request.id, 'rejected')} disabled={saving}
+                                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                                <X className="h-4 w-4" />{isAr ? 'رفض' : 'Reject'}
+                              </button>
+                            </>
+                          )}
+                          {nextStatus && request.status !== 'pending' && (
+                            <button type="button" onClick={() => handleUpdateStatus(request.id, nextStatus)} disabled={saving}
+                              className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                              {isAr ? 'تحويل إلى: ' + STATUS_CONFIG[nextStatus].labelAr : 'Move to: ' + STATUS_CONFIG[nextStatus].label}
+                            </button>
+                          )}
+                        </div>
+                        {(request.delivery_date || request.shipping_date || request.tracking_number) && (
+                          <div className="pt-3 border-t border-zinc-200 dark:border-zinc-700 grid gap-2 md:grid-cols-3 text-xs">
+                            {request.delivery_date && <div><span className="text-zinc-400">{isAr ? 'التسليم:' : 'Delivery:'}</span> <span className="text-zinc-700 dark:text-zinc-300">{formatDate(request.delivery_date)}</span></div>}
+                            {request.shipping_date && <div><span className="text-zinc-400">{isAr ? 'الشحن:' : 'Shipped:'}</span> <span className="text-zinc-700 dark:text-zinc-300">{formatDate(request.shipping_date)}</span></div>}
+                            {request.tracking_number && <div><span className="text-zinc-400">{isAr ? 'التتبع:' : 'Tracking:'}</span> <span className="text-zinc-700 dark:text-zinc-300 font-mono">{request.tracking_number}</span></div>}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
