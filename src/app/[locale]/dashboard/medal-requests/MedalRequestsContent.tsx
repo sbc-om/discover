@@ -1,17 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Award, Building2, Check, Clock, Loader2, Medal, Package, PackageCheck, Send, Truck, X } from 'lucide-react';
+import { Award, Building2, Check, Clock, Loader2, Medal, Package, PackageCheck, Truck, X } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
 import DateTimePicker from '@/components/DateTimePicker';
-
-interface PlayerOption {
-  id: string;
-  first_name: string;
-  last_name: string;
-  avatar_url?: string | null;
-}
+import { useRouter } from 'next/navigation';
 
 interface MedalRequest {
   id: string;
@@ -54,21 +48,16 @@ export default function MedalRequestsContent() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
   const { showToast } = useToast();
+  const router = useRouter();
 
   const [roleName, setRoleName] = useState<string>('');
-  const [players, setPlayers] = useState<PlayerOption[]>([]);
   const [requests, setRequests] = useState<MedalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusType>('all');
+  const [academyFilter, setAcademyFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  const [form, setForm] = useState({
-    user_id: '',
-    medal_type: '',
-    achievement_description: '',
-  });
-
   const [updateForm, setUpdateForm] = useState({
     delivery_date: '',
     shipping_date: '',
@@ -83,12 +72,6 @@ export default function MedalRequestsContent() {
     setRoleName(data.roleName || '');
   };
 
-  const fetchPlayers = async () => {
-    const response = await fetch('/api/users?role=player&limit=200');
-    const data = await response.json();
-    if (response.ok) setPlayers(data.users || []);
-  };
-
   const fetchRequests = async () => {
     const response = await fetch('/api/medal-requests');
     const data = await response.json();
@@ -99,7 +82,6 @@ export default function MedalRequestsContent() {
     const boot = async () => {
       setLoading(true);
       await fetchRole();
-      await fetchPlayers();
       await fetchRequests();
       setLoading(false);
     };
@@ -107,9 +89,29 @@ export default function MedalRequestsContent() {
   }, []);
 
   const filteredRequests = useMemo(() => {
-    if (statusFilter === 'all') return requests;
-    return requests.filter(r => r.status === statusFilter);
-  }, [requests, statusFilter]);
+    let filtered = requests;
+    
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(r => r.status === statusFilter);
+    }
+    
+    // Filter by academy
+    if (academyFilter !== 'all') {
+      filtered = filtered.filter(r => r.academy_name === academyFilter);
+    }
+    
+    return filtered;
+  }, [requests, statusFilter, academyFilter]);
+
+  // Get unique academies
+  const academies = useMemo(() => {
+    const uniqueAcademies = new Set<string>();
+    requests.forEach(req => {
+      if (req.academy_name) uniqueAcademies.add(req.academy_name);
+    });
+    return Array.from(uniqueAcademies).sort();
+  }, [requests]);
 
   // Group requests by academy
   const groupedByAcademy = useMemo(() => {
@@ -133,30 +135,6 @@ export default function MedalRequestsContent() {
     requests.forEach(r => { counts[r.status] = (counts[r.status] || 0) + 1; });
     return counts;
   }, [requests]);
-
-  const handleSubmit = async () => {
-    if (!form.user_id || !form.medal_type) {
-      showToast('error', isAr ? 'اختر اللاعب ونوع الميدالية' : 'Select player and medal type');
-      return;
-    }
-    try {
-      setSaving(true);
-      const response = await fetch('/api/medal-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Failed');
-      setForm({ user_id: '', medal_type: '', achievement_description: '' });
-      await fetchRequests();
-      showToast('success', isAr ? 'تم إرسال الطلب' : 'Request submitted');
-    } catch (error: any) {
-      showToast('error', error.message);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleUpdateStatus = async (requestId: string, newStatus: string) => {
     try {
@@ -210,14 +188,26 @@ export default function MedalRequestsContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
-          <Medal className="h-7 w-7 text-amber-500" />
-          {isAr ? 'طلبات الميداليات' : 'Medal Requests'}
-        </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-          {isAr ? 'إدارة طلبات الميداليات الفيزيائية ومتابعة حالتها.' : 'Manage physical medal requests and track their status.'}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
+            <Medal className="h-7 w-7 text-amber-500" />
+            {isAr ? 'طلبات الميداليات' : 'Medal Requests'}
+          </h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+            {isAr ? 'إدارة طلبات الميداليات الفيزيائية ومتابعة حالتها.' : 'Manage physical medal requests and track their status.'}
+          </p>
+        </div>
+        {(roleName === 'academy_manager' || roleName === 'admin') && (
+          <button
+            type="button"
+            onClick={() => window.location.href = `/${locale}/dashboard/medal-requests/new`}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-lg shadow-amber-500/25 transition-all"
+          >
+            <Award className="h-5 w-5" />
+            {isAr ? 'طلب ميدالية جديدة' : 'New Medal Request'}
+          </button>
+        )}
       </div>
 
       {/* Stats */}
@@ -244,47 +234,45 @@ export default function MedalRequestsContent() {
         })}
       </div>
 
-      {/* New Request Form */}
-      {(roleName === 'academy_manager' || roleName === 'admin') && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4">
-          <div className="flex items-center gap-2 text-base font-bold text-zinc-800 dark:text-zinc-100">
-            <Send className="h-5 w-5 text-amber-500" />
-            {isAr ? 'طلب ميدالية جديدة' : 'New Medal Request'}
+      {/* Academy Filter */}
+      {academies.length > 1 && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Building2 className="h-5 w-5 text-amber-500" />
+            <label className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+              {isAr ? 'تصفية حسب الأكاديمية' : 'Filter by Academy'}
+            </label>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-zinc-500">{isAr ? 'اللاعب' : 'Player'}</label>
-              <select value={form.user_id} onChange={(e) => setForm(prev => ({ ...prev, user_id: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm">
-                <option value="">{isAr ? 'اختر لاعب' : 'Select player'}</option>
-                {players.map((p) => <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>)}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-zinc-500">{isAr ? 'نوع الميدالية' : 'Medal Type'}</label>
-              <div className="grid grid-cols-4 gap-2">
-                {Object.entries(MEDAL_TYPES).map(([value, config]) => (
-                  <button key={value} type="button" onClick={() => setForm(prev => ({ ...prev, medal_type: value }))}
-                    className={'flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ' + (form.medal_type === value
-                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                      : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-300')}>
-                    <div className={'h-6 w-6 rounded-full bg-gradient-to-br ' + config.gradient} />
-                    <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-400">{isAr ? config.labelAr : config.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-zinc-500">{isAr ? 'سبب الميدالية' : 'Reason'}</label>
-              <input type="text" value={form.achievement_description} onChange={(e) => setForm(prev => ({ ...prev, achievement_description: e.target.value }))}
-                placeholder={isAr ? 'وصف الإنجاز...' : 'Achievement description...'} className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm" />
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setAcademyFilter('all')}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                academyFilter === 'all'
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+              }`}
+            >
+              {isAr ? 'الكل' : 'All'} ({requests.length})
+            </button>
+            {academies.map((academy) => {
+              const count = requests.filter(r => r.academy_name === academy).length;
+              return (
+                <button
+                  key={academy}
+                  type="button"
+                  onClick={() => setAcademyFilter(academy)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    academyFilter === academy
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  {academy} ({count})
+                </button>
+              );
+            })}
           </div>
-          <button type="button" onClick={handleSubmit} disabled={saving || !form.user_id || !form.medal_type}
-            className="w-full md:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm disabled:opacity-50 transition flex items-center justify-center gap-2">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {isAr ? 'إرسال الطلب' : 'Submit Request'}
-          </button>
         </div>
       )}
 

@@ -29,12 +29,14 @@ export async function GET(request: Request) {
         u.is_active, u.email_verified, u.last_login, 
         u.preferred_language, u.created_at, u.avatar_url,
         u.academy_id, u.created_by,
+        a.name as academy_name, a.name_ar as academy_name_ar,
         r.id as role_id, r.name as role_name, r.name_ar, r.name_en,
         lvl.completed_level_order,
         lvl.completed_level_name,
         lvl.completed_level_name_ar
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id
+      LEFT JOIN academies a ON a.id = u.academy_id
       LEFT JOIN (
         SELECT pr.user_id,
                MAX(pl.level_order) AS completed_level_order,
