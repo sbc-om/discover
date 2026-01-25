@@ -24,8 +24,10 @@ export default function DashboardLayout({
       <DashboardHeader locale={locale} userName={userName} />
       <ScrollArea className="flex-1">
         <main className="h-full p-6 pb-32">
-          <NotificationRequester />
-          {children}
+          <div className="container mx-auto max-w-7xl">
+            <NotificationRequester />
+            {children}
+          </div>
         </main>
       </ScrollArea>
       <DashboardDock locale={locale} accessibleMenuItems={accessibleMenuItems} />
