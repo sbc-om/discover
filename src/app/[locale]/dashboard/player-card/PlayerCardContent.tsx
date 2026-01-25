@@ -29,6 +29,10 @@ interface AssignmentData {
   age_group_id: string;
   age_group_name: string;
   age_group_name_ar?: string | null;
+  level_id?: string | null;
+  level_name?: string | null;
+  level_name_ar?: string | null;
+  assigned_level_order?: number | null;
   min_age?: number | null;
   max_age?: number | null;
   assigned_at?: string | null;
@@ -170,13 +174,28 @@ export default function PlayerCardContent({ userId }: PlayerCardContentProps) {
   const activeLevels = programLevels.filter((level) => level.is_active);
   const sortedLevels = [...activeLevels].sort((a, b) => a.level_order - b.level_order);
   
-  // Find current level based on progress
-  const currentLevel = sortedLevels.reduce((acc, level) => {
+  // Use assigned level if available, otherwise calculate based on sessions/points (same logic as PlayerProfileContent)
+  const assignedLevelFromList = assignment?.level_id 
+    ? sortedLevels.find(l => l.id === assignment.level_id) 
+    : null;
+  // If level_id exists but not found in list, create a virtual level object from assignment data
+  const assignedLevel = assignedLevelFromList || (assignment?.level_id && assignment?.assigned_level_order ? {
+    id: assignment.level_id,
+    name: assignment.level_name || `Level ${assignment.assigned_level_order}`,
+    name_ar: assignment.level_name_ar,
+    level_order: assignment.assigned_level_order,
+    min_sessions: 0,
+    min_points: 0,
+    is_active: true,
+    image_url: null
+  } : null);
+  const calculatedLevel = sortedLevels.reduce((acc, level) => {
     if (sessionsCompleted >= level.min_sessions && pointsTotal >= level.min_points) {
       return level;
     }
     return acc;
   }, sortedLevels[0] || null);
+  const currentLevel = assignedLevel || calculatedLevel;
 
   // Calculate progress for current level
   const currentLevelMinSessions = currentLevel?.min_sessions || 32;

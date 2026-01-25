@@ -41,6 +41,10 @@ interface AssignmentData {
   age_group_id: string;
   age_group_name: string;
   age_group_name_ar?: string | null;
+  level_id?: string | null;
+  level_name?: string | null;
+  level_name_ar?: string | null;
+  assigned_level_order?: number | null;
 }
 
 interface ProgramLevel {
@@ -125,9 +129,10 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [programs, setPrograms] = useState<ProgramOption[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroupOption[]>([]);
+  const [formLevels, setFormLevels] = useState<ProgramLevel[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
-  const [assignmentForm, setAssignmentForm] = useState({ program_id: '', age_group_id: '' });
+  const [assignmentForm, setAssignmentForm] = useState({ program_id: '', age_group_id: '', level_id: '' });
   const [form, setForm] = useState({ sport: '', position: '', bio: '', goals: '' });
   const [profileFormOpen, setProfileFormOpen] = useState(false);
 
@@ -159,7 +164,11 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         goals: payload.profile?.goals || '',
       });
       if (payload.assignment) {
-        setAssignmentForm({ program_id: payload.assignment.program_id, age_group_id: payload.assignment.age_group_id });
+        setAssignmentForm({ 
+          program_id: payload.assignment.program_id, 
+          age_group_id: payload.assignment.age_group_id,
+          level_id: payload.assignment.level_id || ''
+        });
       }
     } catch (error: any) {
       showToast('error', error.message || (isAr ? 'تعذر تحميل الملف' : 'Failed to load profile'));
@@ -189,6 +198,17 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     }
   };
 
+  const fetchLevelsForForm = async (programId: string) => {
+    if (!programId) { setFormLevels([]); return; }
+    try {
+      const response = await fetch(`/api/programs/${programId}/levels`);
+      const payload = await response.json();
+      if (response.ok) setFormLevels(payload.levels || []);
+    } catch (error) {
+      console.error('Failed to load levels:', error);
+    }
+  };
+
   useEffect(() => { fetchProfile(); fetchUnreadCount(); }, [endpoint]);
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -203,7 +223,12 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     fetchCurrentUser();
   }, []);
   useEffect(() => { if (isAdminView) fetchPrograms(); }, [isAdminView]);
-  useEffect(() => { if (isAdminView && assignmentForm.program_id) fetchAgeGroups(assignmentForm.program_id); }, [assignmentForm.program_id, isAdminView]);
+  useEffect(() => { 
+    if (isAdminView && assignmentForm.program_id) {
+      fetchAgeGroups(assignmentForm.program_id);
+      fetchLevelsForForm(assignmentForm.program_id);
+    }
+  }, [assignmentForm.program_id, isAdminView]);
 
   const handleSaveProfile = async () => {
     if (!form.sport.trim() || !form.bio.trim()) {
@@ -238,7 +263,12 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
       const response = await fetch('/api/player-programs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, program_id: assignmentForm.program_id, age_group_id: assignmentForm.age_group_id }),
+        body: JSON.stringify({ 
+          user_id: userId, 
+          program_id: assignmentForm.program_id, 
+          age_group_id: assignmentForm.age_group_id,
+          level_id: assignmentForm.level_id || null
+        }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Failed to assign program');
@@ -271,10 +301,27 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const notesCount = attendance.filter((r) => r.notes).length;
   const activeLevels = programLevels.filter((level) => level.is_active);
   const sortedLevels = [...activeLevels].sort((a, b) => a.level_order - b.level_order);
-  const currentLevel = sortedLevels.reduce((acc, level) => {
+  
+  // Use assigned level if available, otherwise calculate based on sessions/points
+  const assignedLevelFromList = assignment?.level_id 
+    ? sortedLevels.find(l => l.id === assignment.level_id) 
+    : null;
+  // If level_id exists but not found in list, create a virtual level object from assignment data
+  const assignedLevel = assignedLevelFromList || (assignment?.level_id && assignment?.assigned_level_order ? {
+    id: assignment.level_id,
+    name: assignment.level_name || `Level ${assignment.assigned_level_order}`,
+    name_ar: assignment.level_name_ar,
+    level_order: assignment.assigned_level_order,
+    min_sessions: 0,
+    min_points: 0,
+    is_active: true,
+    image_url: null
+  } : null);
+  const calculatedLevel = sortedLevels.reduce((acc, level) => {
     if (sessionsCompleted >= level.min_sessions && pointsTotal >= level.min_points) return level;
     return acc;
   }, sortedLevels[0] || null);
+  const currentLevel = assignedLevel || calculatedLevel;
 
   const totalProgress = currentLevel ? Math.round(((sessionsCompleted / (currentLevel.min_sessions || 1)) + (pointsTotal / (currentLevel.min_points || 1))) / 2 * 100) : 0;
   const sessionProgress = currentLevel?.min_sessions ? Math.round((sessionsCompleted / currentLevel.min_sessions) * 100) : 0;
@@ -534,7 +581,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
             <h3 className="text-sm font-medium text-zinc-900 dark:text-white">{isAr ? 'تعيين برنامج' : 'Assign program'}</h3>
             <select
               value={assignmentForm.program_id}
-              onChange={(e) => setAssignmentForm({ program_id: e.target.value, age_group_id: '' })}
+              onChange={(e) => setAssignmentForm({ program_id: e.target.value, age_group_id: '', level_id: '' })}
               className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white"
             >
               <option value="">{isAr ? 'اختر البرنامج' : 'Select program'}</option>
@@ -551,6 +598,19 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
               <option value="">{isAr ? 'اختر الفئة' : 'Select age group'}</option>
               {ageGroups.map((group) => (
                 <option key={group.id} value={group.id}>{isAr ? group.name_ar || group.name : group.name} ({group.min_age}-{group.max_age})</option>
+              ))}
+            </select>
+            <select
+              value={assignmentForm.level_id}
+              onChange={(e) => setAssignmentForm((prev) => ({ ...prev, level_id: e.target.value }))}
+              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white"
+              disabled={!assignmentForm.program_id}
+            >
+              <option value="">{isAr ? 'اختر المستوى (اختياري)' : 'Select level (optional)'}</option>
+              {formLevels.filter(l => l.is_active).sort((a, b) => a.level_order - b.level_order).map((level) => (
+                <option key={level.id} value={level.id}>
+                  {isAr ? `المستوى ${level.level_order}` : `Level ${level.level_order}`} - {isAr ? level.name_ar || level.name : level.name}
+                </option>
               ))}
             </select>
             <button

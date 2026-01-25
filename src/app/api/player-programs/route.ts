@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { user_id, program_id, age_group_id } = body;
+    const { user_id, program_id, age_group_id, level_id } = body;
 
     if (!user_id || !program_id || !age_group_id) {
       return NextResponse.json({ message: 'User, program, and age group are required' }, { status: 400 });
@@ -61,16 +61,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Age group not found for program' }, { status: 404 });
     }
 
+    // Validate level if provided
+    if (level_id) {
+      const levelResult = await pool.query(
+        'SELECT id FROM program_levels WHERE id = $1 AND program_id = $2',
+        [level_id, program_id]
+      );
+      if (levelResult.rows.length === 0) {
+        return NextResponse.json({ message: 'Level not found for program' }, { status: 404 });
+      }
+    }
+
+    // Verify assigning user exists
+    const assignerResult = await pool.query('SELECT id FROM users WHERE id = $1', [session.userId]);
+    const assignedBy = assignerResult.rows.length > 0 ? session.userId : null;
+
     const { rows } = await pool.query(
-      `INSERT INTO player_programs (user_id, program_id, age_group_id, assigned_by)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO player_programs (user_id, program_id, age_group_id, level_id, assigned_by)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (user_id)
        DO UPDATE SET program_id = EXCLUDED.program_id,
                      age_group_id = EXCLUDED.age_group_id,
+                     level_id = EXCLUDED.level_id,
                      assigned_by = EXCLUDED.assigned_by,
                      updated_at = CURRENT_TIMESTAMP
-       RETURNING user_id, program_id, age_group_id, assigned_at, updated_at`,
-      [user_id, program_id, age_group_id, session.userId]
+       RETURNING user_id, program_id, age_group_id, level_id, assigned_at, updated_at`,
+      [user_id, program_id, age_group_id, level_id || null, assignedBy]
     );
 
     return NextResponse.json({ assignment: rows[0] });

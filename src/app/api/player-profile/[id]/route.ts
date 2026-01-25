@@ -8,16 +8,18 @@ const fetchProfileData = async (userId: string) => {
       u.id, u.first_name, u.last_name, u.avatar_url,
       a.name as academy_name, a.name_ar as academy_name_ar,
       pp.sport, pp.position, pp.bio, pp.goals,
-      pr.program_id, pr.age_group_id, pr.assigned_at,
+      pr.program_id, pr.age_group_id, pr.level_id, pr.assigned_at,
       p.name as program_name, p.name_ar as program_name_ar,
       pag.name as age_group_name, pag.name_ar as age_group_name_ar,
-      pag.min_age, pag.max_age
+      pag.min_age, pag.max_age,
+      pl.name as level_name, pl.name_ar as level_name_ar, pl.level_order as assigned_level_order
     FROM users u
     LEFT JOIN academies a ON a.id = u.academy_id
     LEFT JOIN player_profiles pp ON pp.user_id = u.id
     LEFT JOIN player_programs pr ON pr.user_id = u.id
     LEFT JOIN programs p ON p.id = pr.program_id
     LEFT JOIN program_age_groups pag ON pag.id = pr.age_group_id
+    LEFT JOIN program_levels pl ON pl.id = pr.level_id
     WHERE u.id = $1`,
     [userId]
   );
@@ -127,6 +129,10 @@ const fetchProfileData = async (userId: string) => {
           age_group_name_ar: user.age_group_name_ar,
           min_age: user.min_age,
           max_age: user.max_age,
+          level_id: user.level_id,
+          level_name: user.level_name,
+          level_name_ar: user.level_name_ar,
+          assigned_level_order: user.assigned_level_order,
           assigned_at: user.assigned_at,
         }
       : null,
