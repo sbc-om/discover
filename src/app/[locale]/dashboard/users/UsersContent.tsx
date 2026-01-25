@@ -203,7 +203,7 @@ export default function UsersContent() {
   const splitFullName = (value: string) => {
     const parts = value.trim().split(/\s+/).filter(Boolean);
     const firstName = parts[0] || '';
-    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : parts[0] || '';
+    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
     return { firstName, lastName };
   };
 
