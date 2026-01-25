@@ -1,49 +1,109 @@
-version: '3.8'
+version: "2.4"
 
 services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: discover-postgres
+    container_name: dna-postgres
+    mem_limit: 1024m
+    cpus: 0.500
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-discover}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - discover-network
+      - dna-network
 
   # Next.js Application
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: discover-app
+    container_name: dna-app
+    mem_limit: 2048m
+    cpus: 1.000
     restart: unless-stopped
     environment:
+      # Nginx Proxy Configuration
+      VIRTUAL_HOST: discovernaturalability.com
+      VIRTUAL_PORT: 3000
+      VIRTUAL_PROTO: http
+      VIRTUAL_NETWORK: proxy
+      LETSENCRYPT_HOST: discovernaturalability.com
+      LETSENCRYPT_EMAIL: admin@sbc.om
+      
+      # Application Configuration
       NODE_ENV: production
+      PORT: 3000
+      
+      # Database
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-discover}
-    ports:
-      - "${APP_PORT:-3000}:3000"
+      
+      # Application URLs
+      NEXT_PUBLIC_APP_URL: https://discovernaturalability.com
+      NEXT_PUBLIC_API_URL: https://discovernaturalability.com
+      
+      # Security (CHANGE THESE IN PRODUCTION!)
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-this}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CRON_SECRET: ${CRON_SECRET:-your-cron-secret-change-this}
+      
+      # VAPID Keys for Push Notifications
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      
+      # File Upload
+      MAX_FILE_SIZE: 10485760
+      UPLOAD_DIR: /app/public/uploads
+    expose:
+      - "3000"
+    volumes:
+      # Persist uploads (images, files, etc.)
+      - uploads-data:/app/public/uploads
+      # Persist application data
+      - app-data:/app/data
+      # Persist logs
+      - logs-data:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - discover-network
+      - dna-network
+      - proxy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  dna-network:
+    external: false
+    name: dna-network
+  proxy:
+    external: true
+    name: proxy
 
 volumes:
   postgres-data:
     driver: local
-
-networks:
-  discover-network:
-    driver: bridge
+    name: dna-postgres-data
+  uploads-data:
+    driver: local
+    name: dna-uploads-data
+  app-data:
+    driver: local
+    name: dna-app-data
+  logs-data:
+    driver: local
+    name: dna-logs-data

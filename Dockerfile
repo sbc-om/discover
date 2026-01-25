@@ -42,6 +42,10 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Create directories for persistent data (will be mounted as volumes)
+RUN mkdir -p /app/public/uploads /app/data /app/logs \
+    && chown -R nextjs:nodejs /app/public/uploads /app/data /app/logs
+
 USER nextjs
 
 EXPOSE 3000
