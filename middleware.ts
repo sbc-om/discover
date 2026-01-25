@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
 
 // Supported locales
 const locales = ['en', 'ar'];
@@ -7,6 +8,19 @@ const defaultLocale = 'en';
 // Protected routes that require authentication
 const protectedRoutes = ['/dashboard'];
 const publicRoutes = ['/login', '/'];
+
+// Verify JWT token
+async function verifyToken(token: string): Promise<boolean> {
+  try {
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
+    );
+    await jwtVerify(token, secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // Simple locale middleware
 function localeMiddleware(request: NextRequest) {
@@ -30,7 +44,7 @@ function localeMiddleware(request: NextRequest) {
   return NextResponse.redirect(newUrl);
 }
 
-export default function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Check if it's a protected route
@@ -45,22 +59,37 @@ export default function middleware(request: NextRequest) {
   // Get token from cookie
   const token = request.cookies.get('auth-token')?.value;
   
+  // Verify token if it exists
+  const isValidToken = token ? await verifyToken(token) : false;
+  
   if (isProtectedRoute) {
-    // Only check token presence here to avoid edge JWT issues; server will validate.
-    if (!token) {
+    if (!token || !isValidToken) {
       const locale = pathname.split('/')[1] || 'en';
       const loginUrl = new URL(`/${locale}/login`, request.url);
       loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+      
+      // Clear invalid token
+      const response = NextResponse.redirect(loginUrl);
+      if (token && !isValidToken) {
+        response.cookies.delete('auth-token');
+      }
+      return response;
     }
 
     return localeMiddleware(request);
   }
 
   // Redirect authenticated users away from login page
-  if (isPublicRoute && pathname.includes('/login') && token) {
+  if (isPublicRoute && pathname.includes('/login') && isValidToken) {
     const locale = pathname.split('/')[1] || 'en';
     return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
+  }
+  
+  // Clear invalid token on public routes
+  if (token && !isValidToken) {
+    const response = localeMiddleware(request);
+    response.cookies.delete('auth-token');
+    return response;
   }
 
   return localeMiddleware(request);
