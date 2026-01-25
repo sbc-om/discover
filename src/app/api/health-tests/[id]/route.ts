@@ -111,6 +111,31 @@ export async function PATCH(
       return NextResponse.json({ message: 'No updates provided' }, { status: 400 });
     }
 
+    // Check if test exists and user has permission to update it
+    const testCheckQuery = `
+      SELECT ht.id, ht.user_id, u.academy_id 
+      FROM health_tests ht
+      JOIN users u ON u.id = ht.user_id
+      WHERE ht.id = $1
+    `;
+    const testCheckResult = await pool.query(testCheckQuery, [id]);
+    
+    if (testCheckResult.rows.length === 0) {
+      return NextResponse.json({ message: 'Test not found' }, { status: 404 });
+    }
+
+    const test = testCheckResult.rows[0];
+    
+    // Academy manager permission check
+    if (session.roleName === 'academy_manager') {
+      const userAcademyResult = await pool.query('SELECT academy_id FROM users WHERE id = $1', [session.userId]);
+      const managerAcademyId = userAcademyResult.rows[0]?.academy_id;
+      
+      if (!managerAcademyId || test.academy_id !== managerAcademyId) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     const query = `UPDATE health_tests SET ${updates.join(', ')} WHERE id = $${index} RETURNING *`;
     paramsList.push(id);
 

@@ -31,7 +31,27 @@ export async function GET(request: Request) {
       query += ` AND ht.user_id = $${index}`;
       params.push(session.userId);
       index += 1;
+    } else if (session.roleName === 'academy_manager') {
+      // Academy managers can only see tests from their academy
+      const academyResult = await pool.query(
+        'SELECT academy_id FROM users WHERE id = $1',
+        [session.userId]
+      );
+      const managerAcademyId = academyResult.rows[0]?.academy_id;
+      if (managerAcademyId) {
+        query += ` AND u.academy_id = $${index}`;
+        params.push(managerAcademyId);
+        index += 1;
+      }
+      
+      if (userId) {
+        // Additional check to ensure user is from the same academy
+        query += ` AND ht.user_id = $${index}`;
+        params.push(userId);
+        index += 1;
+      }
     } else if (userId) {
+      // Admin can see any specific user's tests
       query += ` AND ht.user_id = $${index}`;
       params.push(userId);
       index += 1;

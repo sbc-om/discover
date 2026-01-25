@@ -146,6 +146,25 @@ export async function getAccessibleMenuItems() {
       return rows;
     }
 
+    // Academy Manager sees modules they have access to, except player_profile/coach_profile
+    if (session.roleName === 'academy_manager') {
+      const { rows } = await pool.query(
+        `SELECT DISTINCT
+          m.id, m.name, m.name_ar, m.name_en, 
+          m.icon, m.route, m.display_order
+        FROM role_permissions rp
+        JOIN permissions p ON p.id = rp.permission_id
+        JOIN modules m ON m.id = p.module_id
+        WHERE rp.role_id = $1 
+          AND m.is_active = true 
+          AND m.route IS NOT NULL
+          AND m.name NOT IN ('player_profile', 'coach_profile')
+        ORDER BY m.display_order`,
+        [session.roleId]
+      );
+      return rows;
+    }
+
     // Get modules user has at least read permission for
     const { rows } = await pool.query(
       `SELECT DISTINCT

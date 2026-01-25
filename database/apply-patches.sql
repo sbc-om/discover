@@ -367,5 +367,87 @@ ALTER TABLE medal_requests ADD COLUMN IF NOT EXISTS tracking_number VARCHAR(100)
 ALTER TABLE medal_requests ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMP;
 
 -- =============================================================================
+-- Patch: 2026-01-26-add-push-subscriptions-unique-constraint.sql
+-- =============================================================================
+-- Add unique constraint for push_subscriptions to support ON CONFLICT
+-- This allows users to have multiple subscriptions from different devices/browsers
+-- but prevents duplicate subscriptions for the same endpoint
+
+-- Drop existing records with duplicate (user_id, endpoint) combinations
+-- Keep only the most recent one
+DELETE FROM push_subscriptions a
+USING push_subscriptions b
+WHERE a.id < b.id
+  AND a.user_id = b.user_id
+  AND a.endpoint = b.endpoint;
+
+-- Add unique constraint
+ALTER TABLE push_subscriptions
+  DROP CONSTRAINT IF EXISTS push_subscriptions_user_endpoint_key;
+
+ALTER TABLE push_subscriptions
+  ADD CONSTRAINT push_subscriptions_user_endpoint_key UNIQUE (user_id, endpoint);
+
+-- =============================================================================
+-- Patch: 2026-01-26-add-role-permissions-unique-constraint.sql
+-- =============================================================================
+-- Add unique constraint to role_permissions table
+-- This prevents duplicate role-permission mappings and allows ON CONFLICT clauses
+
+-- Drop existing duplicate entries if any
+DELETE FROM role_permissions a USING role_permissions b
+WHERE a.id < b.id 
+  AND a.role_id = b.role_id 
+  AND a.permission_id = b.permission_id;
+
+-- Add the unique constraint
+ALTER TABLE role_permissions
+ADD CONSTRAINT role_permissions_role_permission_unique 
+UNIQUE (role_id, permission_id);
+
+-- =============================================================================
+-- Patch: 2026-01-26-grant-player-profile-academy-manager.sql
+-- =============================================================================
+-- Grant academy_manager full access to player_profile module
+-- This allows academy managers to view and manage player profiles for their academy
+
+DO $$
+DECLARE
+    v_module_id UUID;
+    v_role_id UUID;
+    v_permission_id UUID;
+BEGIN
+    -- Get player_profile module and academy_manager role IDs
+    SELECT id INTO v_module_id FROM modules WHERE name = 'player_profile';
+    SELECT id INTO v_role_id FROM roles WHERE name = 'academy_manager';
+    
+    IF v_module_id IS NOT NULL AND v_role_id IS NOT NULL THEN
+        -- Grant read permission
+        SELECT id INTO v_permission_id FROM permissions WHERE module_id = v_module_id AND action = 'read';
+        IF v_permission_id IS NOT NULL THEN
+            INSERT INTO role_permissions (role_id, permission_id) 
+            VALUES (v_role_id, v_permission_id) 
+            ON CONFLICT (role_id, permission_id) DO NOTHING;
+        END IF;
+        
+        -- Grant update permission
+        SELECT id INTO v_permission_id FROM permissions WHERE module_id = v_module_id AND action = 'update';
+        IF v_permission_id IS NOT NULL THEN
+            INSERT INTO role_permissions (role_id, permission_id) 
+            VALUES (v_role_id, v_permission_id) 
+            ON CONFLICT (role_id, permission_id) DO NOTHING;
+        END IF;
+        
+        -- Grant create permission
+        SELECT id INTO v_permission_id FROM permissions WHERE module_id = v_module_id AND action = 'create';
+        IF v_permission_id IS NOT NULL THEN
+            INSERT INTO role_permissions (role_id, permission_id) 
+            VALUES (v_role_id, v_permission_id) 
+            ON CONFLICT (role_id, permission_id) DO NOTHING;
+        END IF;
+    END IF;
+END $$;
+
+-- =============================================================================
 -- All patches applied successfully!
 -- =============================================================================

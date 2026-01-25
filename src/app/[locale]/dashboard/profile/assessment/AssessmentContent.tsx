@@ -90,8 +90,8 @@ export default function AssessmentContent() {
     try {
       const response = await fetch('/api/auth/me');
       const data = await response.json();
-      if (response.ok && data.user) {
-        setCurrentRole(data.user.role);
+      if (response.ok) {
+        setCurrentRole(data.roleName || null);
       }
     } catch (error) {
       console.error('Failed to fetch role:', error);

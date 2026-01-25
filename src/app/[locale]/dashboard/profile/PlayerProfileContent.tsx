@@ -137,6 +137,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const [profileFormOpen, setProfileFormOpen] = useState(false);
 
   const isAdminView = Boolean(userId);
+  const canManagePlayer = Boolean(userId) && (currentRole === 'admin' || currentRole === 'academy_manager');
   const endpoint = useMemo(() => userId ? `/api/player-profile/${userId}` : '/api/player-profile', [userId]);
 
   const fetchUnreadCount = async () => {
@@ -222,13 +223,13 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
     };
     fetchCurrentUser();
   }, []);
-  useEffect(() => { if (isAdminView) fetchPrograms(); }, [isAdminView]);
+  useEffect(() => { if (canManagePlayer) fetchPrograms(); }, [canManagePlayer]);
   useEffect(() => { 
-    if (isAdminView && assignmentForm.program_id) {
+    if (canManagePlayer && assignmentForm.program_id) {
       fetchAgeGroups(assignmentForm.program_id);
       fetchLevelsForForm(assignmentForm.program_id);
     }
-  }, [assignmentForm.program_id, isAdminView]);
+  }, [assignmentForm.program_id, canManagePlayer]);
 
   const handleSaveProfile = async () => {
     if (!form.sport.trim() || !form.bio.trim()) {
@@ -575,8 +576,8 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
           </div>
         )}
 
-        {/* Admin: Assign Program */}
-        {isAdminView && (
+        {/* Admin/Academy Manager: Assign Program */}
+        {canManagePlayer && (
           <div className="mt-4 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-white to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 p-4 space-y-3">
             <h3 className="text-sm font-medium text-zinc-900 dark:text-white">{isAr ? 'تعيين برنامج' : 'Assign program'}</h3>
             <select

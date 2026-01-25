@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Award, ImagePlus, Loader2, Plus } from 'lucide-react';
+import { Award, ImagePlus, Loader2, Plus, Edit, Trash2 } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
 
@@ -29,6 +29,9 @@ export default function AchievementsTab() {
     description: '',
     icon_url: '',
   });
+  
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const canManage = roleName === 'admin' || roleName === 'academy_manager';
 
@@ -94,10 +97,16 @@ export default function AchievementsTab() {
     }
     setSaving(true);
     try {
+      const method = editingId ? 'PUT' : 'POST';
+      const body = editingId 
+        ? { id: editingId, ...form }
+        : form;
+        
       const response = await fetch('/api/achievements', {
-        method: 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          ...body,
           title: form.title.trim(),
           title_ar: form.title_ar.trim() || null,
           description: form.description.trim() || null,
@@ -106,15 +115,57 @@ export default function AchievementsTab() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create achievement');
+        throw new Error(data.message || (editingId ? 'Failed to update achievement' : 'Failed to create achievement'));
       }
       setForm({ title: '', title_ar: '', description: '', icon_url: '' });
+      setEditingId(null);
       await fetchAchievements();
-      showToast('success', isAr ? 'تم إنشاء الإنجاز' : 'Achievement created');
+      showToast('success', editingId 
+        ? (isAr ? 'تم تحديث الإنجاز' : 'Achievement updated')
+        : (isAr ? 'تم إنشاء الإنجاز' : 'Achievement created')
+      );
     } catch (error: any) {
-      showToast('error', error.message || (isAr ? 'تعذر الإنشاء' : 'Failed to create'));
+      showToast('error', error.message || (isAr ? 'تعذر الحفظ' : 'Failed to save'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEdit = (achievement: Achievement) => {
+    setEditingId(achievement.id);
+    setForm({
+      title: achievement.title || '',
+      title_ar: achievement.title_ar || '',
+      description: achievement.description || '',
+      icon_url: achievement.icon_url || '',
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setForm({ title: '', title_ar: '', description: '', icon_url: '' });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm(isAr ? 'هل تريد حذف هذا الإنجاز؟' : 'Are you sure you want to delete this achievement?')) {
+      return;
+    }
+    
+    setDeleting(id);
+    try {
+      const response = await fetch(`/api/achievements?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete achievement');
+      }
+      await fetchAchievements();
+      showToast('success', isAr ? 'تم حذف الإنجاز' : 'Achievement deleted');
+    } catch (error: any) {
+      showToast('error', error.message || (isAr ? 'تعذر الحذف' : 'Failed to delete'));
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -183,15 +234,31 @@ export default function AchievementsTab() {
               </div>
             )}
           </div>
-          <button
-            type="button"
-            onClick={handleCreate}
-            disabled={saving}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-semibold disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            {isAr ? 'إضافة الإنجاز' : 'Create achievement'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-semibold disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 
+                editingId ? <Edit className="h-4 w-4" /> : <Plus className="h-4 w-4" />
+              }
+              {editingId 
+                ? (isAr ? 'تحديث الإنجاز' : 'Update achievement')
+                : (isAr ? 'إضافة الإنجاز' : 'Create achievement')
+              }
+            </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
+              >
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -224,6 +291,31 @@ export default function AchievementsTab() {
                     </p>
                   )}
                 </div>
+                {canManage && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(achievement)}
+                      className="p-2 text-zinc-500 hover:text-orange-500 transition-colors"
+                      title={isAr ? 'تعديل' : 'Edit'}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(achievement.id)}
+                      disabled={deleting === achievement.id}
+                      className="p-2 text-zinc-500 hover:text-red-500 transition-colors disabled:opacity-50"
+                      title={isAr ? 'حذف' : 'Delete'}
+                    >
+                      {deleting === achievement.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

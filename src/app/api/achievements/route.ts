@@ -81,3 +81,112 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const session = await requireRole(['admin', 'academy_manager']);
+    const body = await request.json();
+    const { id, title, title_ar, description, icon_url } = body || {};
+
+    if (!id || !title) {
+      return NextResponse.json({ message: 'ID and title are required' }, { status: 400 });
+    }
+
+    // Check if achievement exists and user has permission
+    const achievementResult = await pool.query(
+      'SELECT id, academy_id, created_by FROM achievements WHERE id = $1',
+      [id]
+    );
+
+    if (achievementResult.rows.length === 0) {
+      return NextResponse.json({ message: 'Achievement not found' }, { status: 404 });
+    }
+
+    const achievement = achievementResult.rows[0];
+
+    // Check permissions
+    if (session.roleName === 'academy_manager') {
+      const userResult = await pool.query('SELECT academy_id FROM users WHERE id = $1', [session.userId]);
+      const userAcademyId = userResult.rows[0]?.academy_id;
+      
+      if (!userAcademyId || (achievement.academy_id && achievement.academy_id !== userAcademyId)) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE achievements 
+       SET title = $1, title_ar = $2, description = $3, icon_url = $4, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $5
+       RETURNING id, title, title_ar, description, icon_url, academy_id, is_active, created_at`,
+      [title, title_ar || null, description || null, icon_url || null, id]
+    );
+
+    return NextResponse.json({ achievement: rows[0] });
+  } catch (error: any) {
+    console.error('Update achievement error:', error);
+    return NextResponse.json(
+      { message: error.message || 'Failed to update achievement' },
+      { status: error.message === 'Forbidden' ? 403 : 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await requireRole(['admin', 'academy_manager']);
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ message: 'ID is required' }, { status: 400 });
+    }
+
+    // Check if achievement exists and user has permission
+    const achievementResult = await pool.query(
+      'SELECT id, academy_id, created_by FROM achievements WHERE id = $1',
+      [id]
+    );
+
+    if (achievementResult.rows.length === 0) {
+      return NextResponse.json({ message: 'Achievement not found' }, { status: 404 });
+    }
+
+    const achievement = achievementResult.rows[0];
+
+    // Check permissions
+    if (session.roleName === 'academy_manager') {
+      const userResult = await pool.query('SELECT academy_id FROM users WHERE id = $1', [session.userId]);
+      const userAcademyId = userResult.rows[0]?.academy_id;
+      
+      if (!userAcademyId || (achievement.academy_id && achievement.academy_id !== userAcademyId)) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    // Check if achievement is being used by any players
+    const usageResult = await pool.query(
+      'SELECT COUNT(*) as count FROM player_achievements WHERE achievement_id = $1',
+      [id]
+    );
+
+    if (parseInt(usageResult.rows[0].count) > 0) {
+      // Soft delete - set is_active to false instead of actual deletion
+      await pool.query(
+        'UPDATE achievements SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [id]
+      );
+      return NextResponse.json({ message: 'Achievement deactivated (was being used by players)' });
+    } else {
+      // Hard delete if not being used
+      await pool.query('DELETE FROM achievements WHERE id = $1', [id]);
+      return NextResponse.json({ message: 'Achievement deleted' });
+    }
+  } catch (error: any) {
+    console.error('Delete achievement error:', error);
+    return NextResponse.json(
+      { message: error.message || 'Failed to delete achievement' },
+      { status: error.message === 'Forbidden' ? 403 : 500 }
+    );
+  }
+}
