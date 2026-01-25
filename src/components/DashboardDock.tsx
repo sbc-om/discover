@@ -111,7 +111,8 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
                       key={item.name}
                       href={itemPath}
                       aria-current={isActive ? 'page' : undefined}
-                      className="group relative flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium"
+                      className="group relative flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium no-underline hover:no-underline"
+                      style={{ textDecoration: 'none' }}
                     >
                       {isActive && (
                         <div className="absolute inset-0 rounded-full bg-zinc-900 dark:bg-white" />

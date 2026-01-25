@@ -418,9 +418,9 @@ export default function AcademiesContent() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shrink-0 overflow-hidden">
+                          <div className="w-32 h-20 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 dark:text-zinc-500 shrink-0 overflow-hidden">
                             {academy.logo_url ? (
-                              <img src={academy.logo_url} alt="" className="w-full h-full object-cover" />
+                              <img src={academy.logo_url} alt="" className="w-full h-full object-contain" />
                             ) : (
                               <Building2 className="w-6 h-6" />
                             )}
@@ -508,9 +508,9 @@ export default function AcademiesContent() {
                   className="p-4"
                 >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shrink-0 overflow-hidden">
+                    <div className="w-full h-32 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 dark:text-zinc-500 shrink-0 overflow-hidden">
                       {academy.logo_url ? (
-                        <img src={academy.logo_url} alt="" className="w-full h-full object-cover" />
+                        <img src={academy.logo_url} alt="" className="w-full h-full object-contain" />
                       ) : (
                         <Building2 className="w-7 h-7" />
                       )}
@@ -716,9 +716,9 @@ export default function AcademiesContent() {
                     {/* Logo Upload */}
                     <div className="flex justify-center">
                       <div className="relative">
-                        <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
+                        <div className="w-40 h-24 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 dark:text-zinc-500 font-bold text-2xl overflow-hidden">
                           {logoPreview ? (
-                            <img src={logoPreview} alt="" className="w-full h-full object-cover" />
+                            <img src={logoPreview} alt="" className="w-full h-full object-contain" />
                           ) : (
                             <Building2 className="w-10 h-10" />
                           )}

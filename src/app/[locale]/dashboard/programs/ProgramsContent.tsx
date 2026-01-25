@@ -621,27 +621,31 @@ export default function ProgramsContent() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="relative group"
               >
-                <div className={`rounded-2xl border ${level.is_active ? 'border-zinc-200 dark:border-zinc-800' : 'border-red-200 dark:border-red-900/50'} bg-white dark:bg-zinc-900 p-5 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50 transition-all`}>
-                  {level.image_url && (
-                    <div className="mb-4">
-                      <img
-                        src={level.image_url}
-                        alt={level.name}
-                        className="w-full aspect-square object-cover rounded-xl"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
+                <div className={`h-[320px] flex flex-col rounded-2xl border ${level.is_active ? 'border-zinc-200 dark:border-zinc-800' : 'border-red-200 dark:border-red-900/50'} bg-white dark:bg-zinc-900 p-5 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50 transition-all`}>
                   {/* Level Badge */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                        {level.level_order}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{level.name}</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      {level.image_url ? (
+                        <div className="relative w-22 h-22 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                          <img
+                            src={level.image_url}
+                            alt={level.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          <div className="absolute bottom-0 right-0 w-7 h-7 rounded-tl-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                            {level.level_order}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-22 h-22 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shrink-0">
+                          {level.level_order}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">{level.name}</h3>
                         {level.name_ar && (
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">{level.name_ar}</p>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{level.name_ar}</p>
                         )}
                       </div>
                     </div>
@@ -653,35 +657,27 @@ export default function ProgramsContent() {
                   </div>
 
                   {/* Requirements */}
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                        <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <p className="text-zinc-500 dark:text-zinc-400">{t('Min Sessions', 'الحد الأدنى للجلسات')}</p>
-                        <p className="font-semibold text-zinc-900 dark:text-zinc-100">{level.min_sessions}</p>
-                      </div>
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span className="text-zinc-500 dark:text-zinc-400">{t('Min Sessions', 'الحد الأدنى للجلسات')}:</span>
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">{level.min_sessions}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                        <Award className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                      </div>
-                      <div>
-                        <p className="text-zinc-500 dark:text-zinc-400">{t('Min Points', 'الحد الأدنى للنقاط')}</p>
-                        <p className="font-semibold text-zinc-900 dark:text-zinc-100">{level.min_points}</p>
-                      </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Award className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span className="text-zinc-500 dark:text-zinc-400">{t('Min Points', 'الحد الأدنى للنقاط')}:</span>
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">{level.min_points}</span>
                     </div>
                   </div>
 
                   {level.description && (
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4 line-clamp-2">
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3 line-clamp-2">
                       {level.description}
                     </p>
                   )}
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mt-auto">
                     <button
                       onClick={() => handleEditLevel(level)}
                       className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
@@ -743,7 +739,7 @@ export default function ProgramsContent() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className="relative group"
                 >
-                  <div className={`rounded-2xl border ${ageGroup.is_active ? 'border-zinc-200 dark:border-zinc-800' : 'border-red-200 dark:border-red-900/50'} bg-white dark:bg-zinc-900 p-5 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50 transition-all`}>
+                  <div className={`h-[280px] flex flex-col rounded-2xl border ${ageGroup.is_active ? 'border-zinc-200 dark:border-zinc-800' : 'border-red-200 dark:border-red-900/50'} bg-white dark:bg-zinc-900 p-5 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50 transition-all`}>
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{ageGroup.name}</h3>
@@ -1219,27 +1215,28 @@ export default function ProgramsContent() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className="relative group"
                 >
-                  <div className={`rounded-2xl border ${program.is_active ? 'border-zinc-200 dark:border-zinc-800' : 'border-red-200 dark:border-red-900/50'} bg-white dark:bg-zinc-900 p-5 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50 transition-all`}>
-                    {program.image_url && (
-                      <div className="mb-4">
-                        <img
-                          src={program.image_url}
-                          alt={program.name}
-                          className="w-full aspect-square object-cover rounded-xl"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
+                  <div className={`h-[340px] flex flex-col rounded-2xl border ${program.is_active ? 'border-zinc-200 dark:border-zinc-800' : 'border-red-200 dark:border-red-900/50'} bg-white dark:bg-zinc-900 p-5 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-zinc-900/50 transition-all`}>
                     {/* Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
-                          <Layers className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{program.name}</h3>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {program.image_url ? (
+                          <div className="w-24 h-24 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                            <img
+                              src={program.image_url}
+                              alt={program.name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shrink-0">
+                            <Layers className="w-10 h-10 text-white" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">{program.name}</h3>
                           {program.name_ar && (
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400">{program.name_ar}</p>
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{program.name_ar}</p>
                           )}
                         </div>
                       </div>
@@ -1252,20 +1249,20 @@ export default function ProgramsContent() {
 
                     {/* Academy */}
                     {program.academy_name && (
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">
                         {program.academy_name}
                       </p>
                     )}
 
                     {/* Description */}
                     {program.description && (
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2">
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3 line-clamp-2">
                         {program.description}
                       </p>
                     )}
 
                     {/* Stats */}
-                    <div className="flex flex-wrap items-center gap-3 mb-4 text-sm">
+                    <div className="flex flex-wrap items-center gap-3 mb-auto text-sm">
                       <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                         <Target className="w-4 h-4" />
                         <span>{program.level_count || 0} {program.level_count === 1 ? t('Level', 'مستوى') : t('Levels', 'مستويات')}</span>
@@ -1277,7 +1274,7 @@ export default function ProgramsContent() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mt-auto">
                       <button
                         onClick={() => handleViewLevels(program)}
                         className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all"
