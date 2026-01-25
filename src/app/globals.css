@@ -45,34 +45,16 @@
     @apply bg-background text-foreground;
   }
 
-  /* Disable focus-visible outlines professionally */
-  *,
+  /* Disable browser default focus outlines - use Tailwind ring instead */
   *:focus,
-  *:focus-visible,
-  *:active {
+  *:focus-visible {
     outline: none !important;
-    box-shadow: none !important;
   }
 
   /* Remove tap highlight on mobile */
   * {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
-  }
-
-  /* Remove focus ring from buttons and links */
-  button:focus,
-  button:focus-visible,
-  a:focus,
-  a:focus-visible,
-  input:focus,
-  input:focus-visible,
-  textarea:focus,
-  textarea:focus-visible,
-  select:focus,
-  select:focus-visible {
-    outline: none !important;
-    box-shadow: none !important;
   }
 }
 

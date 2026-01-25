@@ -876,11 +876,15 @@ export default function ProgramsContent() {
                     {t('Level Order', 'ترتيب المستوى')}
                   </label>
                   <input
-                    type="number"
-                    min="1"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={levelFormData.level_order}
-                    onChange={(e) => setLevelFormData({ ...levelFormData, level_order: parseInt(e.target.value) || 1 })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setLevelFormData({ ...levelFormData, level_order: val === '' ? 1 : parseInt(val) || 1 });
+                    }}
+                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                   />
                 </div>
 
@@ -890,11 +894,15 @@ export default function ProgramsContent() {
                       {t('Min Sessions Required', 'الحد الأدنى للجلسات')}
                     </label>
                     <input
-                      type="number"
-                      min="0"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={levelFormData.min_sessions}
-                      onChange={(e) => setLevelFormData({ ...levelFormData, min_sessions: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setLevelFormData({ ...levelFormData, min_sessions: val === '' ? 0 : parseInt(val) });
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                     />
                   </div>
                   <div>
@@ -902,11 +910,15 @@ export default function ProgramsContent() {
                       {t('Min Points Required', 'الحد الأدنى للنقاط')}
                     </label>
                     <input
-                      type="number"
-                      min="0"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={levelFormData.min_points}
-                      onChange={(e) => setLevelFormData({ ...levelFormData, min_points: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setLevelFormData({ ...levelFormData, min_points: val === '' ? 0 : parseInt(val) });
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                     />
                   </div>
                 </div>
@@ -1066,11 +1078,15 @@ export default function ProgramsContent() {
                       {t('Min Age', 'الحد الأدنى للعمر')}
                     </label>
                     <input
-                      type="number"
-                      min={1}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={ageGroupFormData.min_age}
-                      onChange={(e) => setAgeGroupFormData({ ...ageGroupFormData, min_age: Number(e.target.value) })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setAgeGroupFormData({ ...ageGroupFormData, min_age: val === '' ? 1 : parseInt(val) || 1 });
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                     />
                   </div>
                   <div>
@@ -1078,11 +1094,15 @@ export default function ProgramsContent() {
                       {t('Max Age', 'الحد الأقصى للعمر')}
                     </label>
                     <input
-                      type="number"
-                      min={1}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={ageGroupFormData.max_age}
-                      onChange={(e) => setAgeGroupFormData({ ...ageGroupFormData, max_age: Number(e.target.value) })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setAgeGroupFormData({ ...ageGroupFormData, max_age: val === '' ? 1 : parseInt(val) || 1 });
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                     />
                   </div>
                 </div>
@@ -1293,16 +1313,9 @@ export default function ProgramsContent() {
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 {t('No programs yet', 'لا توجد برامج بعد')}
               </h3>
-              <p className="text-zinc-500 dark:text-zinc-400 mb-4">
+              <p className="text-zinc-500 dark:text-zinc-400">
                 {t('Create your first program to get started', 'أنشئ برنامجك الأول للبدء')}
               </p>
-              <button
-                onClick={handleAdd}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                {t('Add Program', 'إضافة برنامج')}
-              </button>
             </div>
           )}
 
