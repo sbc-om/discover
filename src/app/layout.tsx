@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { cookies } from "next/headers";
 import ThemeProvider from "@/providers/ThemeProvider";
 import ScrollArea from "@/components/ScrollArea";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Inter for English text - clean and modern
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+// IBM Plex Sans Arabic - beautiful Arabic font (same as spirithubcafe.com)
+const ibmPlexArabic = IBM_Plex_Sans_Arabic({
+  variable: "--font-arabic",
+  subsets: ["arabic"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -36,7 +41,7 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground h-screen overflow-hidden`}
+        className={`${inter.variable} ${ibmPlexArabic.variable} antialiased bg-background text-foreground h-screen overflow-hidden`}
       >
         <ThemeProvider>
           <ScrollArea className="h-screen w-screen">

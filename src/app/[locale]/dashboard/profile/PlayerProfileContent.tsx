@@ -338,7 +338,7 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
             </div>
             <div className="flex items-center justify-center">
               <img src="/logo/icon-black.png" alt="DNA" className="h-8 w-8 opacity-60 dark:hidden" />
-              <img src="/logo/logo-white.png" alt="DNA" className="h-8 w-8 opacity-60 hidden dark:block" />
+              <img src="/logo/icon-white.png" alt="DNA" className="h-8 w-8 opacity-60 hidden dark:block" />
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-[0.1em] text-zinc-500 font-medium">{isAr ? 'جلسات' : 'SESSIONS'}</p>

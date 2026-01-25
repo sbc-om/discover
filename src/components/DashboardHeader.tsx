@@ -29,7 +29,7 @@ export default function DashboardHeader({ locale, userName }: DashboardHeaderPro
             className="dark:hidden"
           />
           <Image 
-            src="/logo/logo-white.png"
+            src="/logo/icon-white.png"
             alt="DNA"
             width={40}
             height={40}

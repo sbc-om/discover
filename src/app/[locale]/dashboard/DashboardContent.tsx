@@ -86,7 +86,7 @@ export default function DashboardContent() {
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-2 xl:grid-cols-3">
           <StatCard icon={Building2} label={isAr ? 'الأكاديميات' : 'Academies'} value={data.stats.academies || 0} />
           <StatCard icon={Users} label={isAr ? 'إجمالي اللاعبين' : 'Total Players'} value={data.stats.players} />
           <StatCard icon={Shield} label={isAr ? 'المدربين' : 'Coaches'} value={data.stats.coaches} />
@@ -194,7 +194,7 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-2 xl:grid-cols-3">
           <StatCard icon={Users} label={isAr ? 'اللاعبون' : 'Players'} value={data.stats.players} />
           <StatCard icon={Shield} label={isAr ? 'المدربون' : 'Coaches'} value={data.stats.coaches} />
           <StatCard icon={Building2} label={isAr ? 'البرامج' : 'Programs'} value={data.stats.programs || 0} />

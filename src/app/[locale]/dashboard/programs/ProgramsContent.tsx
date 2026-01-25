@@ -7,6 +7,7 @@ import ModalPortal from '@/components/ModalPortal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useToast } from '@/components/ToastProvider';
 import CoachProgramsContent from './CoachProgramsContent';
+import useLocale from '@/hooks/useLocale';
 import {
   Layers,
   Plus,
@@ -75,6 +76,12 @@ interface Academy {
 }
 
 export default function ProgramsContent() {
+  const { locale } = useLocale();
+  const isAr = locale === 'ar';
+  
+  // Translation helper
+  const t = (en: string, ar: string) => isAr ? ar : en;
+  
   const [programs, setPrograms] = useState<Program[]>([]);
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -590,14 +597,14 @@ export default function ProgramsContent() {
               className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
             >
               <Plus className="w-5 h-5" />
-              <span>Add Level</span>
+              <span>{t('Add Level', 'إضافة مستوى')}</span>
             </button>
             <button
               onClick={handleAddAgeGroup}
               className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
             >
               <Plus className="w-5 h-5" />
-              <span>Add Age Group</span>
+              <span>{t('Add Age Group', 'إضافة فئة عمرية')}</span>
             </button>
           </div>
         </div>
@@ -652,7 +659,7 @@ export default function ProgramsContent() {
                         <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-zinc-500 dark:text-zinc-400">Min Sessions</p>
+                        <p className="text-zinc-500 dark:text-zinc-400">{t('Min Sessions', 'الحد الأدنى للجلسات')}</p>
                         <p className="font-semibold text-zinc-900 dark:text-zinc-100">{level.min_sessions}</p>
                       </div>
                     </div>
@@ -661,7 +668,7 @@ export default function ProgramsContent() {
                         <Award className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       </div>
                       <div>
-                        <p className="text-zinc-500 dark:text-zinc-400">Min Points</p>
+                        <p className="text-zinc-500 dark:text-zinc-400">{t('Min Points', 'الحد الأدنى للنقاط')}</p>
                         <p className="font-semibold text-zinc-900 dark:text-zinc-100">{level.min_points}</p>
                       </div>
                     </div>
@@ -680,7 +687,7 @@ export default function ProgramsContent() {
                       className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                     >
                       <Edit2 className="w-4 h-4" />
-                      Edit
+                      {t('Edit', 'تعديل')}
                     </button>
                     <button
                       onClick={() => setDeleteTarget({ type: 'level', item: level, programId: selectedProgram.id })}
@@ -701,17 +708,17 @@ export default function ProgramsContent() {
                 <Target className="w-8 h-8 text-zinc-400" />
               </div>
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                No levels yet
+                {t('No levels yet', 'لا توجد مستويات بعد')}
               </h3>
               <p className="text-zinc-500 dark:text-zinc-400 mb-4">
-                Create the first level for this program
+                {t('Create the first level for this program', 'أنشئ المستوى الأول لهذا البرنامج')}
               </p>
               <button
                 onClick={handleAddLevel}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Add Level
+                {t('Add Level', 'إضافة مستوى')}
               </button>
             </div>
           )}
@@ -721,7 +728,7 @@ export default function ProgramsContent() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Age Groups
+              {t('Age Groups', 'الفئات العمرية')}
             </h2>
           </div>
 
@@ -756,7 +763,7 @@ export default function ProgramsContent() {
                         <Target className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                       </div>
                       <div>
-                        <p className="text-zinc-500 dark:text-zinc-400">Age Range</p>
+                        <p className="text-zinc-500 dark:text-zinc-400">{t('Age Range', 'الفئة العمرية')}</p>
                         <p className="font-semibold text-zinc-900 dark:text-zinc-100">
                           {ageGroup.min_age} - {ageGroup.max_age}
                         </p>
@@ -769,7 +776,7 @@ export default function ProgramsContent() {
                         className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                       >
                         <Edit2 className="w-4 h-4" />
-                        Edit
+                        {t('Edit', 'تعديل')}
                       </button>
                       <button
                         onClick={() => setDeleteTarget({ type: 'age_group', item: ageGroup, programId: selectedProgram.id })}
@@ -789,17 +796,17 @@ export default function ProgramsContent() {
                   <Target className="w-8 h-8 text-zinc-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                  No age groups yet
+                  {t('No age groups yet', 'لا توجد فئات عمرية بعد')}
                 </h3>
                 <p className="text-zinc-500 dark:text-zinc-400 mb-4">
-                  Create the first age group for this program
+                  {t('Create the first age group for this program', 'أنشئ الفئة العمرية الأولى لهذا البرنامج')}
                 </p>
                 <button
                   onClick={handleAddAgeGroup}
                   className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Age Group
+                  {t('Add Age Group', 'إضافة فئة عمرية')}
                 </button>
               </div>
             )}
@@ -825,7 +832,7 @@ export default function ProgramsContent() {
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                  {editingLevel ? 'Edit Level' : 'Add Level'}
+                  {editingLevel ? t('Edit Level', 'تعديل المستوى') : t('Add Level', 'إضافة مستوى')}
                 </h2>
                 <button
                   onClick={() => setShowLevelModal(false)}
@@ -839,19 +846,19 @@ export default function ProgramsContent() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Name (English) *
+                      {t('Name (English)', 'الاسم (إنجليزي)')} *
                     </label>
                     <input
                       type="text"
                       value={levelFormData.name}
                       onChange={(e) => setLevelFormData({ ...levelFormData, name: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                      placeholder="Level 1"
+                      placeholder={t('Level 1', 'المستوى ١')}
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Name (Arabic)
+                      {t('Name (Arabic)', 'الاسم (عربي)')}
                     </label>
                     <input
                       type="text"
@@ -866,7 +873,7 @@ export default function ProgramsContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Level Order
+                    {t('Level Order', 'ترتيب المستوى')}
                   </label>
                   <input
                     type="number"
@@ -880,7 +887,7 @@ export default function ProgramsContent() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Min Sessions Required
+                      {t('Min Sessions Required', 'الحد الأدنى للجلسات')}
                     </label>
                     <input
                       type="number"
@@ -892,7 +899,7 @@ export default function ProgramsContent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Min Points Required
+                      {t('Min Points Required', 'الحد الأدنى للنقاط')}
                     </label>
                     <input
                       type="number"
@@ -906,7 +913,7 @@ export default function ProgramsContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Image
+                    {t('Image', 'الصورة')}
                   </label>
                   <div className="flex items-center gap-4">
                     <div className="w-24 h-24 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 overflow-hidden flex items-center justify-center">
@@ -917,7 +924,7 @@ export default function ProgramsContent() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-xs text-zinc-400">No image</span>
+                        <span className="text-xs text-zinc-400">{t('No image', 'لا توجد صورة')}</span>
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
@@ -934,7 +941,7 @@ export default function ProgramsContent() {
                         className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                         disabled={uploadingLevelImage}
                       >
-                        {uploadingLevelImage ? 'Uploading...' : 'Upload Image'}
+                        {uploadingLevelImage ? t('Uploading...', 'جاري الرفع...') : t('Upload Image', 'رفع صورة')}
                       </button>
                       {levelImagePreview && (
                         <button
@@ -945,7 +952,7 @@ export default function ProgramsContent() {
                           }}
                           className="text-xs text-red-500 hover:text-red-600"
                         >
-                          Remove
+                          {t('Remove', 'حذف')}
                         </button>
                       )}
                     </div>
@@ -954,14 +961,14 @@ export default function ProgramsContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Description
+                    {t('Description', 'الوصف')}
                   </label>
                   <textarea
                     rows={2}
                     value={levelFormData.description}
                     onChange={(e) => setLevelFormData({ ...levelFormData, description: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
-                    placeholder="Level description..."
+                    placeholder={t('Level description...', 'وصف المستوى...')}
                   />
                 </div>
 
@@ -972,7 +979,7 @@ export default function ProgramsContent() {
                     onChange={(e) => setLevelFormData({ ...levelFormData, is_active: e.target.checked })}
                     className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-600 text-orange-500 focus:ring-orange-500 transition-all"
                   />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Active</span>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('Active', 'نشط')}</span>
                 </label>
               </div>
 
@@ -981,14 +988,14 @@ export default function ProgramsContent() {
                   onClick={() => setShowLevelModal(false)}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
                 >
-                  Cancel
+                  {t('Cancel', 'إلغاء')}
                 </button>
                 <button
                   onClick={handleSaveLevel}
                   disabled={!levelFormData.name}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  {editingLevel ? 'Update' : 'Create'}
+                  {editingLevel ? t('Update', 'تحديث') : t('Create', 'إنشاء')}
                 </button>
               </div>
             </motion.div>
@@ -1015,7 +1022,7 @@ export default function ProgramsContent() {
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                  {editingAgeGroup ? 'Edit Age Group' : 'Add Age Group'}
+                  {editingAgeGroup ? t('Edit Age Group', 'تعديل الفئة العمرية') : t('Add Age Group', 'إضافة فئة عمرية')}
                 </h2>
                 <button
                   onClick={() => setShowAgeGroupModal(false)}
@@ -1029,7 +1036,7 @@ export default function ProgramsContent() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Name (EN)
+                      {t('Name (EN)', 'الاسم (إنجليزي)')}
                     </label>
                     <input
                       type="text"
@@ -1041,7 +1048,7 @@ export default function ProgramsContent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Name (AR)
+                      {t('Name (AR)', 'الاسم (عربي)')}
                     </label>
                     <input
                       type="text"
@@ -1056,7 +1063,7 @@ export default function ProgramsContent() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Min Age
+                      {t('Min Age', 'الحد الأدنى للعمر')}
                     </label>
                     <input
                       type="number"
@@ -1068,7 +1075,7 @@ export default function ProgramsContent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Max Age
+                      {t('Max Age', 'الحد الأقصى للعمر')}
                     </label>
                     <input
                       type="number"
@@ -1087,7 +1094,7 @@ export default function ProgramsContent() {
                     onChange={(e) => setAgeGroupFormData({ ...ageGroupFormData, is_active: e.target.checked })}
                     className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-600 text-orange-500 focus:ring-orange-500 transition-all"
                   />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Active</span>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('Active', 'نشط')}</span>
                 </label>
               </div>
 
@@ -1096,14 +1103,14 @@ export default function ProgramsContent() {
                   onClick={() => setShowAgeGroupModal(false)}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
                 >
-                  Cancel
+                  {t('Cancel', 'إلغاء')}
                 </button>
                 <button
                   onClick={handleSaveAgeGroup}
                   disabled={!ageGroupFormData.name}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  {editingAgeGroup ? 'Update' : 'Create'}
+                  {editingAgeGroup ? t('Update', 'تحديث') : t('Create', 'إنشاء')}
                 </button>
               </div>
             </motion.div>
@@ -1117,18 +1124,18 @@ export default function ProgramsContent() {
           onClose={() => { setDeleteTarget(null); setDeleteError(null); }}
           onConfirm={handleConfirmDelete}
           title={deleteTarget?.type === 'program'
-            ? 'Delete Program'
+            ? t('Delete Program', 'حذف البرنامج')
             : deleteTarget?.type === 'level'
-            ? 'Delete Level'
-            : 'Delete Age Group'
+            ? t('Delete Level', 'حذف المستوى')
+            : t('Delete Age Group', 'حذف الفئة العمرية')
           }
           description={deleteTarget?.type === 'program' 
-            ? `Are you sure you want to delete "${(deleteTarget?.item as Program)?.name}"? All levels and age groups will also be deleted.`
+            ? t(`Are you sure you want to delete "${(deleteTarget?.item as Program)?.name}"? All levels and age groups will also be deleted.`, `هل أنت متأكد من حذف "${(deleteTarget?.item as Program)?.name}"? سيتم حذف جميع المستويات والفئات العمرية أيضاً.`)
             : deleteTarget?.type === 'level'
-            ? `Are you sure you want to delete level "${(deleteTarget?.item as Level)?.name}"?`
-            : `Are you sure you want to delete age group "${(deleteTarget?.item as AgeGroup)?.name}"?`
+            ? t(`Are you sure you want to delete level "${(deleteTarget?.item as Level)?.name}"?`, `هل أنت متأكد من حذف المستوى "${(deleteTarget?.item as Level)?.name}"?`)
+            : t(`Are you sure you want to delete age group "${(deleteTarget?.item as AgeGroup)?.name}"?`, `هل أنت متأكد من حذف الفئة العمرية "${(deleteTarget?.item as AgeGroup)?.name}"?`)
           }
-          confirmText="Delete"
+          confirmText={t('Delete', 'حذف')}
           loading={deleting}
           errorMessage={deleteError}
         />
@@ -1142,14 +1149,14 @@ export default function ProgramsContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-          Programs
+          {t('Programs', 'البرامج')}
         </h1>
         <button
           onClick={handleAdd}
           className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
         >
           <Plus className="w-5 h-5" />
-          <span>Add Program</span>
+          <span>{t('Add Program', 'إضافة برنامج')}</span>
         </button>
       </div>
 
@@ -1161,7 +1168,7 @@ export default function ProgramsContent() {
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search programs..."
+            placeholder={t('Search programs...', 'بحث عن البرامج...')}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
           />
         </div>
@@ -1170,7 +1177,7 @@ export default function ProgramsContent() {
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
         >
           {getSortIcon('name')}
-          <span className="text-sm font-medium">Sort by Name</span>
+          <span className="text-sm font-medium">{t('Sort by Name', 'ترتيب حسب الاسم')}</span>
         </button>
       </div>
 
@@ -1241,11 +1248,11 @@ export default function ProgramsContent() {
                     <div className="flex flex-wrap items-center gap-3 mb-4 text-sm">
                       <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                         <Target className="w-4 h-4" />
-                        <span>{program.level_count || 0} {program.level_count === 1 ? 'Level' : 'Levels'}</span>
+                        <span>{program.level_count || 0} {program.level_count === 1 ? t('Level', 'مستوى') : t('Levels', 'مستويات')}</span>
                       </div>
                       <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                         <Target className="w-4 h-4" />
-                        <span>{program.age_group_count || 0} {program.age_group_count === 1 ? 'Age Group' : 'Age Groups'}</span>
+                        <span>{program.age_group_count || 0} {program.age_group_count === 1 ? t('Age Group', 'فئة عمرية') : t('Age Groups', 'فئات عمرية')}</span>
                       </div>
                     </div>
 
@@ -1256,7 +1263,7 @@ export default function ProgramsContent() {
                         className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all"
                       >
                         <Target className="w-4 h-4" />
-                        Levels
+                        {t('Levels', 'المستويات')}
                       </button>
                       <button
                         onClick={() => handleEdit(program)}
@@ -1284,17 +1291,17 @@ export default function ProgramsContent() {
                 <Layers className="w-8 h-8 text-zinc-400" />
               </div>
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                No programs yet
+                {t('No programs yet', 'لا توجد برامج بعد')}
               </h3>
               <p className="text-zinc-500 dark:text-zinc-400 mb-4">
-                Create your first program to get started
+                {t('Create your first program to get started', 'أنشئ برنامجك الأول للبدء')}
               </p>
               <button
                 onClick={handleAdd}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Add Program
+                {t('Add Program', 'إضافة برنامج')}
               </button>
             </div>
           )}
@@ -1310,7 +1317,7 @@ export default function ProgramsContent() {
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <span className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Page {page} of {totalPages}
+                {t(`Page ${page} of ${totalPages}`, `صفحة ${page} من ${totalPages}`)}
               </span>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
@@ -1343,7 +1350,7 @@ export default function ProgramsContent() {
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                {editingProgram ? 'Edit Program' : 'Add Program'}
+                {editingProgram ? t('Edit Program', 'تعديل البرنامج') : t('Add Program', 'إضافة برنامج')}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -1361,19 +1368,19 @@ export default function ProgramsContent() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Name (English) *
+                      {t('Name (English)', 'الاسم (إنجليزي)')} *
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                      placeholder="Football"
+                      placeholder={t('Football', 'كرة القدم')}
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Name (Arabic)
+                      {t('Name (Arabic)', 'الاسم (عربي)')}
                     </label>
                     <input
                       type="text"
@@ -1389,14 +1396,14 @@ export default function ProgramsContent() {
                 {isAdmin && academies.length > 1 && (
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                      Academy *
+                      {t('Academy', 'الأكاديمية')} *
                     </label>
                     <select
                       value={formData.academy_id}
                       onChange={(e) => setFormData({ ...formData, academy_id: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     >
-                      <option value="">Select Academy</option>
+                      <option value="">{t('Select Academy', 'اختر الأكاديمية')}</option>
                       {academies.map((academy) => (
                         <option key={academy.id} value={academy.id}>
                           {academy.name} {academy.name_ar && `(${academy.name_ar})`}
@@ -1408,7 +1415,7 @@ export default function ProgramsContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Image
+                    {t('Image', 'الصورة')}
                   </label>
                   <div className="flex items-center gap-4">
                     <div className="w-24 h-24 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 overflow-hidden flex items-center justify-center">
@@ -1419,7 +1426,7 @@ export default function ProgramsContent() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-xs text-zinc-400">No image</span>
+                        <span className="text-xs text-zinc-400">{t('No image', 'لا توجد صورة')}</span>
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
@@ -1436,7 +1443,7 @@ export default function ProgramsContent() {
                         className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                         disabled={uploadingProgramImage}
                       >
-                        {uploadingProgramImage ? 'Uploading...' : 'Upload Image'}
+                        {uploadingProgramImage ? t('Uploading...', 'جاري الرفع...') : t('Upload Image', 'رفع صورة')}
                       </button>
                       {programImagePreview && (
                         <button
@@ -1447,7 +1454,7 @@ export default function ProgramsContent() {
                           }}
                           className="text-xs text-red-500 hover:text-red-600"
                         >
-                          Remove
+                          {t('Remove', 'حذف')}
                         </button>
                       )}
                     </div>
@@ -1456,20 +1463,20 @@ export default function ProgramsContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Description (English)
+                    {t('Description (English)', 'الوصف (إنجليزي)')}
                   </label>
                   <textarea
                     rows={3}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
-                    placeholder="Program description..."
+                    placeholder={t('Program description...', 'وصف البرنامج...')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Description (Arabic)
+                    {t('Description (Arabic)', 'الوصف (عربي)')}
                   </label>
                   <textarea
                     rows={3}
@@ -1477,7 +1484,7 @@ export default function ProgramsContent() {
                     onChange={(e) => setFormData({ ...formData, description_ar: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
                     dir="rtl"
-                    placeholder="وصف البرنامج..."
+                    placeholder={t('Program description...', 'وصف البرنامج...')}
                   />
                 </div>
 
@@ -1488,7 +1495,7 @@ export default function ProgramsContent() {
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-600 text-orange-500 focus:ring-orange-500 transition-all"
                   />
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Active</span>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('Active', 'نشط')}</span>
                 </label>
               </div>
             </OverlayScrollbarsComponent>
@@ -1498,14 +1505,14 @@ export default function ProgramsContent() {
                 onClick={() => setShowModal(false)}
                 className="flex-1 px-4 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
               >
-                Cancel
+                {t('Cancel', 'إلغاء')}
               </button>
               <button
                 onClick={handleSave}
                 disabled={!formData.name || (isAdmin && academies.length > 1 && !formData.academy_id)}
                 className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {editingProgram ? 'Update' : 'Create'}
+                {editingProgram ? t('Update', 'تحديث') : t('Create', 'إنشاء')}
               </button>
             </div>
           </motion.div>
@@ -1518,12 +1525,12 @@ export default function ProgramsContent() {
         open={!!deleteTarget}
         onClose={() => { setDeleteTarget(null); setDeleteError(null); }}
         onConfirm={handleConfirmDelete}
-        title={deleteTarget?.type === 'program' ? 'Delete Program' : 'Delete Level'}
+        title={deleteTarget?.type === 'program' ? t('Delete Program', 'حذف البرنامج') : t('Delete Level', 'حذف المستوى')}
         description={deleteTarget?.type === 'program' 
-          ? `Are you sure you want to delete "${(deleteTarget?.item as Program)?.name}"? All levels will also be deleted.`
-          : `Are you sure you want to delete level "${(deleteTarget?.item as Level)?.name}"?`
+          ? t(`Are you sure you want to delete "${(deleteTarget?.item as Program)?.name}"? All levels will also be deleted.`, `هل أنت متأكد من حذف "${(deleteTarget?.item as Program)?.name}"? سيتم حذف جميع المستويات أيضاً.`)
+          : t(`Are you sure you want to delete level "${(deleteTarget?.item as Level)?.name}"?`, `هل أنت متأكد من حذف المستوى "${(deleteTarget?.item as Level)?.name}"?`)
         }
-        confirmText="Delete"
+        confirmText={t('Delete', 'حذف')}
         loading={deleting}
         errorMessage={deleteError}
       />
