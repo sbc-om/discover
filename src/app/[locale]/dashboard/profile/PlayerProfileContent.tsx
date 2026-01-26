@@ -330,16 +330,18 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
 
   return (
     <div className="mx-auto w-full max-w-[390px] pb-8">
-      {/* Back Button */}
-      <div className="mb-4">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>{isAr ? 'رجوع' : 'Back'}</span>
-        </button>
-      </div>
+      {/* Back Button - Only show for Admin and Academy Manager */}
+      {(currentRole === 'admin' || currentRole === 'academy_manager') && (
+        <div className="mb-4">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>{isAr ? 'رجوع' : 'Back'}</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Card */}
       <div className="rounded-3xl border-2 border-zinc-300 dark:border-zinc-800 bg-gradient-to-b from-white to-zinc-100 dark:from-zinc-900 dark:to-zinc-950 p-4 shadow-[0_20px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">

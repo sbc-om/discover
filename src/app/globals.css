@@ -30,6 +30,11 @@
     color-scheme: dark;
   }
 
+  /* Support for safe area insets on mobile devices */
+  html {
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+
   /* LTR (English) - Use Inter */
   [dir="ltr"] body {
     font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
