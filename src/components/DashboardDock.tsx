@@ -73,6 +73,11 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
     }
   }, [emblaApi, accessibleMenuItems, locale, pathname]);
 
+  // Don't show the dock if there's only one or no menu items
+  if (accessibleMenuItems.length <= 1) {
+    return null;
+  }
+
   return (
     <section
       dir={isRTL ? 'rtl' : 'ltr'}
@@ -80,12 +85,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
       style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
     >
       <div className="relative glass-panel rounded-[28px] border-2 border-zinc-900/15 dark:border-white/10 bg-white/90 dark:bg-zinc-900/70 shadow-lg shadow-zinc-900/5 dark:shadow-none px-3 py-3">
-        {accessibleMenuItems.length === 0 ? (
-          <div className="text-center text-zinc-500 dark:text-zinc-400 text-sm py-2">
-            {isAr ? 'لا توجد بيانات' : 'No data'}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={scrollPrev}
@@ -150,7 +150,6 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
               {isRTL ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </button>
           </div>
-        )}
       </div>
     </section>
   );
