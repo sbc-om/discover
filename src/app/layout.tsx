@@ -417,7 +417,7 @@ export default async function RootLayout({
     
     /* Paragraph Styles */
     p, .paragraph {
-      margin-bottom: var(--paragraph-spacing);
+      /* margin-bottom: var(--paragraph-spacing); */
       text-indent: var(--paragraph-indent);
     }
     

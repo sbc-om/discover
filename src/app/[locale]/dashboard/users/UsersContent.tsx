@@ -686,13 +686,13 @@ export default function UsersContent() {
                               <span>{user.first_name.charAt(0)}{user.last_name.charAt(0)}</span>
                             )}
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="font-medium text-zinc-900 dark:text-white text-sm">
+                              <p className="font-medium text-zinc-900 dark:text-white text-sm truncate">
                                 {user.first_name} {user.last_name}
                               </p>
                               {user.role_name === 'player' && (
-                                <>
+                                <div className="flex items-center gap-1 shrink-0">
                                   {!user.has_health_test && (
                                     <span 
                                       className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-100 dark:bg-amber-900/30"
@@ -709,7 +709,7 @@ export default function UsersContent() {
                                       <AlertTriangle className="w-3 h-3 text-red-700 dark:text-red-400" />
                                     </span>
                                   )}
-                                </>
+                                </div>
                               )}
                             </div>
                             {user.email_verified && (
@@ -810,7 +810,7 @@ export default function UsersContent() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <div className="flex items-center gap-2 mb-1">
                       <p className="font-medium text-zinc-900 dark:text-white text-sm truncate">
                         {user.first_name} {user.last_name}
                       </p>
@@ -818,10 +818,10 @@ export default function UsersContent() {
                         {isAr ? user.name_ar || user.name_en || user.role_name : user.name_en || user.role_name}
                       </span>
                       {user.role_name === 'player' && (
-                        <>
+                        <div className="flex items-center gap-1 shrink-0">
                           {!user.has_health_test && (
                             <span 
-                              className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded bg-amber-100 dark:bg-amber-900/30"
+                              className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-100 dark:bg-amber-900/30"
                               title={isAr ? 'لم يتم التقييم' : 'Not assessed'}
                             >
                               <AlertTriangle className="w-3 h-3 text-amber-700 dark:text-amber-400" />
@@ -829,13 +829,13 @@ export default function UsersContent() {
                           )}
                           {!user.has_program_assignment && (
                             <span 
-                              className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded bg-red-100 dark:bg-red-900/30"
-                              title={isAr ? 'غير مسجل في برنامج' : 'Not assigned to program'}
+                              className="inline-flex items-center justify-center w-5 h-5 rounded bg-red-100 dark:bg-red-900/30"
+                              title={isAr ? 'غير مسجل در برنامج' : 'Not assigned to program'}
                             >
                               <AlertTriangle className="w-3 h-3 text-red-700 dark:text-red-400" />
                             </span>
                           )}
-                        </>
+                        </div>
                       )}
                     </div>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>
