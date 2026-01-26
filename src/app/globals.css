@@ -49,6 +49,11 @@
     @apply bg-background text-foreground;
   }
 
+  /* Remove underline from all links */
+  a {
+    text-decoration: none !important;
+  }
+
   /* Disable browser default focus outlines - use Tailwind ring instead */
   *:focus,
   *:focus-visible {

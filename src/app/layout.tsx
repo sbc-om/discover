@@ -424,14 +424,12 @@ export default async function RootLayout({
     /* Link Styles */
     a {
       font-weight: var(--font-weight-medium);
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 2px;
+      text-decoration: none;
       transition: all 0.2s ease;
     }
     
     a:hover {
-      text-decoration-thickness: 2px;
+      opacity: 0.8;
     }
     
     /* List Styles */

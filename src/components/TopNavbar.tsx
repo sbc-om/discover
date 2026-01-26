@@ -79,27 +79,17 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
-            <Link href={`/${locale}`} className="flex items-center gap-2.5 group">
-              <div className="relative flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-900 to-zinc-700 dark:from-white dark:to-zinc-200 shadow-lg group-hover:shadow-xl transition-shadow">
-                <img
-                  src="/logo/icon-white.png"
-                  alt="DNA"
-                  className="h-5 w-5 md:h-6 md:w-6 dark:hidden"
-                />
-                <img
-                  src="/logo/icon-black.png"
-                  alt="DNA"
-                  className="h-5 w-5 md:h-6 md:w-6 hidden dark:block"
-                />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-base md:text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
-                  DNA
-                </h1>
-                <p className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-400 -mt-0.5">
-                  {isAr ? 'اكتشف قدرتك' : 'Discover Ability'}
-                </p>
-              </div>
+            <Link href={`/${locale}`} className="flex items-center group">
+              <img
+                src="/logo/icon-black.png"
+                alt="DNA"
+                className="h-10 w-10 md:h-12 md:w-12 dark:hidden transition-transform group-hover:scale-105"
+              />
+              <img
+                src="/logo/icon-white.png"
+                alt="DNA"
+                className="h-10 w-10 md:h-12 md:w-12 hidden dark:block transition-transform group-hover:scale-105"
+              />
             </Link>
 
             {/* Desktop Navigation */}
@@ -169,20 +159,17 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
         >
           {/* Menu Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
-            <Link href={`/${locale}`} className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-900 to-zinc-700 dark:from-white dark:to-zinc-200">
-                <img
-                  src="/logo/icon-white.png"
-                  alt="DNA"
-                  className="h-5 w-5 dark:hidden"
-                />
-                <img
-                  src="/logo/icon-black.png"
-                  alt="DNA"
-                  className="h-5 w-5 hidden dark:block"
-                />
-              </div>
-              <span className="text-lg font-bold text-zinc-900 dark:text-white">DNA</span>
+            <Link href={`/${locale}`} className="flex items-center" onClick={() => setOpen(false)}>
+              <img
+                src="/logo/icon-black.png"
+                alt="DNA"
+                className="h-10 w-10 dark:hidden"
+              />
+              <img
+                src="/logo/icon-white.png"
+                alt="DNA"
+                className="h-10 w-10 hidden dark:block"
+              />
             </Link>
             <button
               type="button"
