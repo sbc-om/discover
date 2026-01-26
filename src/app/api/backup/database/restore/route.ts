@@ -42,6 +42,8 @@ export async function POST(request: Request) {
     const sequenceStatements: string[] = [];
     const otherStatements: string[] = [];
 
+    const referencedSequences = new Set<string>();
+
     let currentStatement = '';
     let inMultiLineStatement = false;
     
@@ -60,6 +62,14 @@ export async function POST(request: Request) {
       if (trimmedLine.endsWith(';')) {
         const stmt = currentStatement.trim();
         const upperStmt = stmt.toUpperCase();
+
+        const sequenceMatches = stmt.match(/nextval\('([^']+)'::regclass\)/gi) || [];
+        for (const match of sequenceMatches) {
+          const seqName = match.match(/nextval\('([^']+)'::regclass\)/i)?.[1];
+          if (seqName) {
+            referencedSequences.add(seqName);
+          }
+        }
         
         if (upperStmt.startsWith('DROP TABLE')) {
           dropStatements.push(stmt);
@@ -126,12 +136,26 @@ export async function POST(request: Request) {
         }
       }
 
-      // 3. Create tables (without constraints)
+      // 3. Ensure sequences referenced in defaults exist
+      for (const seqName of referencedSequences) {
+        try {
+          const isSafeName = /^[a-zA-Z0-9_\.\"]+$/.test(seqName);
+          if (!isSafeName) {
+            console.warn('Skipping unsafe sequence name:', seqName);
+            continue;
+          }
+          await client.query(`CREATE SEQUENCE IF NOT EXISTS ${seqName}`);
+        } catch (err: any) {
+          console.warn('Sequence create warning:', err.message);
+        }
+      }
+
+      // 4. Create tables (without constraints)
       for (const stmt of createTableStatements) {
         await client.query(stmt);
       }
 
-      // 4. Add PRIMARY KEY constraints FIRST (required for foreign keys)
+      // 5. Add PRIMARY KEY constraints FIRST (required for foreign keys)
       for (const stmt of primaryKeyStatements) {
         try {
           await client.query(stmt);
@@ -140,7 +164,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // 5. Add UNIQUE constraints (may be needed for foreign keys)
+      // 6. Add UNIQUE constraints (may be needed for foreign keys)
       for (const stmt of uniqueConstraintStatements) {
         try {
           await client.query(stmt);
@@ -149,12 +173,12 @@ export async function POST(request: Request) {
         }
       }
 
-      // 6. Insert data
+      // 7. Insert data
       for (const stmt of insertStatements) {
         await client.query(stmt);
       }
 
-      // 7. Add FOREIGN KEY constraints AFTER data and primary keys
+      // 8. Add FOREIGN KEY constraints AFTER data and primary keys
       for (const stmt of foreignKeyStatements) {
         try {
           await client.query(stmt);
@@ -166,7 +190,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // 8. Create indexes
+      // 9. Create indexes
       for (const stmt of indexStatements) {
         try {
           await client.query(stmt);
@@ -178,7 +202,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // 9. Set sequence values
+      // 10. Set sequence values
       for (const stmt of sequenceStatements) {
         try {
           await client.query(stmt);
@@ -208,10 +232,15 @@ export async function POST(request: Request) {
     }
   } catch (error: any) {
     console.error('Database restore error:', error);
+    const status = error.message === 'Forbidden'
+      ? 403
+      : error.message === 'Unauthorized'
+        ? 401
+        : 500;
 
     return NextResponse.json(
       { message: error.message || 'Failed to restore database' },
-      { status: error.message === 'Forbidden' ? 403 : 500 }
+      { status }
     );
   } finally {
     client.release();
