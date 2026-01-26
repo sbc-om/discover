@@ -186,15 +186,15 @@ export default function MedalRequestsContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
-            <Medal className="h-7 w-7 text-amber-500" />
+          <h1 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2 md:gap-3">
+            <Medal className="h-6 w-6 md:h-7 md:w-7 text-amber-500" />
             {isAr ? 'طلبات الميداليات' : 'Medal Requests'}
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             {isAr ? 'إدارة طلبات الميداليات الفيزيائية ومتابعة حالتها.' : 'Manage physical medal requests and track their status.'}
           </p>
         </div>
@@ -202,16 +202,16 @@ export default function MedalRequestsContent() {
           <button
             type="button"
             onClick={() => window.location.href = `/${locale}/dashboard/medal-requests/new`}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-lg shadow-amber-500/25 transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm md:text-base font-bold shadow-lg transition-all"
           >
-            <Award className="h-5 w-5" />
+            <Award className="h-4 w-4 md:h-5 md:w-5" />
             {isAr ? 'طلب ميدالية جديدة' : 'New Medal Request'}
           </button>
         )}
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
         {(['all', 'pending', 'approved', 'preparing', 'shipped', 'delivered', 'rejected'] as StatusType[]).map((status) => {
           const config = status === 'all' 
             ? { label: 'All', labelAr: 'الكل', color: 'text-zinc-600', bgColor: 'bg-zinc-100 dark:bg-zinc-800', icon: Award }
@@ -222,13 +222,15 @@ export default function MedalRequestsContent() {
               key={status}
               type="button"
               onClick={() => setStatusFilter(status)}
-              className={'rounded-2xl p-4 text-center transition-all ' + (statusFilter === status
+              className={'relative rounded-lg p-2.5 md:p-3 text-center transition-all hover:scale-[1.02] overflow-hidden ' + (statusFilter === status
                 ? 'ring-2 ring-amber-500 ' + config.bgColor
                 : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-amber-300')}
             >
-              <Icon className={'h-5 w-5 mx-auto ' + config.color} />
-              <p className="text-2xl font-bold text-zinc-900 dark:text-white mt-2">{stats[status] || 0}</p>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider">{isAr ? config.labelAr : config.label}</p>
+              <Icon className={'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 ' + (statusFilter === status ? 'h-16 w-16 md:h-20 md:w-20' : 'h-14 w-14 md:h-16 md:w-16')} />
+              <div className="relative z-10">
+                <p className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">{stats[status] || 0}</p>
+                <p className="text-[9px] md:text-[10px] text-zinc-600 dark:text-zinc-400 uppercase tracking-wide font-semibold mt-0.5">{isAr ? config.labelAr : config.label}</p>
+              </div>
             </button>
           );
         })}
@@ -236,10 +238,10 @@ export default function MedalRequestsContent() {
 
       {/* Academy Filter */}
       {academies.length > 1 && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Building2 className="h-5 w-5 text-amber-500" />
-            <label className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+        <div className="rounded-xl md:rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 md:p-4">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+            <Building2 className="h-4 w-4 md:h-5 md:w-5 text-amber-500" />
+            <label className="text-xs md:text-sm font-bold text-zinc-900 dark:text-zinc-100">
               {isAr ? 'تصفية حسب الأكاديمية' : 'Filter by Academy'}
             </label>
           </div>
@@ -247,7 +249,7 @@ export default function MedalRequestsContent() {
             <button
               type="button"
               onClick={() => setAcademyFilter('all')}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-medium transition-all ${
                 academyFilter === 'all'
                   ? 'bg-amber-500 text-white'
                   : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -262,7 +264,7 @@ export default function MedalRequestsContent() {
                   key={academy}
                   type="button"
                   onClick={() => setAcademyFilter(academy)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-medium transition-all ${
                     academyFilter === academy
                       ? 'bg-amber-500 text-white'
                       : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -277,27 +279,27 @@ export default function MedalRequestsContent() {
       )}
 
       {/* Requests List - Grouped by Academy */}
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {filteredRequests.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-12 text-center">
-            <Medal className="h-12 w-12 mx-auto text-zinc-300 dark:text-zinc-700" />
-            <p className="mt-4 text-zinc-500">{isAr ? 'لا توجد طلبات' : 'No requests found'}</p>
+          <div className="rounded-xl md:rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 md:p-12 text-center">
+            <Medal className="h-10 w-10 md:h-12 md:w-12 mx-auto text-zinc-300 dark:text-zinc-700" />
+            <p className="mt-3 md:mt-4 text-sm md:text-base text-zinc-500">{isAr ? 'لا توجد طلبات' : 'No requests found'}</p>
           </div>
         ) : groupedByAcademy.map((group) => (
-          <div key={group.name} className="space-y-3">
+          <div key={group.name} className="space-y-2 md:space-y-3">
             {/* Academy Header */}
-            <div className="flex items-center gap-3 px-1">
-              <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                <Building2 className="h-4 w-4 text-zinc-500" />
+            <div className="flex items-center gap-2 md:gap-3 px-1">
+              <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-zinc-500" />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{isAr ? group.nameAr : group.name}</h3>
-                <p className="text-xs text-zinc-400">{group.requests.length} {isAr ? 'طلب' : 'request(s)'}</p>
+                <h3 className="text-xs md:text-sm font-bold text-zinc-800 dark:text-zinc-200">{isAr ? group.nameAr : group.name}</h3>
+                <p className="text-[10px] md:text-xs text-zinc-400">{group.requests.length} {isAr ? 'طلب' : 'request(s)'}</p>
               </div>
             </div>
 
             {/* Academy Requests */}
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               {group.requests.map((request) => {
                 const statusConfig = STATUS_CONFIG[request.status] || STATUS_CONFIG.pending;
                 const StatusIcon = statusConfig.icon;
