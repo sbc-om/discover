@@ -306,16 +306,11 @@ export default function AcademiesContent() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg shadow-orange-500/20">
-            <Building2 className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">{isAr ? 'الأكاديميات' : 'Academies'}</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              {isAr ? `إجمالي ${total} أكاديمية` : `${total} total academies`}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">{isAr ? 'الأكاديميات' : 'Academies'}</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            {isAr ? `إجمالي ${total} أكاديمية` : `${total} total academies`}
+          </p>
         </div>
         {isAdmin && (
           <button

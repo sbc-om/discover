@@ -190,11 +190,10 @@ export default function MedalRequestsContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2 md:gap-3">
-            <Medal className="h-6 w-6 md:h-7 md:w-7 text-amber-500" />
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {isAr ? 'طلبات الميداليات' : 'Medal Requests'}
           </h1>
-          <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {isAr ? 'إدارة طلبات الميداليات الفيزيائية ومتابعة حالتها.' : 'Manage physical medal requests and track their status.'}
           </p>
         </div>
@@ -329,7 +328,7 @@ export default function MedalRequestsContent() {
                         </div>
                         {roleName === 'admin' && request.status !== 'delivered' && request.status !== 'rejected' && (
                           <button type="button" onClick={() => setExpandedId(isExpanded ? null : request.id)}
-                            className="px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 text-xs font-medium hover:bg-zinc-200 transition">
+                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all">
                             {isExpanded ? (isAr ? 'إغلاق' : 'Close') : (isAr ? 'إدارة' : 'Manage')}
                           </button>
                         )}
