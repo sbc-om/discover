@@ -4,8 +4,8 @@ services:
     image: postgres:16-alpine
     container_name: dna-postgres
     restart: unless-stopped
-    # ports:
-    #   - "5432:5432"
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -82,7 +82,6 @@ services:
         condition: service_healthy
     networks:
       - dna-network
-      - proxy
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
@@ -94,9 +93,6 @@ networks:
   dna-network:
     external: false
     name: dna-network
-  proxy:
-    external: true
-    name: proxy
 
 volumes:
   postgres-data:
