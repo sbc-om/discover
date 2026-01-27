@@ -82,6 +82,7 @@ services:
         condition: service_healthy
     networks:
       - dna-network
+      - proxy
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
@@ -93,6 +94,9 @@ networks:
   dna-network:
     external: false
     name: dna-network
+  proxy:
+    external: true
+    name: proxy
 
 volumes:
   postgres-data:
