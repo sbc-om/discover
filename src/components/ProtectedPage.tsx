@@ -26,9 +26,13 @@ export default async function ProtectedPage({
 
     // Check module access if specified
     if (moduleName) {
-      const hasAccess = await hasModuleAccess(moduleName);
-      if (!hasAccess) {
-        redirect(`/${locale}/dashboard`);
+      if (moduleName === 'player_profile' && ['admin', 'academy_manager', 'player'].includes(session.roleName)) {
+        // allow
+      } else {
+        const hasAccess = await hasModuleAccess(moduleName);
+        if (!hasAccess) {
+          redirect(`/${locale}/dashboard`);
+        }
       }
     }
 
