@@ -104,6 +104,10 @@ export async function hasModuleAccess(moduleName: string): Promise<boolean> {
       return true;
     }
 
+    if (moduleName === 'player_profile' && ['academy_manager', 'player'].includes(session.roleName)) {
+      return true;
+    }
+
     const { rows } = await pool.query(
       `SELECT COUNT(*) as count
       FROM role_permissions rp
