@@ -52,9 +52,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Create directories for persistent data (will be mounted as volumes)
-RUN mkdir -p /app/public/uploads /app/data /app/logs /app/backups \
-    && chown -R nextjs:nodejs /app/public/uploads /app/data /app/logs /app/backups
+# Create directories for persistent data and Next.js cache (will be mounted as volumes)
+RUN mkdir -p /app/public/uploads /app/data /app/logs /app/backups /app/.next/cache \
+    && chown -R nextjs:nodejs /app/public/uploads /app/data /app/logs /app/backups /app/.next/cache
 
 USER nextjs
 
