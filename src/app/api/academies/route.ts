@@ -16,6 +16,8 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const sortBy = searchParams.get('sortBy') || 'created_at';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const status = searchParams.get('status'); // 'active' | 'inactive'
+    const hasUsers = searchParams.get('hasUsers'); // 'true' | 'false'
     const offset = (page - 1) * limit;
 
     // Validate sortBy to prevent SQL injection
@@ -63,6 +65,20 @@ export async function GET(request: Request) {
       query += ` AND (a.name ILIKE $${paramIndex} OR a.name_ar ILIKE $${paramIndex} OR a.city ILIKE $${paramIndex})`;
       params.push(`%${search}%`);
       paramIndex++;
+    }
+
+    // Filter by status
+    if (status === 'active') {
+      query += ` AND a.is_active = true`;
+    } else if (status === 'inactive') {
+      query += ` AND a.is_active = false`;
+    }
+
+    // Filter by user count
+    if (hasUsers === 'true') {
+      query += ` AND (SELECT COUNT(*) FROM users WHERE academy_id = a.id) > 0`;
+    } else if (hasUsers === 'false') {
+      query += ` AND (SELECT COUNT(*) FROM users WHERE academy_id = a.id) = 0`;
     }
 
     // Get total count

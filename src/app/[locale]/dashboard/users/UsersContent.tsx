@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
@@ -88,6 +89,10 @@ const roleBadgeColors: { [key: string]: string } = {
 export default function UsersContent() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get('filter');
+  const roleParam = searchParams.get('role');
+  
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [users, setUsers] = useState<User[]>([]);
@@ -99,7 +104,13 @@ export default function UsersContent() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
+  // Initialize filters directly from URL params
+  const [roleFilter, setRoleFilter] = useState(() => 
+    roleParam && ['admin', 'academy_manager', 'coach', 'player'].includes(roleParam) ? roleParam : ''
+  );
+  const [specialFilter, setSpecialFilter] = useState<string | null>(() => 
+    filterParam || null
+  );
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [currentAcademyId, setCurrentAcademyId] = useState<string | null>(null);
   const [currentAcademyName, setCurrentAcademyName] = useState<string | null>(null);
@@ -128,11 +139,24 @@ export default function UsersContent() {
     is_active: true
   });
 
+  // Sync filters when URL params change (e.g., navigation from dashboard)
+  useEffect(() => {
+    const newRoleFilter = roleParam && ['admin', 'academy_manager', 'coach', 'player'].includes(roleParam) ? roleParam : '';
+    const newSpecialFilter = filterParam || null;
+    
+    if (newRoleFilter !== roleFilter) {
+      setRoleFilter(newRoleFilter);
+    }
+    if (newSpecialFilter !== specialFilter) {
+      setSpecialFilter(newSpecialFilter);
+    }
+  }, [filterParam, roleParam]);
+
   useEffect(() => {
     fetchUsers();
     fetchRoles();
     fetchAcademies();
-  }, [page, limit, search, roleFilter, sortField, sortOrder]);
+  }, [page, limit, search, roleFilter, sortField, sortOrder, specialFilter]);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -161,7 +185,8 @@ export default function UsersContent() {
         sortBy: sortField,
         sortOrder: sortOrder,
         ...(search && { search }),
-        ...(roleFilter && { role: roleFilter })
+        ...(roleFilter && { role: roleFilter }),
+        ...(specialFilter && { filter: specialFilter })
       });
 
       const response = await fetch(`/api/users?${params}`);
@@ -525,6 +550,49 @@ export default function UsersContent() {
           <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 rotate-90 pointer-events-none" />
         </div>
       </div>
+
+      {/* Special Filter Banner */}
+      {(specialFilter || (roleFilter && roleParam)) && (
+        <div className="rounded-xl border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/10 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-orange-900 dark:text-orange-300 mb-1">
+                {specialFilter === 'noAcademy' && (isAr ? 'عرض: مستخدمون بدون أكاديمية' : 'Viewing: Users Without Academy')}
+                {specialFilter === 'noProgram' && (isAr ? 'عرض: لاعبون بدون برنامج' : 'Viewing: Players Without Program')}
+                {!specialFilter && roleParam === 'player' && (isAr ? 'عرض: اللاعبون فقط' : 'Viewing: Players Only')}
+                {!specialFilter && roleParam === 'coach' && (isAr ? 'عرض: المدربون فقط' : 'Viewing: Coaches Only')}
+                {!specialFilter && roleParam === 'academy_manager' && (isAr ? 'عرض: مدراء الأكاديميات فقط' : 'Viewing: Academy Managers Only')}
+                {!specialFilter && roleParam === 'admin' && (isAr ? 'عرض: المديرون فقط' : 'Viewing: Admins Only')}
+              </p>
+              <p className="text-xs text-orange-700 dark:text-orange-400">
+                {specialFilter === 'noAcademy' && (isAr 
+                  ? 'هؤلاء المستخدمون يحتاجون إلى تعيين أكاديمية. انقر على "تعديل" لتعيين أكاديمية لهم.'
+                  : 'These users need to be assigned to an academy. Click "Edit" to assign an academy to them.'
+                )}
+                {specialFilter === 'noProgram' && (isAr
+                  ? 'هؤلاء اللاعبون لم يتم تسجيلهم في أي برنامج بعد.'
+                  : 'These players have not been enrolled in any program yet.'
+                )}
+                {!specialFilter && roleParam && (isAr
+                  ? `تم تطبيق فلتر الدور من لوحة التحكم`
+                  : `Role filter applied from dashboard`
+                )}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setSpecialFilter(null);
+                setRoleFilter('');
+                window.history.replaceState(null, '', window.location.pathname);
+              }}
+              className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Legend for Player Indicators */}
       {roleFilter === 'player' || roleFilter === '' ? (

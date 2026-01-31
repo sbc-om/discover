@@ -2,7 +2,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { requireAuth } from '@/lib/session';
 import { getAccessibleMenuItems } from '@/lib/permissions';
 import { redirect } from 'next/navigation';
-import DashboardContent from './DashboardContent';
+import ActionDashboard from './ActionDashboard';
 
 export default async function DashboardPage({
   params,
@@ -26,7 +26,7 @@ export default async function DashboardPage({
 
     return (
       <DashboardLayout locale={locale} userName={userName} accessibleMenuItems={accessibleMenuItems}>
-        <DashboardContent />
+        <ActionDashboard />
       </DashboardLayout>
     );
   } catch (error) {

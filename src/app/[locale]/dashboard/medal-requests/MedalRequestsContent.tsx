@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Award, Building2, Check, Clock, Loader2, Medal, Package, PackageCheck, Truck, X } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
@@ -49,12 +50,19 @@ export default function MedalRequestsContent() {
   const isAr = locale === 'ar';
   const { showToast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const statusParam = searchParams.get('status');
 
   const [roleName, setRoleName] = useState<string>('');
   const [requests, setRequests] = useState<MedalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<StatusType>('all');
+  // Initialize status filter directly from URL
+  const [statusFilter, setStatusFilter] = useState<StatusType>(() => 
+    statusParam && ['pending', 'approved', 'rejected', 'cancelled', 'delivered'].includes(statusParam) 
+      ? statusParam as StatusType 
+      : 'all'
+  );
   const [academyFilter, setAcademyFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
@@ -73,10 +81,25 @@ export default function MedalRequestsContent() {
   };
 
   const fetchRequests = async () => {
-    const response = await fetch('/api/medal-requests');
+    const params = new URLSearchParams();
+    if (statusFilter !== 'all') {
+      params.append('status', statusFilter);
+    }
+    const url = params.toString() ? `/api/medal-requests?${params}` : '/api/medal-requests';
+    const response = await fetch(url);
     const data = await response.json();
     if (response.ok) setRequests(data.requests || []);
   };
+
+  // Sync filter when URL params change
+  useEffect(() => {
+    const newFilter = statusParam && ['pending', 'approved', 'rejected', 'cancelled', 'delivered'].includes(statusParam) 
+      ? statusParam as StatusType 
+      : 'all';
+    if (newFilter !== statusFilter) {
+      setStatusFilter(newFilter);
+    }
+  }, [statusParam]);
 
   useEffect(() => {
     const boot = async () => {
@@ -86,7 +109,7 @@ export default function MedalRequestsContent() {
       setLoading(false);
     };
     boot();
-  }, []);
+  }, [statusFilter]);
 
   const filteredRequests = useMemo(() => {
     let filtered = requests;

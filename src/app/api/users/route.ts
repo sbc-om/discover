@@ -14,6 +14,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
     const roleFilter = searchParams.get('role') || '';
+    const specialFilter = searchParams.get('filter') || '';
     const sortBy = searchParams.get('sortBy') || 'created_at';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const offset = (page - 1) * limit;
@@ -97,6 +98,13 @@ export async function GET(request: Request) {
       query += ` AND r.name = $${paramIndex}`;
       params.push(roleFilter);
       paramIndex++;
+    }
+
+    // Special filters from dashboard
+    if (specialFilter === 'noAcademy') {
+      query += ` AND u.academy_id IS NULL AND r.name IN ('player', 'coach', 'academy_manager')`;
+    } else if (specialFilter === 'noProgram') {
+      query += ` AND pp.user_id IS NULL AND r.name = 'player'`;
     }
 
     // Get total count

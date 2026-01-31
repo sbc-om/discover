@@ -368,13 +368,13 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
           </button>
         </div>
 
-        {/* Player Image */}
+        {/* Player Image - Square */}
         <div className="rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 bg-zinc-200 dark:bg-zinc-800 overflow-hidden shadow-lg">
-          <div className="aspect-[4/3] w-full bg-zinc-300 dark:bg-zinc-700">
+          <div className="aspect-square w-full bg-zinc-300 dark:bg-zinc-700">
             {data.user.avatar_url ? (
-              <img src={data.user.avatar_url} alt="" className="h-full w-full object-cover" />
+              <img src={data.user.avatar_url} alt="" className="h-full w-full object-contain bg-white dark:bg-zinc-800" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-4xl font-bold text-zinc-400 dark:text-zinc-500">
+              <div className="flex h-full w-full items-center justify-center text-6xl font-bold text-zinc-400 dark:text-zinc-500">
                 {data.user.first_name?.charAt(0)}{data.user.last_name?.charAt(0)}
               </div>
             )}

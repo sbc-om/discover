@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Building2, CheckCircle2, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
@@ -122,20 +123,37 @@ export default function HealthTestsContent() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
+  const statusParam = searchParams.get('status');
+  
   const [tests, setTests] = useState<HealthTestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  // Initialize status filter directly from URL
+  const [statusFilter, setStatusFilter] = useState(() => statusParam || '');
   const [scheduleById, setScheduleById] = useState<Record<string, string>>({});
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [resultsById, setResultsById] = useState<Record<string, ResultForm>>({});
 
+  // Sync filter when URL params change
+  useEffect(() => {
+    const newFilter = statusParam || '';
+    if (newFilter !== statusFilter) {
+      setStatusFilter(newFilter);
+    }
+  }, [statusParam]);
+
   const fetchTests = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/health-tests');
+      const params = new URLSearchParams();
+      if (statusFilter) {
+        params.append('status', statusFilter);
+      }
+      const url = statusFilter ? `/api/health-tests?${params}` : '/api/health-tests';
+      const response = await fetch(url);
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message || 'Failed to load tests');
@@ -171,12 +189,12 @@ export default function HealthTestsContent() {
     } finally {
       setLoading(false);
     }
-  };
+  };statusFilter
 
   useEffect(() => {
     fetchTests();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [statusFilter]);
 
   const updateTest = async (id: string, payload: Record<string, any>) => {
     try {

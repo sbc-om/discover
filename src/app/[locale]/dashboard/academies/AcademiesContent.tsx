@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import ModalPortal from '@/components/ModalPortal';
@@ -24,7 +25,10 @@ import {
   ArrowUp,
   ArrowDown,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Eye,
+  Calendar,
+  Mail
 } from 'lucide-react';
 
 interface Academy {
@@ -55,6 +59,12 @@ interface Manager {
 export default function AcademiesContent() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // Read URL params once for initial state
+  const statusParam = searchParams.get('status');
+  const hasUsersParam = searchParams.get('hasUsers');
+  
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +75,13 @@ export default function AcademiesContent() {
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  // Initialize filters directly from URL
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>(() => 
+    (statusParam === 'active' || statusParam === 'inactive') ? statusParam : 'all'
+  );
+  const [hasUsersFilter, setHasUsersFilter] = useState<boolean | null>(() => 
+    hasUsersParam === 'true' ? true : hasUsersParam === 'false' ? false : null
+  );
   const [showModal, setShowModal] = useState(false);
   const [editingAcademy, setEditingAcademy] = useState<Academy | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Academy | null>(null);
@@ -87,11 +104,31 @@ export default function AcademiesContent() {
     is_active: true
   });
 
+  // Sync filters when URL params change
+  useEffect(() => {
+    const currentStatusParam = searchParams.get('status');
+    const currentHasUsersParam = searchParams.get('hasUsers');
+    
+    const newStatusFilter = (currentStatusParam === 'active' || currentStatusParam === 'inactive') ? currentStatusParam : 'all';
+    const newHasUsersFilter = currentHasUsersParam === 'true' ? true : currentHasUsersParam === 'false' ? false : null;
+    
+    if (newStatusFilter !== statusFilter) {
+      setStatusFilter(newStatusFilter);
+    }
+    if (newHasUsersFilter !== hasUsersFilter) {
+      setHasUsersFilter(newHasUsersFilter);
+    }
+  }, [searchParams]);
+
+  // Check admin status once on mount
+  useEffect(() => {
+    checkIsAdmin();
+  }, []);
+
   useEffect(() => {
     fetchAcademies();
     fetchManagers();
-    checkIsAdmin();
-  }, [page, limit, search, sortField, sortOrder]);
+  }, [page, limit, search, sortField, sortOrder, statusFilter, hasUsersFilter]);
 
   const checkIsAdmin = async () => {
     try {
@@ -115,6 +152,16 @@ export default function AcademiesContent() {
         sortOrder: sortOrder,
         ...(search && { search })
       });
+
+      // Add status filter if not 'all'
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+
+      // Add hasUsers filter if set
+      if (hasUsersFilter !== null) {
+        params.append('hasUsers', hasUsersFilter.toString());
+      }
 
       const response = await fetch(`/api/academies?${params}`);
       const data = await response.json();
@@ -304,6 +351,45 @@ export default function AcademiesContent() {
 
   return (
     <div className="space-y-6">
+      {/* Filter Banner */}
+      {(statusFilter !== 'all' || hasUsersFilter !== null) && (
+        <div className="bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/20 rounded-2xl p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">
+              {statusFilter === 'inactive' && hasUsersFilter === true
+                ? isAr
+                  ? '🔍 عرض الأكاديميات غير النشطة التي بها مستخدمون'
+                  : '🔍 Showing inactive academies with users'
+                : statusFilter === 'inactive'
+                ? isAr
+                  ? '🔍 عرض الأكاديميات غير النشطة'
+                  : '🔍 Showing inactive academies'
+                : statusFilter === 'active'
+                ? isAr
+                  ? '🔍 عرض الأكاديميات النشطة'
+                  : '🔍 Showing active academies'
+                : hasUsersFilter === true
+                ? isAr
+                  ? '🔍 عرض الأكاديميات التي بها مستخدمون'
+                  : '🔍 Showing academies with users'
+                : isAr
+                  ? '🔍 عرض الأكاديميات بدون مستخدمين'
+                  : '🔍 Showing academies without users'}
+            </p>
+            <button
+              onClick={() => {
+                setStatusFilter('all');
+                setHasUsersFilter(null);
+                window.history.pushState({}, '', '/dashboard/academies');
+              }}
+              className="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium"
+            >
+              {isAr ? 'إزالة الفلتر' : 'Clear Filter'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -312,18 +398,16 @@ export default function AcademiesContent() {
             {isAr ? `إجمالي ${total} أكاديمية` : `${total} total academies`}
           </p>
         </div>
-        {isAdmin && (
-          <button
-            onClick={() => {
-              resetForm();
-              setShowModal(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25 transition-all text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            {isAr ? 'إضافة أكاديمية' : 'Add Academy'}
-          </button>
-        )}
+        <button
+          onClick={() => {
+            resetForm();
+            setShowModal(true);
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg shadow-orange-500/25 transition-all text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          {isAr ? 'إضافة أكاديمية' : 'Add Academy'}
+        </button>
       </div>
 
       {/* Search */}
@@ -344,222 +428,195 @@ export default function AcademiesContent() {
       </div>
 
       {/* Content */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <div className="min-h-[400px]">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
           </div>
         ) : academies.length === 0 ? (
-          <div className="text-center py-20">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-center py-20">
             <Building2 className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
             <p className="text-zinc-500 dark:text-zinc-400">{isAr ? 'لا توجد أكاديميات' : 'No academies found'}</p>
           </div>
         ) : (
-          <>
-            {/* Desktop Table */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
-                  <tr>
-                    <th className="text-left px-6 py-4">
-                      <button
-                        onClick={() => handleSort('name')}
-                        className="flex items-center gap-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider hover:text-zinc-900 dark:hover:text-white"
-                      >
-                        {isAr ? 'الأكاديمية' : 'Academy'}
-                        {getSortIcon('name')}
-                      </button>
-                    </th>
-                    <th className="text-left px-6 py-4">
-                      <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        {isAr ? 'المدير' : 'Manager'}
-                      </span>
-                    </th>
-                    <th className="text-left px-6 py-4">
-                      <button
-                        onClick={() => handleSort('city')}
-                        className="flex items-center gap-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider hover:text-zinc-900 dark:hover:text-white"
-                      >
-                        {isAr ? 'الموقع' : 'Location'}
-                        {getSortIcon('city')}
-                      </button>
-                    </th>
-                    <th className="text-left px-6 py-4">
-                      <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        {isAr ? 'المستخدمون' : 'Users'}
-                      </span>
-                    </th>
-                    <th className="text-left px-6 py-4">
-                      <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        {isAr ? 'الحالة' : 'Status'}
-                      </span>
-                    </th>
-                    {isAdmin && (
-                      <th className="text-right px-6 py-4">
-                        <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                          {isAr ? 'الإجراءات' : 'Actions'}
-                        </span>
-                      </th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                  {academies.map((academy) => (
-                    <motion.tr
-                      key={academy.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-32 h-20 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 dark:text-zinc-500 shrink-0 overflow-hidden">
-                            {academy.logo_url ? (
-                              <img src={academy.logo_url} alt="" className="w-full h-full object-contain" />
-                            ) : (
-                              <Building2 className="w-6 h-6" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium text-zinc-900 dark:text-white">{academy.name}</p>
-                            {academy.name_ar && (
-                              <p className="text-xs text-zinc-500 dark:text-zinc-400">{academy.name_ar}</p>
-                            )}
-                          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {academies.map((academy) => (
+              <motion.div
+                key={academy.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="group relative bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300"
+              >
+                {/* Status Badge - Floating */}
+                <div className="absolute top-4 right-4 z-10">
+                  {academy.is_active ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/90 text-white shadow-lg backdrop-blur-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                      {isAr ? 'نشط' : 'Active'}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-zinc-500/90 text-white shadow-lg backdrop-blur-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
+                      {isAr ? 'غير نشط' : 'Inactive'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Logo/Header Area - Fixed Height with Full Image Display */}
+                <div className="relative h-44 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                  {academy.logo_url ? (
+                    <>
+                      {/* Main Image - Fill Container Completely */}
+                      <img 
+                        src={academy.logo_url} 
+                        alt={academy.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" 
+                      />
+                      
+                      {/* Subtle Overlay for better contrast */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+                    </>
+                  ) : (
+                    <>
+                      {/* Background Pattern for no-logo */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-zinc-800 dark:via-zinc-850 dark:to-zinc-900">
+                        <div className="absolute inset-0 opacity-[0.05]" style={{
+                          backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+                          backgroundSize: '16px 16px'
+                        }} />
+                      </div>
+                      {/* Default Icon */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 via-amber-500 to-orange-600 flex items-center justify-center shadow-xl shadow-orange-500/20 group-hover:scale-105 group-hover:shadow-orange-500/30 transition-all duration-500">
+                          <Building2 className="w-10 h-10 text-white" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {academy.manager_first_name ? (
-                          <div>
-                            <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="p-5">
+                  {/* Name */}
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-1">
+                      {academy.name}
+                    </h3>
+                    {academy.name_ar && (
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-1">{academy.name_ar}</p>
+                    )}
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {/* Location */}
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                        <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{isAr ? 'الموقع' : 'Location'}</p>
+                        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate">
+                          {academy.city || (isAr ? 'غير محدد' : 'N/A')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Users Count */}
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50">
+                      <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{isAr ? 'المستخدمون' : 'Users'}</p>
+                        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                          {academy.user_count}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Manager Info */}
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-zinc-800 dark:to-zinc-800/50 border border-orange-100 dark:border-zinc-700">
+                    {academy.manager_first_name ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                            {academy.manager_first_name.charAt(0)}{academy.manager_last_name?.charAt(0) || ''}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] uppercase tracking-wider text-orange-600/70 dark:text-orange-400/70">{isAr ? 'المدير' : 'Manager'}</p>
+                            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">
                               {academy.manager_first_name} {academy.manager_last_name}
                             </p>
-                            <p className="text-xs text-zinc-500">{academy.manager_email}</p>
                           </div>
-                        ) : (
-                          <span className="text-sm text-zinc-400">{isAr ? 'بدون مدير' : 'No manager'}</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4 text-zinc-400" />
-                          <span className="text-sm text-zinc-600 dark:text-zinc-300">
-                            {[academy.city, academy.country].filter(Boolean).join(', ') || (isAr ? 'غير محدد' : 'Not set')}
-                          </span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5">
-                          <Users className="w-4 h-4 text-zinc-400" />
-                          <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                            {academy.user_count}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {academy.is_active ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                            <CheckCircle2 className="w-3 h-3" />
-                            {isAr ? 'نشط' : 'Active'}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                            <XCircle className="w-3 h-3" />
-                            {isAr ? 'غير نشط' : 'Inactive'}
-                          </span>
-                        )}
-                      </td>
-                      {isAdmin && (
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={() => handleEdit(academy)}
-                              className="p-2 text-zinc-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(academy.id)}
-                              className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                        {academy.manager_email && (
+                          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 pl-13">
+                            <Mail className="w-3.5 h-3.5" />
+                            <span className="truncate">{academy.manager_email}</span>
                           </div>
-                        </td>
-                      )}
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Cards */}
-            <div className="lg:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
-              {academies.map((academy) => (
-                <motion.div
-                  key={academy.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="p-4"
-                >
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-full h-32 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 dark:text-zinc-500 shrink-0 overflow-hidden">
-                      {academy.logo_url ? (
-                        <img src={academy.logo_url} alt="" className="w-full h-full object-contain" />
-                      ) : (
-                        <Building2 className="w-7 h-7" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-zinc-900 dark:text-white">{academy.name}</p>
-                      {academy.name_ar && (
-                        <p className="text-xs text-zinc-500">{academy.name_ar}</p>
-                      )}
-                      {academy.manager_first_name && (
-                        <p className="text-xs text-zinc-400 mt-1">
-                          {isAr ? 'المدير:' : 'Manager:'} {academy.manager_first_name} {academy.manager_last_name}
-                        </p>
-                      )}
-                    </div>
-                    {academy.is_active ? (
-                      <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
+                        )}
+                      </div>
                     ) : (
-                      <XCircle className="w-5 h-5 text-zinc-400 shrink-0" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                          <Users className="w-4 h-4 text-zinc-400" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-zinc-400">{isAr ? 'المدير' : 'Manager'}</p>
+                          <p className="text-sm text-zinc-400 italic">{isAr ? 'لم يتم التعيين' : 'Not assigned'}</p>
+                        </div>
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 mb-3 text-sm text-zinc-600 dark:text-zinc-400">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {[academy.city, academy.country].filter(Boolean).join(', ') || (isAr ? 'غير محدد' : 'Not set')}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      {isAr ? `${academy.user_count} مستخدم` : `${academy.user_count} users`}
-                    </div>
+
+                  {/* Created Date */}
+                  <div className="flex items-center gap-2 mt-3 text-xs text-zinc-400 dark:text-zinc-500">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{isAr ? 'تاريخ الإنشاء:' : 'Created:'} {new Date(academy.created_at).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                   </div>
-                  {isAdmin && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(academy)}
-                        className="flex-1 px-3 py-2 text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-                      >
-                        {isAr ? 'تعديل' : 'Edit'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDeleteTarget(academy);
-                          setDeleteError(null);
-                        }}
-                        className="p-2 text-zinc-500 hover:text-red-500 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          </>
+
+                  {/* Actions - Always visible with all buttons */}
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                    {/* View Details Button */}
+                    <button
+                      onClick={() => router.push(`/${locale}/dashboard/programs?academyId=${academy.id}`)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                      title={isAr ? 'عرض التفاصيل' : 'View Details'}
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden sm:inline">{isAr ? 'عرض' : 'View'}</span>
+                    </button>
+                    
+                    {/* Edit Button */}
+                    <button
+                      onClick={() => handleEdit(academy)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-xl hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                      title={isAr ? 'تعديل' : 'Edit'}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">{isAr ? 'تعديل' : 'Edit'}</span>
+                    </button>
+                    
+                    {/* Delete Button */}
+                    <button
+                      onClick={() => {
+                        setDeleteTarget(academy);
+                        setDeleteError(null);
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      title={isAr ? 'حذف' : 'Delete'}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">{isAr ? 'حذف' : 'Delete'}</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         )}
       </div>
 
