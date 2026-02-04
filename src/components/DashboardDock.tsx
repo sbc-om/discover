@@ -81,15 +81,15 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
   return (
     <section
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="fixed bottom-0 left-0 right-0 z-50 bg-transparent"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-transparent flex justify-center"
       style={{ 
         paddingBottom: 'env(safe-area-inset-bottom)',
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',
       }}
     >
-      <div className="px-4 pb-4 pt-2">
-        <div className="relative rounded-[28px] border-2 border-zinc-900/15 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-zinc-900/10 dark:shadow-none px-3 py-3">
+      <div className="px-4 pb-4 pt-2 max-w-full">
+        <div className="relative rounded-[28px] border-2 border-zinc-900/15 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-zinc-900/10 dark:shadow-none px-3 py-3 w-fit max-w-full">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -104,7 +104,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
               {isRTL ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
 
-            <div className="flex-1 min-w-0 overflow-hidden" ref={emblaRef}>
+            <div className="min-w-0 overflow-hidden" ref={emblaRef}>
               <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
                 {accessibleMenuItems.map((item) => {
                   const Icon = iconMap[item.icon] || LayoutDashboard;
