@@ -30,7 +30,8 @@ export async function GET(request: Request) {
         p.academy_id, p.is_active, p.created_at, p.updated_at,
         a.name as academy_name, a.name_ar as academy_name_ar,
         (SELECT COUNT(*) FROM program_levels WHERE program_id = p.id) as level_count,
-        (SELECT COUNT(*) FROM program_age_groups WHERE program_id = p.id) as age_group_count
+        (SELECT COUNT(*) FROM program_age_groups WHERE program_id = p.id) as age_group_count,
+        (SELECT COUNT(*) FROM program_academies WHERE program_id = p.id AND is_active = true) as assigned_academy_count
       FROM programs p
       LEFT JOIN academies a ON a.id = p.academy_id
       WHERE 1=1
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
     const params: any[] = [];
     let paramIndex = 1;
 
-    // If not admin, only show programs from user's academy
+    // If not admin, only show programs assigned to user's academy
     if (session.roleName !== 'admin') {
       const userResult = await pool.query(
         'SELECT academy_id FROM users WHERE id = $1',
@@ -48,7 +49,11 @@ export async function GET(request: Request) {
       const userAcademyId = userResult.rows[0]?.academy_id;
       
       if (userAcademyId) {
-        query += ` AND p.academy_id = $${paramIndex}`;
+        // Show programs that are assigned to user's academy via program_academies
+        query += ` AND (p.academy_id = $${paramIndex} OR EXISTS (
+          SELECT 1 FROM program_academies pa 
+          WHERE pa.program_id = p.id AND pa.academy_id = $${paramIndex} AND pa.is_active = true
+        ))`;
         params.push(userAcademyId);
         paramIndex++;
       } else {
@@ -58,8 +63,11 @@ export async function GET(request: Request) {
         });
       }
     } else if (academyId) {
-      // Admin can filter by specific academy
-      query += ` AND p.academy_id = $${paramIndex}`;
+      // Admin can filter by specific academy (including assigned programs)
+      query += ` AND (p.academy_id = $${paramIndex} OR EXISTS (
+        SELECT 1 FROM program_academies pa 
+        WHERE pa.program_id = p.id AND pa.academy_id = $${paramIndex} AND pa.is_active = true
+      ))`;
       params.push(academyId);
       paramIndex++;
     }
@@ -84,8 +92,31 @@ export async function GET(request: Request) {
 
     const { rows } = await pool.query(query, params);
 
+    // Fetch assigned academies for each program
+    const programsWithAcademies = await Promise.all(
+      rows.map(async (program: any) => {
+        const academiesResult = await pool.query(
+          `SELECT 
+            pa.academy_id,
+            pa.is_active,
+            a.name as academy_name,
+            a.name_ar as academy_name_ar,
+            a.logo_url
+           FROM program_academies pa
+           JOIN academies a ON a.id = pa.academy_id
+           WHERE pa.program_id = $1 AND pa.is_active = true
+           ORDER BY a.name ASC`,
+          [program.id]
+        );
+        return {
+          ...program,
+          assigned_academies: academiesResult.rows
+        };
+      })
+    );
+
     return NextResponse.json({
-      programs: rows,
+      programs: programsWithAcademies,
       pagination: {
         page,
         limit,

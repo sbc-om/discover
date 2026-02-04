@@ -109,6 +109,14 @@ interface AgeGroup {
   created_at: string;
 }
 
+interface AssignedAcademy {
+  academy_id: string;
+  academy_name: string;
+  academy_name_ar?: string;
+  logo_url?: string;
+  is_active: boolean;
+}
+
 interface Program {
   id: string;
   name: string;
@@ -122,6 +130,8 @@ interface Program {
   is_active: boolean;
   level_count: number;
   age_group_count?: number;
+  assigned_academy_count?: number;
+  assigned_academies?: AssignedAcademy[];
   created_at: string;
   levels?: Level[];
   age_groups?: AgeGroup[];
@@ -264,9 +274,22 @@ export default function ProgramsContent() {
   const [savingHealthField, setSavingHealthField] = useState(false);
   const [deletingHealthField, setDeletingHealthField] = useState<string | null>(null);
 
-  if (currentRole === 'coach') {
-    return <CoachProgramsContent />;
-  }
+  // Academy Assignment State
+  const [showAcademyAssignmentModal, setShowAcademyAssignmentModal] = useState(false);
+  const [assignedAcademies, setAssignedAcademies] = useState<{
+    assignment_id: string;
+    academy_id: string;
+    academy_name: string;
+    academy_name_ar?: string;
+    logo_url?: string;
+    is_active: boolean;
+    player_count: number;
+    assigned_at: string;
+  }[]>([]);
+  const [loadingAssignedAcademies, setLoadingAssignedAcademies] = useState(false);
+  const [selectedAcademiesToAssign, setSelectedAcademiesToAssign] = useState<string[]>([]);
+  const [savingAcademyAssignment, setSavingAcademyAssignment] = useState(false);
+  const [removingAcademy, setRemovingAcademy] = useState<string | null>(null);
 
   useEffect(() => {
     checkIsAdmin();
@@ -456,6 +479,98 @@ export default function ProgramsContent() {
       ...prev,
       field_options: prev.field_options?.filter((_, i) => i !== index) || []
     }));
+  };
+
+  // Academy Assignment Functions
+  const fetchAssignedAcademies = async (programId: string) => {
+    try {
+      setLoadingAssignedAcademies(true);
+      const response = await fetch(`/api/programs/${programId}/academies`);
+      if (response.ok) {
+        const data = await response.json();
+        setAssignedAcademies(data.academies || []);
+      } else {
+        setAssignedAcademies([]);
+      }
+    } catch (error) {
+      console.error('Error fetching assigned academies:', error);
+      setAssignedAcademies([]);
+    } finally {
+      setLoadingAssignedAcademies(false);
+    }
+  };
+
+  const handleOpenAcademyAssignment = async (program: Program) => {
+    setSelectedProgram(program);
+    setSelectedAcademiesToAssign([]);
+    await fetchAssignedAcademies(program.id);
+    setShowAcademyAssignmentModal(true);
+  };
+
+  const handleAssignAcademies = async () => {
+    if (!selectedProgram || selectedAcademiesToAssign.length === 0) return;
+
+    try {
+      setSavingAcademyAssignment(true);
+      const response = await fetch(`/api/programs/${selectedProgram.id}/academies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ academy_ids: selectedAcademiesToAssign })
+      });
+
+      if (response.ok) {
+        showToast('success', t('Academies assigned successfully', 'تم تعيين الأكاديميات بنجاح'));
+        setSelectedAcademiesToAssign([]);
+        await fetchAssignedAcademies(selectedProgram.id);
+        await fetchPrograms();
+      } else {
+        const data = await response.json();
+        showToast('error', data.message || t('Failed to assign academies', 'فشل في تعيين الأكاديميات'));
+      }
+    } catch (error) {
+      showToast('error', t('Error assigning academies', 'خطأ في تعيين الأكاديميات'));
+    } finally {
+      setSavingAcademyAssignment(false);
+    }
+  };
+
+  const handleRemoveAcademyAssignment = async (academyId: string) => {
+    if (!selectedProgram) return;
+
+    try {
+      setRemovingAcademy(academyId);
+      const response = await fetch(
+        `/api/programs/${selectedProgram.id}/academies?academy_id=${academyId}`,
+        { method: 'DELETE' }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.deactivated) {
+          showToast('info', t(
+            `Program deactivated for this academy (${data.player_count} active players)`,
+            `تم إلغاء تفعيل البرنامج لهذه الأكاديمية (${data.player_count} لاعب نشط)`
+          ));
+        } else {
+          showToast('success', t('Academy removed successfully', 'تمت إزالة الأكاديمية بنجاح'));
+        }
+        await fetchAssignedAcademies(selectedProgram.id);
+        await fetchPrograms();
+      } else {
+        const data = await response.json();
+        showToast('error', data.message || t('Failed to remove academy', 'فشل في إزالة الأكاديمية'));
+      }
+    } catch (error) {
+      showToast('error', t('Error removing academy', 'خطأ في إزالة الأكاديمية'));
+    } finally {
+      setRemovingAcademy(null);
+    }
+  };
+
+  // Get unassigned academies for the dropdown
+  const getUnassignedAcademies = () => {
+    const assignedIds = assignedAcademies.map(a => a.academy_id);
+    return academies.filter(a => !assignedIds.includes(a.id));
   };
 
   // Permission helper functions - only return true if permissions are loaded
@@ -993,6 +1108,11 @@ export default function ProgramsContent() {
     setSelectedProgram(null);
   };
 
+  // Coach view
+  if (currentRole === 'coach') {
+    return <CoachProgramsContent />;
+  }
+
   // Render level view
   if (selectedProgram) {
     return (
@@ -1044,6 +1164,22 @@ export default function ProgramsContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{t('Health Test Fields', 'حقول الفحص الصحي')}</span>
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => handleOpenAcademyAssignment(selectedProgram)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-blue-500/25 transition-all"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span>{t('Assign to Academies', 'تعيين للأكاديميات')}</span>
+                {selectedProgram.assigned_academy_count !== undefined && selectedProgram.assigned_academy_count > 0 && (
+                  <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    {selectedProgram.assigned_academy_count}
+                  </span>
+                )}
               </button>
             )}
           </div>
@@ -2346,33 +2482,33 @@ export default function ProgramsContent() {
                                 </div>
                                 <div className="space-y-2">
                                   {(healthFieldFormData.field_options || []).map((option, index) => (
-                                    <div key={index} className="flex items-center gap-2">
+                                    <div key={index} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
                                       <input
                                         type="text"
                                         value={option.value}
                                         onChange={(e) => updateFieldOption(index, 'value', e.target.value)}
                                         placeholder={t('Value', 'القيمة')}
-                                        className="flex-1 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+                                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
                                       />
                                       <input
                                         type="text"
                                         value={option.label}
                                         onChange={(e) => updateFieldOption(index, 'label', e.target.value)}
                                         placeholder={t('Label (EN)', 'التسمية (EN)')}
-                                        className="flex-1 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+                                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
                                       />
                                       <input
                                         type="text"
                                         value={option.label_ar || ''}
                                         onChange={(e) => updateFieldOption(index, 'label_ar', e.target.value)}
                                         placeholder={t('Label (AR)', 'التسمية (AR)')}
-                                        className="flex-1 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+                                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
                                         dir="rtl"
                                       />
                                       <button
                                         type="button"
                                         onClick={() => removeFieldOption(index)}
-                                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex-shrink-0"
                                       >
                                         <Trash2 className="w-4 h-4" />
                                       </button>
@@ -2857,6 +2993,189 @@ export default function ProgramsContent() {
         </motion.div>
       </ModalPortal>
       )}
+
+      {/* Academy Assignment Modal */}
+      {(() => {
+        const program = selectedProgram as Program | null;
+        if (!showAcademyAssignmentModal || !program) return null;
+        return (
+        <ModalPortal>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowAcademyAssignmentModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden border border-zinc-200 dark:border-zinc-800"
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    {t('Assign to Academies', 'تعيين للأكاديميات')}
+                  </h2>
+                  <p className="text-blue-100 text-sm mt-1">
+                    {program.name} {program.name_ar && `• ${program.name_ar}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowAcademyAssignmentModal(false)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+
+              <OverlayScrollbarsComponent className="max-h-[calc(85vh-80px)]" options={{ scrollbars: { autoHide: 'scroll' } }}>
+                <div className="p-6 space-y-6">
+                  {/* Assign New Academies */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <Plus className="w-4 h-4 text-blue-500" />
+                      {t('Add to Academy', 'إضافة إلى أكاديمية')}
+                    </h3>
+                    
+                    {getUnassignedAcademies().length > 0 ? (
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          {getUnassignedAcademies().map((academy) => (
+                            <label
+                              key={academy.id}
+                              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border cursor-pointer transition-all ${
+                                selectedAcademiesToAssign.includes(academy.id)
+                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                                  : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedAcademiesToAssign.includes(academy.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedAcademiesToAssign([...selectedAcademiesToAssign, academy.id]);
+                                  } else {
+                                    setSelectedAcademiesToAssign(selectedAcademiesToAssign.filter(id => id !== academy.id));
+                                  }
+                                }}
+                                className="w-4 h-4 rounded border-zinc-300 text-blue-500 focus:ring-blue-500"
+                              />
+                              <span className="text-sm font-medium">
+                                {isAr ? (academy.name_ar || academy.name) : academy.name}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        
+                        {selectedAcademiesToAssign.length > 0 && (
+                          <button
+                            onClick={handleAssignAcademies}
+                            disabled={savingAcademyAssignment}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50"
+                          >
+                            {savingAcademyAssignment ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Plus className="w-4 h-4" />
+                            )}
+                            {t(`Assign to ${selectedAcademiesToAssign.length} Academy`, `تعيين لـ ${selectedAcademiesToAssign.length} أكاديمية`)}
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 rounded-xl px-4 py-3">
+                        {t('All academies have been assigned this program', 'تم تعيين هذا البرنامج لجميع الأكاديميات')}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Current Assigned Academies */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      {t('Assigned Academies', 'الأكاديميات المعينة')} 
+                      <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-2 py-0.5 rounded-full">
+                        {assignedAcademies.length}
+                      </span>
+                    </h3>
+
+                    {loadingAssignedAcademies ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                      </div>
+                    ) : assignedAcademies.length === 0 ? (
+                      <div className="text-center py-8 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700">
+                        <svg className="w-12 h-12 mx-auto text-zinc-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                          {t('No academies assigned yet', 'لم يتم تعيين أي أكاديمية بعد')}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {assignedAcademies.map((assignment) => (
+                          <div
+                            key={assignment.assignment_id}
+                            className={`flex items-center justify-between p-4 rounded-xl border ${
+                              assignment.is_active
+                                ? 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'
+                                : 'bg-zinc-100 dark:bg-zinc-800/50 border-zinc-300 dark:border-zinc-600 opacity-70'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                                {(isAr ? assignment.academy_name_ar || assignment.academy_name : assignment.academy_name).charAt(0)}
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
+                                  {isAr ? assignment.academy_name_ar || assignment.academy_name : assignment.academy_name}
+                                </h4>
+                                <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                                  <span>{t('Players', 'اللاعبين')}: {assignment.player_count}</span>
+                                  <span>•</span>
+                                  <span>{new Date(assignment.assigned_at).toLocaleDateString(isAr ? 'ar' : 'en')}</span>
+                                  {!assignment.is_active && (
+                                    <>
+                                      <span>•</span>
+                                      <span className="text-amber-500">{t('Inactive', 'غير نشط')}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleRemoveAcademyAssignment(assignment.academy_id)}
+                              disabled={removingAcademy === assignment.academy_id}
+                              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                              title={t('Remove', 'إزالة')}
+                            >
+                              {removingAcademy === assignment.academy_id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </OverlayScrollbarsComponent>
+            </motion.div>
+          </motion.div>
+        </ModalPortal>
+        );
+      })()}
 
       {/* Delete Confirmation */}
       <ConfirmDialog
