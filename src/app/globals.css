@@ -87,6 +87,19 @@
       radial-gradient(800px circle at 50% 120%, rgba(244, 114, 182, 0.18), transparent 60%);
   }
 
+  /* Smooth theme transition - content stays visible */
+  .theme-transitioning,
+  .theme-transitioning *,
+  .theme-transitioning *::before,
+  .theme-transitioning *::after {
+    transition: background-color var(--theme-transition, 0.4s) ease,
+                border-color var(--theme-transition, 0.4s) ease,
+                color var(--theme-transition, 0.4s) ease,
+                fill var(--theme-transition, 0.4s) ease,
+                stroke var(--theme-transition, 0.4s) ease,
+                box-shadow var(--theme-transition, 0.4s) ease !important;
+  }
+
   .glass-panel {
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
