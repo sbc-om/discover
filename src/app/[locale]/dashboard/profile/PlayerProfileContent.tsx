@@ -25,6 +25,10 @@ interface PlayerProfileData {
 interface HealthTestData {
   id: string;
   status: 'pending' | 'approved' | 'rejected' | 'completed';
+  program_id?: string | null;
+  program_name?: string | null;
+  program_name_ar?: string | null;
+  test_date?: string | null;
   speed_score?: number | null;
   agility_score?: number | null;
   power_score?: number | null;
@@ -32,6 +36,39 @@ interface HealthTestData {
   reaction_score?: number | null;
   coordination_score?: number | null;
   flexibility_score?: number | null;
+  dynamic_results?: DynamicTestResult[];
+}
+
+interface DynamicTestResult {
+  id: string;
+  field_id: string;
+  field_key: string;
+  field_name: string;
+  field_name_ar?: string | null;
+  field_type: 'number' | 'text' | 'select' | 'boolean' | 'date' | 'range';
+  field_unit?: string | null;
+  field_unit_ar?: string | null;
+  field_options?: { value: string; label: string; label_ar?: string }[] | null;
+  min_value?: number | null;
+  max_value?: number | null;
+  value: string | number | boolean | null;
+  notes?: string | null;
+}
+
+interface HealthTestField {
+  id: string;
+  program_id: string;
+  field_key: string;
+  field_name: string;
+  field_name_ar?: string | null;
+  field_type: 'number' | 'text' | 'select' | 'boolean' | 'date' | 'range';
+  field_unit?: string | null;
+  field_unit_ar?: string | null;
+  field_options?: { value: string; label: string; label_ar?: string }[] | null;
+  min_value?: number | null;
+  max_value?: number | null;
+  is_required: boolean;
+  display_order: number;
 }
 
 interface AssignmentData {
@@ -170,6 +207,9 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const [profileFormOpen, setProfileFormOpen] = useState(false);
   const [showAddProgramForm, setShowAddProgramForm] = useState(false);
   const [activeProgramIndex, setActiveProgramIndex] = useState(0);
+  const [healthTestResults, setHealthTestResults] = useState<HealthTestData[]>([]);
+  const [healthTestFields, setHealthTestFields] = useState<Record<string, HealthTestField[]>>({});
+  const [loadingHealthTests, setLoadingHealthTests] = useState(false);
 
   const isAdminView = Boolean(userId);
   const canManagePlayer = Boolean(userId) && (currentRole === 'admin' || currentRole === 'academy_manager');
@@ -210,6 +250,22 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
       showToast('error', error.message || (isAr ? 'تعذر تحميل الملف' : 'Failed to load profile'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchHealthTestResults = async (playerId: string) => {
+    try {
+      setLoadingHealthTests(true);
+      const response = await fetch(`/api/players/${playerId}/health-test-results`);
+      const payload = await response.json();
+      if (response.ok) {
+        setHealthTestResults(payload.tests || []);
+        setHealthTestFields(payload.fieldsByProgram || {});
+      }
+    } catch (error) {
+      console.error('Failed to load health test results:', error);
+    } finally {
+      setLoadingHealthTests(false);
     }
   };
 
@@ -265,6 +321,14 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
       fetchLevelsForForm(assignmentForm.program_id);
     }
   }, [assignmentForm.program_id, canManagePlayer]);
+
+  // Fetch health test results when data loads
+  useEffect(() => {
+    const playerId = userId || data?.user?.id;
+    if (playerId) {
+      fetchHealthTestResults(playerId);
+    }
+  }, [userId, data?.user?.id]);
 
   const handleSaveProfile = async () => {
     if (!form.sport.trim() || !form.bio.trim()) {
@@ -705,22 +769,116 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
         )}
         </div>
 
-        {/* Insight Section - Health Tests */}
+        {/* Insight Section - Health Tests (Dynamic per Program) */}
         <div className="relative mt-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-10">
           <span className="absolute -top-6 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-900 dark:text-white shadow-sm">
-            {isAr ? 'مؤشرات' : 'Insight'}
+            {isAr ? 'نتائج الفحص' : 'Health Test'}
           </span>
-          {latestTest && latestTest.status === 'completed' ? (
-            <div className="grid grid-cols-3 gap-3">
-              <RadialInsight label={isAr ? 'السرعة' : 'SPEED'} value={latestTest?.speed_score} />
-              <RadialInsight label={isAr ? 'الرشاقة' : 'AGILITY'} value={latestTest?.agility_score} />
-              <RadialInsight label={isAr ? 'القوة' : 'POWER'} value={latestTest?.power_score} />
+          
+          {loadingHealthTests ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
             </div>
-          ) : (
-            <p className="text-xs text-zinc-500 text-center py-4">
-              {isAr ? 'لا يوجد اختبار بدني مكتمل بعد.' : 'No completed physical test yet.'}
-            </p>
-          )}
+          ) : (() => {
+            // Find health tests for the active program
+            const activeProgramId = activeProgram?.program_id;
+            const programTests = activeProgramId 
+              ? healthTestResults.filter(t => t.program_id === activeProgramId && t.status === 'completed')
+              : healthTestResults.filter(t => t.status === 'completed');
+            const latestProgramTest = programTests[0];
+            const programFields = activeProgramId ? healthTestFields[activeProgramId] || [] : [];
+
+            if (latestProgramTest && latestProgramTest.dynamic_results && latestProgramTest.dynamic_results.length > 0) {
+              // Display dynamic fields
+              return (
+                <div className="space-y-3">
+                  {/* Test Date */}
+                  {latestProgramTest.test_date && (
+                    <p className="text-[10px] text-center text-zinc-500 mb-2">
+                      {isAr ? 'تاريخ الفحص:' : 'Test Date:'} {new Date(latestProgramTest.test_date).toLocaleDateString(isAr ? 'ar' : 'en')}
+                    </p>
+                  )}
+                  
+                  {/* Dynamic Results Grid */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {latestProgramTest.dynamic_results.slice(0, 6).map((result) => {
+                      const displayValue = result.field_type === 'boolean' 
+                        ? (result.value ? (isAr ? 'نعم' : 'Yes') : (isAr ? 'لا' : 'No'))
+                        : result.field_type === 'select' && result.field_options
+                          ? (() => {
+                              const opt = result.field_options.find(o => o.value === result.value);
+                              return isAr ? opt?.label_ar || opt?.label || result.value : opt?.label || result.value;
+                            })()
+                          : result.value;
+                      
+                      const numValue = result.field_type === 'number' || result.field_type === 'range' 
+                        ? Number(result.value) || 0 
+                        : null;
+                      
+                      return (
+                        <div key={result.id} className="rounded-xl bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-300 dark:border-zinc-700 p-3 text-center">
+                          {numValue !== null && result.max_value ? (
+                            <RadialInsight 
+                              label={isAr ? result.field_name_ar || result.field_name : result.field_name} 
+                              value={numValue} 
+                            />
+                          ) : (
+                            <>
+                              <p className="text-lg font-bold text-zinc-900 dark:text-white">
+                                {displayValue}
+                                {result.field_unit && (
+                                  <span className="text-xs text-zinc-500 ms-1">
+                                    {isAr ? result.field_unit_ar || result.field_unit : result.field_unit}
+                                  </span>
+                                )}
+                              </p>
+                              <p className="mt-1 text-[10px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                                {isAr ? result.field_name_ar || result.field_name : result.field_name}
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Show more link if more than 6 results */}
+                  {latestProgramTest.dynamic_results.length > 6 && (
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/${locale}/dashboard/profile/assessment${isAdminView && userId ? `?user_id=${userId}` : ''}`)}
+                      className="text-orange-500 text-[11px] font-medium hover:text-orange-400 flex items-center justify-center gap-1 w-full mt-2"
+                    >
+                      {isAr ? `عرض ${latestProgramTest.dynamic_results.length - 6} نتيجة أخرى` : `View ${latestProgramTest.dynamic_results.length - 6} more results`}
+                      <span>→</span>
+                    </button>
+                  )}
+                </div>
+              );
+            } else if (latestTest && latestTest.status === 'completed') {
+              // Fallback to legacy static fields
+              return (
+                <div className="grid grid-cols-3 gap-3">
+                  <RadialInsight label={isAr ? 'السرعة' : 'SPEED'} value={latestTest?.speed_score} />
+                  <RadialInsight label={isAr ? 'الرشاقة' : 'AGILITY'} value={latestTest?.agility_score} />
+                  <RadialInsight label={isAr ? 'القوة' : 'POWER'} value={latestTest?.power_score} />
+                </div>
+              );
+            } else {
+              return (
+                <div className="text-center py-4">
+                  <p className="text-xs text-zinc-500">
+                    {isAr ? 'لا يوجد اختبار بدني مكتمل بعد.' : 'No completed physical test yet.'}
+                  </p>
+                  {programFields.length > 0 && (
+                    <p className="text-[10px] text-zinc-400 mt-2">
+                      {isAr ? `${programFields.length} معيار متاح للفحص` : `${programFields.length} metrics available for testing`}
+                    </p>
+                  )}
+                </div>
+              );
+            }
+          })()}
         </div>
 
         {/* Action Buttons */}

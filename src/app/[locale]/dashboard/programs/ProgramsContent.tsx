@@ -59,6 +59,30 @@ interface Achievement {
   is_active: boolean;
 }
 
+interface HealthTestFieldOption {
+  value: string;
+  label: string;
+  label_ar?: string;
+}
+
+interface HealthTestField {
+  id?: string;
+  field_key: string;
+  field_name: string;
+  field_name_ar?: string;
+  field_type: 'number' | 'text' | 'select' | 'boolean' | 'date' | 'range';
+  field_unit?: string;
+  field_unit_ar?: string;
+  field_options?: HealthTestFieldOption[];
+  min_value?: number | null;
+  max_value?: number | null;
+  is_required: boolean;
+  display_order: number;
+  description?: string;
+  description_ar?: string;
+  is_active: boolean;
+}
+
 interface Level {
   id: string;
   name: string;
@@ -215,6 +239,31 @@ export default function ProgramsContent() {
     is_active: true
   });
 
+  // Health Test Fields State
+  const [showHealthTestFieldsModal, setShowHealthTestFieldsModal] = useState(false);
+  const [healthTestFields, setHealthTestFields] = useState<HealthTestField[]>([]);
+  const [loadingHealthTestFields, setLoadingHealthTestFields] = useState(false);
+  const [showHealthFieldForm, setShowHealthFieldForm] = useState(false);
+  const [editingHealthField, setEditingHealthField] = useState<HealthTestField | null>(null);
+  const [healthFieldFormData, setHealthFieldFormData] = useState<HealthTestField>({
+    field_key: '',
+    field_name: '',
+    field_name_ar: '',
+    field_type: 'number',
+    field_unit: '',
+    field_unit_ar: '',
+    field_options: [],
+    min_value: null,
+    max_value: null,
+    is_required: false,
+    display_order: 0,
+    description: '',
+    description_ar: '',
+    is_active: true
+  });
+  const [savingHealthField, setSavingHealthField] = useState(false);
+  const [deletingHealthField, setDeletingHealthField] = useState<string | null>(null);
+
   if (currentRole === 'coach') {
     return <CoachProgramsContent />;
   }
@@ -266,6 +315,147 @@ export default function ProgramsContent() {
     } catch (error) {
       console.error('Error fetching achievements:', error);
     }
+  };
+
+  // Health Test Fields Functions
+  const fetchHealthTestFields = async (programId: string) => {
+    try {
+      setLoadingHealthTestFields(true);
+      const response = await fetch(`/api/programs/${programId}/health-test-fields`);
+      if (response.ok) {
+        const data = await response.json();
+        setHealthTestFields(data.fields || []);
+      } else {
+        setHealthTestFields([]);
+      }
+    } catch (error) {
+      console.error('Error fetching health test fields:', error);
+      setHealthTestFields([]);
+    } finally {
+      setLoadingHealthTestFields(false);
+    }
+  };
+
+  const handleOpenHealthTestFields = async (program: Program) => {
+    setSelectedProgram(program);
+    await fetchHealthTestFields(program.id);
+    setShowHealthTestFieldsModal(true);
+  };
+
+  const handleAddHealthField = () => {
+    setEditingHealthField(null);
+    setHealthFieldFormData({
+      field_key: '',
+      field_name: '',
+      field_name_ar: '',
+      field_type: 'number',
+      field_unit: '',
+      field_unit_ar: '',
+      field_options: [],
+      min_value: null,
+      max_value: null,
+      is_required: false,
+      display_order: healthTestFields.length,
+      description: '',
+      description_ar: '',
+      is_active: true
+    });
+    setShowHealthFieldForm(true);
+  };
+
+  const handleEditHealthField = (field: HealthTestField) => {
+    setEditingHealthField(field);
+    setHealthFieldFormData({
+      ...field,
+      field_options: field.field_options || []
+    });
+    setShowHealthFieldForm(true);
+  };
+
+  const handleSaveHealthField = async () => {
+    if (!selectedProgram) return;
+    if (!healthFieldFormData.field_key || !healthFieldFormData.field_name) {
+      showToast('error', t('Field key and name are required', 'مفتاح الحقل والاسم مطلوبان'));
+      return;
+    }
+
+    try {
+      setSavingHealthField(true);
+      const url = editingHealthField 
+        ? `/api/programs/${selectedProgram.id}/health-test-fields/${editingHealthField.id}`
+        : `/api/programs/${selectedProgram.id}/health-test-fields`;
+      
+      const response = await fetch(url, {
+        method: editingHealthField ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(healthFieldFormData)
+      });
+
+      if (response.ok) {
+        showToast(
+          'success',
+          editingHealthField 
+            ? t('Field updated successfully', 'تم تحديث الحقل بنجاح')
+            : t('Field created successfully', 'تم إنشاء الحقل بنجاح')
+        );
+        await fetchHealthTestFields(selectedProgram.id);
+        setShowHealthFieldForm(false);
+      } else {
+        const data = await response.json();
+        showToast('error', data.message || t('Failed to save field', 'فشل في حفظ الحقل'));
+      }
+    } catch (error) {
+      showToast('error', t('Error saving field', 'خطأ في حفظ الحقل'));
+    } finally {
+      setSavingHealthField(false);
+    }
+  };
+
+  const handleDeleteHealthField = async (fieldId: string) => {
+    if (!selectedProgram) return;
+
+    try {
+      setDeletingHealthField(fieldId);
+      const response = await fetch(
+        `/api/programs/${selectedProgram.id}/health-test-fields/${fieldId}`,
+        { method: 'DELETE' }
+      );
+
+      if (response.ok) {
+        showToast('success', t('Field deleted successfully', 'تم حذف الحقل بنجاح'));
+        await fetchHealthTestFields(selectedProgram.id);
+      } else {
+        const data = await response.json();
+        showToast('error', data.message || t('Failed to delete field', 'فشل في حذف الحقل'));
+      }
+    } catch (error) {
+      showToast('error', t('Error deleting field', 'خطأ في حذف الحقل'));
+    } finally {
+      setDeletingHealthField(null);
+    }
+  };
+
+  const addFieldOption = () => {
+    setHealthFieldFormData(prev => ({
+      ...prev,
+      field_options: [...(prev.field_options || []), { value: '', label: '', label_ar: '' }]
+    }));
+  };
+
+  const updateFieldOption = (index: number, key: keyof HealthTestFieldOption, value: string) => {
+    setHealthFieldFormData(prev => ({
+      ...prev,
+      field_options: prev.field_options?.map((opt, i) => 
+        i === index ? { ...opt, [key]: value } : opt
+      ) || []
+    }));
+  };
+
+  const removeFieldOption = (index: number) => {
+    setHealthFieldFormData(prev => ({
+      ...prev,
+      field_options: prev.field_options?.filter((_, i) => i !== index) || []
+    }));
   };
 
   // Permission helper functions - only return true if permissions are loaded
@@ -843,6 +1033,17 @@ export default function ProgramsContent() {
               >
                 <Plus className="w-5 h-5" />
                 <span>{t('Add Age Group', 'إضافة فئة عمرية')}</span>
+              </button>
+            )}
+            {(isAdmin || currentRole === 'academy_manager') && (
+              <button
+                onClick={() => handleOpenHealthTestFields(selectedProgram)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{t('Health Test Fields', 'حقول الفحص الصحي')}</span>
               </button>
             )}
           </div>
@@ -1819,12 +2020,462 @@ export default function ProgramsContent() {
             ? t(`Are you sure you want to delete "${(deleteTarget?.item as Program)?.name}"? All levels and age groups will also be deleted.`, `هل أنت متأكد من حذف "${(deleteTarget?.item as Program)?.name}"? سيتم حذف جميع المستويات والفئات العمرية أيضاً.`)
             : deleteTarget?.type === 'level'
             ? t(`Are you sure you want to delete level "${(deleteTarget?.item as Level)?.name}"?`, `هل أنت متأكد من حذف المستوى "${(deleteTarget?.item as Level)?.name}"?`)
-            : t(`Are you sure you want to delete age group "${(deleteTarget?.item as AgeGroup)?.name}"?`, `هل أنت متأكد من حذف الفئة العمرية "${(deleteTarget?.item as AgeGroup)?.name}"?`)
+            : t(`Are you sure you want to delete age group "${(deleteTarget?.item as AgeGroup)?.name}"?`, `هل أنت متأکد من حذف الفئة العمرية "${(deleteTarget?.item as AgeGroup)?.name}"?`)
           }
           confirmText={t('Delete', 'حذف')}
           loading={deleting}
           errorMessage={deleteError}
         />
+
+        {/* Health Test Fields Modal */}
+        {showHealthTestFieldsModal && (
+        <ModalPortal>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowHealthTestFieldsModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-zinc-200 dark:border-zinc-800"
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    {t('Health Test Fields Configuration', 'إعداد حقول الفحص الصحي')}
+                  </h2>
+                  <p className="text-emerald-100 text-sm mt-1">
+                    {selectedProgram.name} {selectedProgram.name_ar && `• ${selectedProgram.name_ar}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowHealthTestFieldsModal(false)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              <OverlayScrollbarsComponent className="max-h-[calc(90vh-80px)]" options={{ scrollbars: { autoHide: 'scroll' } }}>
+                <div className="p-6 space-y-6">
+                  {/* Add Field Button */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      {t('Define custom health test metrics for this program. These fields will be used when conducting health tests for players.', 
+                         'حدد مقاييس الفحص الصحي المخصصة لهذا البرنامج. سيتم استخدام هذه الحقول عند إجراء الفحوصات الصحية للاعبين.')}
+                    </p>
+                    <button
+                      onClick={handleAddHealthField}
+                      className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition-colors shrink-0"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {t('Add Field', 'إضافة حقل')}
+                    </button>
+                  </div>
+
+                  {/* Fields List */}
+                  {loadingHealthTestFields ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                    </div>
+                  ) : healthTestFields.length === 0 ? (
+                    <div className="text-center py-12 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700">
+                      <svg className="w-16 h-16 mx-auto text-zinc-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                      </svg>
+                      <h3 className="text-lg font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                        {t('No health test fields defined', 'لم يتم تحديد حقول للفحص الصحي')}
+                      </h3>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                        {t('Add custom fields to track health metrics for players in this program.', 'أضف حقولاً مخصصة لتتبع المقاييس الصحية للاعبين في هذا البرنامج.')}
+                      </p>
+                      <button
+                        onClick={handleAddHealthField}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        {t('Add First Field', 'إضافة أول حقل')}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {healthTestFields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className={`flex items-center gap-4 p-4 rounded-xl border ${
+                            field.is_active 
+                              ? 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700' 
+                              : 'bg-zinc-100 dark:bg-zinc-800/50 border-zinc-300 dark:border-zinc-600 opacity-60'
+                          }`}
+                        >
+                          {/* Order Badge */}
+                          <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm shrink-0">
+                            {index + 1}
+                          </div>
+
+                          {/* Field Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                                {isAr ? field.field_name_ar || field.field_name : field.field_name}
+                              </h4>
+                              <span className="px-2 py-0.5 text-xs rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+                                {field.field_key}
+                              </span>
+                              {field.is_required && (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                                  {t('Required', 'مطلوب')}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                              <span className="flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                {field.field_type === 'number' && t('Number', 'رقم')}
+                                {field.field_type === 'text' && t('Text', 'نص')}
+                                {field.field_type === 'select' && t('Select', 'اختيار')}
+                                {field.field_type === 'boolean' && t('Yes/No', 'نعم/لا')}
+                                {field.field_type === 'date' && t('Date', 'تاريخ')}
+                                {field.field_type === 'range' && t('Range', 'نطاق')}
+                              </span>
+                              {field.field_unit && (
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                  </svg>
+                                  {isAr ? field.field_unit_ar || field.field_unit : field.field_unit}
+                                </span>
+                              )}
+                              {(field.min_value !== null || field.max_value !== null) && (
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                  </svg>
+                                  {field.min_value ?? '-'} - {field.max_value ?? '-'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => handleEditHealthField(field)}
+                              className="p-2 text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => field.id && handleDeleteHealthField(field.id)}
+                              disabled={deletingHealthField === field.id}
+                              className="p-2 text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {deletingHealthField === field.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Field Form Modal */}
+                  {showHealthFieldForm && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]" onClick={() => setShowHealthFieldForm(false)}>
+                      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 flex items-center justify-between">
+                          <h3 className="text-lg font-bold text-white">
+                            {editingHealthField ? t('Edit Field', 'تعديل الحقل') : t('Add New Field', 'إضافة حقل جديد')}
+                          </h3>
+                          <button onClick={() => setShowHealthFieldForm(false)} className="p-2 hover:bg-white/20 rounded-lg">
+                            <X className="w-5 h-5 text-white" />
+                          </button>
+                        </div>
+
+                        <OverlayScrollbarsComponent className="max-h-[calc(85vh-70px)]" options={{ scrollbars: { autoHide: 'scroll' } }}>
+                          <div className="p-6 space-y-4">
+                            {/* Field Key & Name */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                  {t('Field Key', 'مفتاح الحقل')} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={healthFieldFormData.field_key}
+                                  onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, field_key: e.target.value.toLowerCase().replace(/\s+/g, '_') }))}
+                                  placeholder="speed_test"
+                                  disabled={!!editingHealthField}
+                                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 disabled:opacity-60"
+                                />
+                                <p className="text-xs text-zinc-500 mt-1">{t('Unique identifier (no spaces)', 'معرف فريد (بدون مسافات)')}</p>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                  {t('Field Type', 'نوع الحقل')} <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                  value={healthFieldFormData.field_type}
+                                  onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, field_type: e.target.value as any }))}
+                                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                                >
+                                  <option value="number">{t('Number', 'رقم')}</option>
+                                  <option value="text">{t('Text', 'نص')}</option>
+                                  <option value="select">{t('Select (Dropdown)', 'اختيار (قائمة)')}</option>
+                                  <option value="boolean">{t('Yes/No', 'نعم/لا')}</option>
+                                  <option value="date">{t('Date', 'تاريخ')}</option>
+                                  <option value="range">{t('Range (Min-Max)', 'نطاق (أدنى-أقصى)')}</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Field Names */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                  {t('Field Name (English)', 'اسم الحقل (إنجليزي)')} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={healthFieldFormData.field_name}
+                                  onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, field_name: e.target.value }))}
+                                  placeholder="Speed Test"
+                                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                  {t('Field Name (Arabic)', 'اسم الحقل (عربي)')}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={healthFieldFormData.field_name_ar || ''}
+                                  onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, field_name_ar: e.target.value }))}
+                                  placeholder="اختبار السرعة"
+                                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                                  dir="rtl"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Units (for number/range) */}
+                            {(healthFieldFormData.field_type === 'number' || healthFieldFormData.field_type === 'range') && (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                    {t('Unit (English)', 'الوحدة (إنجليزي)')}
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={healthFieldFormData.field_unit || ''}
+                                    onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, field_unit: e.target.value }))}
+                                    placeholder="seconds, kg, cm, bpm"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                    {t('Unit (Arabic)', 'الوحدة (عربي)')}
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={healthFieldFormData.field_unit_ar || ''}
+                                    onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, field_unit_ar: e.target.value }))}
+                                    placeholder="ثانية، كغ، سم"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                                    dir="rtl"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Min/Max Values (for number/range) */}
+                            {(healthFieldFormData.field_type === 'number' || healthFieldFormData.field_type === 'range') && (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                    {t('Minimum Value', 'القيمة الدنيا')}
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={healthFieldFormData.min_value ?? ''}
+                                    onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, min_value: e.target.value ? parseFloat(e.target.value) : null }))}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                    {t('Maximum Value', 'القيمة القصوى')}
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={healthFieldFormData.max_value ?? ''}
+                                    onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, max_value: e.target.value ? parseFloat(e.target.value) : null }))}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Select Options */}
+                            {healthFieldFormData.field_type === 'select' && (
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                    {t('Options', 'الخيارات')} <span className="text-red-500">*</span>
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={addFieldOption}
+                                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    {t('Add Option', 'إضافة خيار')}
+                                  </button>
+                                </div>
+                                <div className="space-y-2">
+                                  {(healthFieldFormData.field_options || []).map((option, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                      <input
+                                        type="text"
+                                        value={option.value}
+                                        onChange={(e) => updateFieldOption(index, 'value', e.target.value)}
+                                        placeholder={t('Value', 'القيمة')}
+                                        className="flex-1 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={option.label}
+                                        onChange={(e) => updateFieldOption(index, 'label', e.target.value)}
+                                        placeholder={t('Label (EN)', 'التسمية (EN)')}
+                                        className="flex-1 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={option.label_ar || ''}
+                                        onChange={(e) => updateFieldOption(index, 'label_ar', e.target.value)}
+                                        placeholder={t('Label (AR)', 'التسمية (AR)')}
+                                        className="flex-1 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+                                        dir="rtl"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => removeFieldOption(index)}
+                                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {(!healthFieldFormData.field_options || healthFieldFormData.field_options.length === 0) && (
+                                    <p className="text-sm text-zinc-500 text-center py-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+                                      {t('No options added yet. Click "Add Option" to add options.', 'لم تتم إضافة خيارات بعد. انقر على "إضافة خيار" لإضافة خيارات.')}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Description */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                  {t('Description (English)', 'الوصف (إنجليزي)')}
+                                </label>
+                                <textarea
+                                  value={healthFieldFormData.description || ''}
+                                  onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, description: e.target.value }))}
+                                  rows={2}
+                                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 resize-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                  {t('Description (Arabic)', 'الوصف (عربي)')}
+                                </label>
+                                <textarea
+                                  value={healthFieldFormData.description_ar || ''}
+                                  onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, description_ar: e.target.value }))}
+                                  rows={2}
+                                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 resize-none"
+                                  dir="rtl"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Settings */}
+                            <div className="flex items-center gap-6 pt-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={healthFieldFormData.is_required}
+                                  onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, is_required: e.target.checked }))}
+                                  className="w-4 h-4 rounded border-zinc-300 text-emerald-500 focus:ring-emerald-500"
+                                />
+                                <span className="text-sm text-zinc-700 dark:text-zinc-300">{t('Required Field', 'حقل مطلوب')}</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={healthFieldFormData.is_active}
+                                  onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                                  className="w-4 h-4 rounded border-zinc-300 text-emerald-500 focus:ring-emerald-500"
+                                />
+                                <span className="text-sm text-zinc-700 dark:text-zinc-300">{t('Active', 'نشط')}</span>
+                              </label>
+                              <div className="flex items-center gap-2">
+                                <label className="text-sm text-zinc-700 dark:text-zinc-300">{t('Display Order:', 'ترتيب العرض:')}</label>
+                                <input
+                                  type="number"
+                                  value={healthFieldFormData.display_order}
+                                  onChange={(e) => setHealthFieldFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
+                                  min="0"
+                                  className="w-20 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                              <button
+                                type="button"
+                                onClick={() => setShowHealthFieldForm(false)}
+                                className="px-5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                              >
+                                {t('Cancel', 'إلغاء')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSaveHealthField}
+                                disabled={savingHealthField}
+                                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium hover:shadow-lg disabled:opacity-60 flex items-center gap-2"
+                              >
+                                {savingHealthField && <Loader2 className="w-4 h-4 animate-spin" />}
+                                {editingHealthField ? t('Update Field', 'تحديث الحقل') : t('Create Field', 'إنشاء الحقل')}
+                              </button>
+                            </div>
+                          </div>
+                        </OverlayScrollbarsComponent>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </OverlayScrollbarsComponent>
+            </motion.div>
+          </motion.div>
+        </ModalPortal>
+        )}
       </div>
     );
   }
@@ -2214,8 +2865,8 @@ export default function ProgramsContent() {
         onConfirm={handleConfirmDelete}
         title={deleteTarget?.type === 'program' ? t('Delete Program', 'حذف البرنامج') : t('Delete Level', 'حذف المستوى')}
         description={deleteTarget?.type === 'program' 
-          ? t(`Are you sure you want to delete "${(deleteTarget?.item as Program)?.name}"? All levels will also be deleted.`, `هل أنت متأكد من حذف "${(deleteTarget?.item as Program)?.name}"? سيتم حذف جميع المستويات أيضاً.`)
-          : t(`Are you sure you want to delete level "${(deleteTarget?.item as Level)?.name}"?`, `هل أنت متأكد من حذف المستوى "${(deleteTarget?.item as Level)?.name}"?`)
+          ? t(`Are you sure you want to delete "${(deleteTarget?.item as Program)?.name}"? All levels will also be deleted.`, `هل أنت متأکد من حذف "${(deleteTarget?.item as Program)?.name}"? سيتم حذف جميع المستويات أيضاً.`)
+          : t(`Are you sure you want to delete level "${(deleteTarget?.item as Level)?.name}"?`, `هل أنت متأکد من حذف المستوى "${(deleteTarget?.item as Level)?.name}"?`)
         }
         confirmText={t('Delete', 'حذف')}
         loading={deleting}
