@@ -1,0 +1,24 @@
+                             Table "public.program_levels"
+    Column    |            Type             | Collation | Nullable |      Default       
+--------------+-----------------------------+-----------+----------+--------------------
+ id           | uuid                        |           | not null | uuid_generate_v4()
+ program_id   | uuid                        |           |          | 
+ name         | character varying(255)      |           | not null | 
+ name_ar      | character varying(255)      |           |          | 
+ description  | text                        |           |          | 
+ level_order  | integer                     |           | not null | 1
+ min_sessions | integer                     |           | not null | 0
+ min_points   | integer                     |           | not null | 0
+ is_active    | boolean                     |           |          | true
+ created_at   | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+ updated_at   | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+ image_url    | text                        |           |          | 
+Indexes:
+    "program_levels_pkey" PRIMARY KEY, btree (id)
+    "idx_program_levels_order" btree (program_id, level_order)
+    "idx_program_levels_program_id" btree (program_id)
+Foreign-key constraints:
+    "program_levels_program_id_fkey" FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "player_programs" CONSTRAINT "player_programs_level_id_fkey" FOREIGN KEY (level_id) REFERENCES program_levels(id) ON DELETE SET NULL
+

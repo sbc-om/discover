@@ -25,8 +25,39 @@ import {
   XCircle,
   Target,
   Award,
-  Clock
+  Clock,
+  Gift,
+  Medal,
+  Sparkles
 } from 'lucide-react';
+
+interface LevelReward {
+  id?: string;
+  reward_type: 'virtual' | 'physical';
+  trigger_type: 'sessions_completed' | 'points_earned' | 'level_completed';
+  trigger_value: number | null;
+  title: string;
+  title_ar: string;
+  description: string;
+  description_ar: string;
+  badge_icon_url: string;
+  medal_type: string;
+  achievement_id: string | null;
+  notify_player: boolean;
+  notify_coach: boolean;
+  notify_parent: boolean;
+  display_order: number;
+  is_active: boolean;
+}
+
+interface Achievement {
+  id: string;
+  title: string;
+  title_ar: string;
+  description: string;
+  icon_url: string;
+  is_active: boolean;
+}
 
 interface Level {
   id: string;
@@ -39,6 +70,7 @@ interface Level {
   min_points: number;
   is_active: boolean;
   created_at: string;
+  rewards?: LevelReward[];
 }
 
 interface AgeGroup {
@@ -150,6 +182,27 @@ export default function ProgramsContent() {
     min_points: 0,
     is_active: true
   });
+  const [levelRewards, setLevelRewards] = useState<LevelReward[]>([]);
+  const [showRewardForm, setShowRewardForm] = useState(false);
+  const [editingRewardIndex, setEditingRewardIndex] = useState<number | null>(null);
+  const [rewardFormData, setRewardFormData] = useState<LevelReward>({
+    reward_type: 'virtual',
+    trigger_type: 'level_completed',
+    trigger_value: null,
+    title: '',
+    title_ar: '',
+    description: '',
+    description_ar: '',
+    badge_icon_url: '',
+    medal_type: 'gold',
+    achievement_id: null,
+    notify_player: true,
+    notify_coach: true,
+    notify_parent: false,
+    display_order: 1,
+    is_active: true
+  });
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [ageGroupFormData, setAgeGroupFormData] = useState({
     name: '',
     name_ar: '',
@@ -196,6 +249,18 @@ export default function ProgramsContent() {
       console.error('Error fetching permissions:', error);
     } finally {
       setPermissionsLoaded(true);
+    }
+  };
+
+  const fetchAchievements = async () => {
+    try {
+      const response = await fetch('/api/achievements?limit=100&is_active=true');
+      if (response.ok) {
+        const data = await response.json();
+        setAchievements(data.achievements || []);
+      }
+    } catch (error) {
+      console.error('Error fetching achievements:', error);
     }
   };
 
@@ -450,10 +515,14 @@ export default function ProgramsContent() {
     });
     setLevelImageFile(null);
     setLevelImagePreview(null);
+    setLevelRewards([]);
+    setShowRewardForm(false);
+    setEditingRewardIndex(null);
+    fetchAchievements();
     setShowLevelModal(true);
   };
 
-  const handleEditLevel = (level: Level) => {
+  const handleEditLevel = async (level: Level) => {
     setEditingLevel(level);
     setLevelFormData({
       name: level.name,
@@ -467,6 +536,25 @@ export default function ProgramsContent() {
     });
     setLevelImageFile(null);
     setLevelImagePreview(level.image_url || null);
+    setShowRewardForm(false);
+    setEditingRewardIndex(null);
+    
+    // Fetch achievements for virtual rewards
+    fetchAchievements();
+    
+    // Load existing rewards for this level
+    try {
+      const response = await fetch(`/api/programs/${selectedProgram?.id}/levels/${level.id}/rewards`);
+      if (response.ok) {
+        const data = await response.json();
+        setLevelRewards(data.rewards || []);
+      } else {
+        setLevelRewards([]);
+      }
+    } catch {
+      setLevelRewards([]);
+    }
+    
     setShowLevelModal(true);
   };
 
@@ -533,9 +621,28 @@ export default function ProgramsContent() {
       const data = await response.json();
 
       if (response.ok) {
+        const savedLevelId = editingLevel?.id || data.level?.id;
+        
+        // Save rewards for this level
+        if (savedLevelId && levelRewards.length > 0) {
+          for (const reward of levelRewards) {
+            const rewardUrl = reward.id 
+              ? `/api/programs/${selectedProgram.id}/levels/${savedLevelId}/rewards/${reward.id}`
+              : `/api/programs/${selectedProgram.id}/levels/${savedLevelId}/rewards`;
+            const rewardMethod = reward.id ? 'PUT' : 'POST';
+            
+            await fetch(rewardUrl, {
+              method: rewardMethod,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(reward)
+            });
+          }
+        }
+        
         showToast('success', editingLevel ? 'Level updated successfully' : 'Level created successfully');
         setShowLevelModal(false);
         setLevelImageFile(null);
+        setLevelRewards([]);
         fetchProgramWithLevels(selectedProgram.id);
         fetchPrograms();
       } else {
@@ -545,6 +652,79 @@ export default function ProgramsContent() {
       console.error('Error saving level:', error);
       showToast('error', 'Failed to save level');
     }
+  };
+
+  // Reward management helper functions
+  const handleAddReward = () => {
+    setEditingRewardIndex(null);
+    setRewardFormData({
+      reward_type: 'virtual',
+      trigger_type: 'level_completed',
+      trigger_value: null,
+      title: '',
+      title_ar: '',
+      description: '',
+      description_ar: '',
+      badge_icon_url: '',
+      medal_type: 'gold',
+      achievement_id: null,
+      notify_player: true,
+      notify_coach: true,
+      notify_parent: false,
+      display_order: levelRewards.length + 1,
+      is_active: true
+    });
+    setShowRewardForm(true);
+  };
+
+  const handleEditReward = (index: number) => {
+    setEditingRewardIndex(index);
+    setRewardFormData({ ...levelRewards[index] });
+    setShowRewardForm(true);
+  };
+
+  const handleSaveReward = () => {
+    if (!rewardFormData.title) {
+      showToast('error', t('Reward title is required', 'عنوان المكافأة مطلوب'));
+      return;
+    }
+
+    if (rewardFormData.reward_type === 'virtual' && !rewardFormData.achievement_id) {
+      showToast('error', t('Please select an achievement for virtual reward', 'لطفاً یک دستاورد برای شارت مجازی انتخاب کنید'));
+      return;
+    }
+
+    if (editingRewardIndex !== null) {
+      // Update existing reward
+      const updatedRewards = [...levelRewards];
+      updatedRewards[editingRewardIndex] = rewardFormData;
+      setLevelRewards(updatedRewards);
+    } else {
+      // Add new reward
+      setLevelRewards([...levelRewards, rewardFormData]);
+    }
+
+    setShowRewardForm(false);
+    setEditingRewardIndex(null);
+  };
+
+  const handleDeleteReward = async (index: number) => {
+    const reward = levelRewards[index];
+    
+    // If this reward has an ID, delete it from the server
+    if (reward.id && editingLevel && selectedProgram) {
+      try {
+        await fetch(`/api/programs/${selectedProgram.id}/levels/${editingLevel.id}/rewards/${reward.id}`, {
+          method: 'DELETE'
+        });
+      } catch (error) {
+        console.error('Error deleting reward from server:', error);
+      }
+    }
+    
+    // Remove from local state
+    const updatedRewards = levelRewards.filter((_, i) => i !== index);
+    setLevelRewards(updatedRewards);
   };
 
   // Age group management
@@ -879,7 +1059,7 @@ export default function ProgramsContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto"
             onClick={() => setShowLevelModal(false)}
           >
             <motion.div
@@ -887,7 +1067,7 @@ export default function ProgramsContent() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden"
+              className="w-full max-w-2xl rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden my-4"
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -901,7 +1081,7 @@ export default function ProgramsContent() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
@@ -1042,6 +1222,333 @@ export default function ProgramsContent() {
                     placeholder={t('Level description...', 'وصف المستوى...')}
                   />
                 </div>
+
+                {/* Rewards Section */}
+                <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50">
+                    <div className="flex items-center gap-2">
+                      <Gift className="w-4 h-4 text-amber-500" />
+                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        {t('Level Rewards', 'مكافآت المستوى')}
+                      </span>
+                      <span className="px-2 py-0.5 text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full">
+                        {levelRewards.length}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddReward}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      {t('Add Reward', 'إضافة مكافأة')}
+                    </button>
+                  </div>
+                  
+                  {levelRewards.length > 0 && (
+                    <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
+                      {levelRewards.map((reward, index) => {
+                        const linkedAchievement = reward.achievement_id 
+                          ? achievements.find(a => a.id === reward.achievement_id) 
+                          : null;
+                        return (
+                        <div key={index} className="flex items-center justify-between px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              reward.reward_type === 'physical' 
+                                ? 'bg-gradient-to-br from-yellow-400 to-amber-500' 
+                                : 'bg-gradient-to-br from-purple-400 to-indigo-500'
+                            }`}>
+                              {reward.reward_type === 'physical' ? (
+                                <Medal className="w-4 h-4 text-white" />
+                              ) : linkedAchievement?.icon_url ? (
+                                <img src={linkedAchievement.icon_url} alt="" className="w-5 h-5 object-contain" />
+                              ) : (
+                                <Sparkles className="w-4 h-4 text-white" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {isAr ? (reward.title_ar || reward.title) : reward.title}
+                              </p>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                {reward.trigger_type === 'sessions_completed' && 
+                                  t(`After ${reward.trigger_value} sessions`, `بعد ${reward.trigger_value} جلسة`)}
+                                {reward.trigger_type === 'points_earned' && 
+                                  t(`After ${reward.trigger_value} points`, `بعد ${reward.trigger_value} نقطة`)}
+                                {reward.trigger_type === 'level_completed' && 
+                                  t('On level completion', 'عند إكمال المستوى')}
+                                {' • '}
+                                {reward.reward_type === 'physical' 
+                                  ? `${t('Physical Medal', 'ميدالية حقيقية')} (${reward.medal_type})` 
+                                  : linkedAchievement 
+                                    ? `${t('Achievement', 'دستاورد')}: ${isAr ? (linkedAchievement.title_ar || linkedAchievement.title) : linkedAchievement.title}`
+                                    : t('Virtual Badge', 'شارة افتراضية')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleEditReward(index)}
+                              className="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteReward(index)}
+                              className="p-1.5 text-red-500 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
+                  {levelRewards.length === 0 && (
+                    <div className="px-4 py-6 text-center">
+                      <Gift className="w-8 h-8 text-zinc-300 dark:text-zinc-600 mx-auto mb-2" />
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {t('No rewards defined yet', 'لم يتم تحديد مكافآت بعد')}
+                      </p>
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+                        {t('Add rewards to motivate players!', 'أضف مكافآت لتحفيز اللاعبين!')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Reward Form (inline) */}
+                {showRewardForm && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="border border-amber-200 dark:border-amber-500/30 rounded-xl p-4 bg-amber-50/50 dark:bg-amber-500/5 space-y-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                        {editingRewardIndex !== null ? t('Edit Reward', 'تعديل المكافأة') : t('New Reward', 'مكافأة جديدة')}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => setShowRewardForm(false)}
+                        className="p-1 text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                          {t('Title (English)', 'العنوان (إنجليزي)')} *
+                        </label>
+                        <input
+                          type="text"
+                          value={rewardFormData.title}
+                          onChange={(e) => setRewardFormData({ ...rewardFormData, title: e.target.value })}
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                          placeholder={t('Gold Medal', 'ميدالية ذهبية')}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                          {t('Title (Arabic)', 'العنوان (عربي)')}
+                        </label>
+                        <input
+                          type="text"
+                          value={rewardFormData.title_ar}
+                          onChange={(e) => setRewardFormData({ ...rewardFormData, title_ar: e.target.value })}
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                          dir="rtl"
+                          placeholder="ميدالية ذهبية"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                          {t('Reward Type', 'نوع المكافأة')}
+                        </label>
+                        <select
+                          value={rewardFormData.reward_type}
+                          onChange={(e) => setRewardFormData({ 
+                            ...rewardFormData, 
+                            reward_type: e.target.value as 'virtual' | 'physical',
+                            achievement_id: e.target.value === 'physical' ? null : rewardFormData.achievement_id
+                          })}
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                        >
+                          <option value="virtual">{t('Virtual Badge', 'شارة افتراضية')}</option>
+                          <option value="physical">{t('Physical Medal', 'ميدالية حقيقية')}</option>
+                        </select>
+                      </div>
+                      {rewardFormData.reward_type === 'physical' && (
+                        <div>
+                          <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                            {t('Medal Type', 'نوع الميدالية')}
+                          </label>
+                          <select
+                            value={rewardFormData.medal_type}
+                            onChange={(e) => setRewardFormData({ ...rewardFormData, medal_type: e.target.value })}
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                          >
+                            <option value="gold">{t('Gold', 'ذهبية')}</option>
+                            <option value="silver">{t('Silver', 'فضية')}</option>
+                            <option value="bronze">{t('Bronze', 'برونزية')}</option>
+                            <option value="participation">{t('Participation', 'مشاركة')}</option>
+                          </select>
+                        </div>
+                      )}
+                      {rewardFormData.reward_type === 'virtual' && (
+                        <div className="col-span-2">
+                          <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">
+                            {t('Select Achievement', 'انتخاب دستاورد')} *
+                          </label>
+                          {achievements.length > 0 ? (
+                            <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
+                              {achievements.map((achievement) => (
+                                <button
+                                  key={achievement.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setRewardFormData({ 
+                                      ...rewardFormData, 
+                                      achievement_id: achievement.id,
+                                      title: rewardFormData.title || achievement.title || '',
+                                      title_ar: rewardFormData.title_ar || achievement.title_ar || '',
+                                      badge_icon_url: achievement.icon_url || rewardFormData.badge_icon_url
+                                    });
+                                  }}
+                                  className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border-2 transition-all ${
+                                    rewardFormData.achievement_id === achievement.id
+                                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10 shadow-sm'
+                                      : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-300 dark:hover:border-amber-500/50 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                                  }`}
+                                >
+                                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-500/20 dark:to-indigo-500/20 flex items-center justify-center overflow-hidden">
+                                    {achievement.icon_url ? (
+                                      <img 
+                                        src={achievement.icon_url} 
+                                        alt={achievement.title}
+                                        className="w-8 h-8 object-contain"
+                                      />
+                                    ) : (
+                                      <Sparkles className="w-5 h-5 text-purple-500" />
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] font-medium text-zinc-700 dark:text-zinc-300 text-center line-clamp-2 leading-tight">
+                                    {isAr ? (achievement.title_ar || achievement.title) : achievement.title}
+                                  </span>
+                                  {rewardFormData.achievement_id === achievement.id && (
+                                    <div className="absolute top-1 right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                                      <CheckCircle2 className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 py-4 text-center bg-amber-50 dark:bg-amber-500/10 rounded-lg">
+                              {t('No achievements found. Create achievements first.', 'هیچ دستاوردی یافت نشد. ابتدا دستاوردها را ایجاد کنید.')}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                          {t('Trigger', 'المحفز')}
+                        </label>
+                        <select
+                          value={rewardFormData.trigger_type}
+                          onChange={(e) => setRewardFormData({ 
+                            ...rewardFormData, 
+                            trigger_type: e.target.value as 'sessions_completed' | 'points_earned' | 'level_completed',
+                            trigger_value: e.target.value === 'level_completed' ? null : rewardFormData.trigger_value || 1
+                          })}
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                        >
+                          <option value="level_completed">{t('On Level Completion', 'عند إكمال المستوى')}</option>
+                          <option value="sessions_completed">{t('After X Sessions', 'بعد عدد جلسات')}</option>
+                          <option value="points_earned">{t('After X Points', 'بعد عدد نقاط')}</option>
+                        </select>
+                      </div>
+                      {rewardFormData.trigger_type !== 'level_completed' && (
+                        <div>
+                          <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                            {rewardFormData.trigger_type === 'sessions_completed' 
+                              ? t('Sessions Required', 'الجلسات المطلوبة')
+                              : t('Points Required', 'النقاط المطلوبة')}
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={rewardFormData.trigger_value || ''}
+                            onChange={(e) => setRewardFormData({ ...rewardFormData, trigger_value: parseInt(e.target.value) || null })}
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            placeholder={rewardFormData.trigger_type === 'sessions_completed' ? '10' : '100'}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-4 text-xs">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={rewardFormData.notify_player}
+                          onChange={(e) => setRewardFormData({ ...rewardFormData, notify_player: e.target.checked })}
+                          className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-amber-500 focus:ring-amber-500"
+                        />
+                        <span className="text-zinc-600 dark:text-zinc-400">{t('Notify Player', 'إشعار اللاعب')}</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={rewardFormData.notify_coach}
+                          onChange={(e) => setRewardFormData({ ...rewardFormData, notify_coach: e.target.checked })}
+                          className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-amber-500 focus:ring-amber-500"
+                        />
+                        <span className="text-zinc-600 dark:text-zinc-400">{t('Notify Coach', 'إشعار المدرب')}</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={rewardFormData.notify_parent}
+                          onChange={(e) => setRewardFormData({ ...rewardFormData, notify_parent: e.target.checked })}
+                          className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-amber-500 focus:ring-amber-500"
+                        />
+                        <span className="text-zinc-600 dark:text-zinc-400">{t('Notify Parent', 'إشعار ولي الأمر')}</span>
+                      </label>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowRewardForm(false)}
+                        className="flex-1 px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        {t('Cancel', 'إلغاء')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveReward}
+                        className="flex-1 px-3 py-2 text-xs font-medium text-white bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg hover:shadow-md transition-all"
+                      >
+                        {editingRewardIndex !== null ? t('Update', 'تحديث') : t('Add', 'إضافة')}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
 
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
