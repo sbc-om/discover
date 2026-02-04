@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Bell, ChevronDown, Award, Activity, ArrowLeft, X } from 'lucide-react';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { Bell, ChevronDown, Award, Activity, ArrowLeft, X, ChevronLeft, ChevronRight, Plus, Star, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ToastProvider';
 import useLocale from '@/hooks/useLocale';
@@ -65,6 +65,36 @@ interface AttendanceRecord {
   notes?: string | null;
 }
 
+interface ProgramEnrollment {
+  assignment_id: string;
+  program_id: string;
+  program_name: string;
+  program_name_ar?: string | null;
+  program_image?: string | null;
+  age_group_id?: string | null;
+  age_group_name?: string | null;
+  age_group_name_ar?: string | null;
+  min_age?: number | null;
+  max_age?: number | null;
+  level_id?: string | null;
+  level_name?: string | null;
+  level_name_ar?: string | null;
+  level_image?: string | null;
+  assigned_level_order?: number | null;
+  level_min_sessions?: number | null;
+  level_min_points?: number | null;
+  is_primary?: boolean;
+  enrollment_status?: string;
+  assigned_at?: string;
+  levels: ProgramLevel[];
+  progress: {
+    sessions_completed: number;
+    points_earned: number;
+    notes_count: number;
+  };
+  recent_attendance?: AttendanceRecord[];
+}
+
 interface ProgramOption {
   id: string;
   name: string;
@@ -85,6 +115,7 @@ interface ProfileResponse {
   profileComplete: boolean;
   latestTest?: HealthTestData | null;
   assignment?: AssignmentData | null;
+  programs?: ProgramEnrollment[];
   program_levels?: ProgramLevel[];
   attendance?: AttendanceRecord[];
 }
@@ -123,9 +154,11 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const isAr = locale === 'ar';
   const router = useRouter();
   const { showToast } = useToast();
+  const programsSliderRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [removingProgram, setRemovingProgram] = useState<string | null>(null);
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [programs, setPrograms] = useState<ProgramOption[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroupOption[]>([]);
@@ -135,6 +168,8 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const [assignmentForm, setAssignmentForm] = useState({ program_id: '', age_group_id: '', level_id: '' });
   const [form, setForm] = useState({ sport: '', position: '', bio: '', goals: '' });
   const [profileFormOpen, setProfileFormOpen] = useState(false);
+  const [showAddProgramForm, setShowAddProgramForm] = useState(false);
+  const [activeProgramIndex, setActiveProgramIndex] = useState(0);
 
   const isAdminView = Boolean(userId);
   const canManagePlayer = Boolean(userId) && (currentRole === 'admin' || currentRole === 'academy_manager');
@@ -273,13 +308,55 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Failed to assign program');
-      showToast('success', isAr ? 'تم تحديث البرنامج' : 'Program updated');
+      showToast('success', isAr ? 'تم إضافة البرنامج' : 'Program added');
+      setShowAddProgramForm(false);
+      setAssignmentForm({ program_id: '', age_group_id: '', level_id: '' });
       await fetchProfile();
     } catch (error: any) {
-      showToast('error', error.message || (isAr ? 'تعذر تحديث البرنامج' : 'Failed to update program'));
+      showToast('error', error.message || (isAr ? 'تعذر إضافة البرنامج' : 'Failed to add program'));
     } finally {
       setAssigning(false);
     }
+  };
+
+  const handleRemoveProgram = async (assignmentId: string) => {
+    if (!confirm(isAr ? 'هل تريد إزالة هذا البرنامج؟' : 'Remove this program?')) return;
+    try {
+      setRemovingProgram(assignmentId);
+      const response = await fetch(`/api/player-programs?id=${assignmentId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to remove program');
+      showToast('success', isAr ? 'تمت إزالة البرنامج' : 'Program removed');
+      await fetchProfile();
+      setActiveProgramIndex(0);
+    } catch (error: any) {
+      showToast('error', error.message || (isAr ? 'تعذر إزالة البرنامج' : 'Failed to remove program'));
+    } finally {
+      setRemovingProgram(null);
+    }
+  };
+
+  const handleSetPrimaryProgram = async (assignmentId: string) => {
+    try {
+      const response = await fetch('/api/player-programs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: assignmentId, is_primary: true }),
+      });
+      if (!response.ok) throw new Error('Failed to set primary');
+      showToast('success', isAr ? 'تم تعيين كبرنامج رئيسي' : 'Set as primary');
+      await fetchProfile();
+    } catch (error: any) {
+      showToast('error', error.message);
+    }
+  };
+
+  const scrollPrograms = (direction: 'left' | 'right') => {
+    if (!programsSliderRef.current) return;
+    const scrollAmount = 300;
+    programsSliderRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
   };
 
   if (loading || !data) {
@@ -293,40 +370,49 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
   const userName = `${data.user.first_name} ${data.user.last_name}`.trim().toUpperCase();
   const academyName = isAr ? data.user.academy_name_ar || data.user.academy_name : data.user.academy_name || data.user.academy_name_ar;
   const profileComplete = data.profileComplete;
-  const assignment = data.assignment;
-  const programLevels = data.program_levels || [];
-  const attendance = data.attendance || [];
+  const playerPrograms = data.programs || [];
   const latestTest = data.latestTest;
+  
+  // For backward compatibility, get overall stats
+  const attendance = data.attendance || [];
   const sessionsCompleted = attendance.filter((r) => r.present).length;
   const pointsTotal = attendance.reduce((sum, r) => sum + (r.score || 0), 0);
   const notesCount = attendance.filter((r) => r.notes).length;
-  const activeLevels = programLevels.filter((level) => level.is_active);
+  
+  // Active program from slider
+  const activeProgram = playerPrograms[activeProgramIndex] || null;
+  const activeLevels = activeProgram?.levels?.filter((level) => level.is_active) || [];
   const sortedLevels = [...activeLevels].sort((a, b) => a.level_order - b.level_order);
   
-  // Use assigned level if available, otherwise calculate based on sessions/points
-  const assignedLevelFromList = assignment?.level_id 
-    ? sortedLevels.find(l => l.id === assignment.level_id) 
+  // Use the active program's data for display
+  const programSessionsCompleted = activeProgram?.progress?.sessions_completed || 0;
+  const programPointsTotal = activeProgram?.progress?.points_earned || 0;
+  const programNotesCount = activeProgram?.progress?.notes_count || 0;
+  
+  // Use assigned level if available
+  const assignedLevelFromList = activeProgram?.level_id 
+    ? sortedLevels.find(l => l.id === activeProgram.level_id) 
     : null;
   // If level_id exists but not found in list, create a virtual level object from assignment data
-  const assignedLevel = assignedLevelFromList || (assignment?.level_id && assignment?.assigned_level_order ? {
-    id: assignment.level_id,
-    name: assignment.level_name || `Level ${assignment.assigned_level_order}`,
-    name_ar: assignment.level_name_ar,
-    level_order: assignment.assigned_level_order,
-    min_sessions: 0,
-    min_points: 0,
+  const assignedLevel = assignedLevelFromList || (activeProgram?.level_id && activeProgram?.assigned_level_order ? {
+    id: activeProgram.level_id,
+    name: activeProgram.level_name || `Level ${activeProgram.assigned_level_order}`,
+    name_ar: activeProgram.level_name_ar,
+    level_order: activeProgram.assigned_level_order,
+    min_sessions: activeProgram.level_min_sessions || 0,
+    min_points: activeProgram.level_min_points || 0,
     is_active: true,
-    image_url: null
+    image_url: activeProgram.level_image
   } : null);
   const calculatedLevel = sortedLevels.reduce((acc, level) => {
-    if (sessionsCompleted >= level.min_sessions && pointsTotal >= level.min_points) return level;
+    if (programSessionsCompleted >= level.min_sessions && programPointsTotal >= level.min_points) return level;
     return acc;
   }, sortedLevels[0] || null);
   const currentLevel = assignedLevel || calculatedLevel;
 
-  const totalProgress = currentLevel ? Math.round(((sessionsCompleted / (currentLevel.min_sessions || 1)) + (pointsTotal / (currentLevel.min_points || 1))) / 2 * 100) : 0;
-  const sessionProgress = currentLevel?.min_sessions ? Math.round((sessionsCompleted / currentLevel.min_sessions) * 100) : 0;
-  const pointProgress = currentLevel?.min_points ? Math.round((pointsTotal / currentLevel.min_points) * 100) : 0;
+  const totalProgress = currentLevel ? Math.round(((programSessionsCompleted / (currentLevel.min_sessions || 1)) + (programPointsTotal / (currentLevel.min_points || 1))) / 2 * 100) : 0;
+  const sessionProgress = currentLevel?.min_sessions ? Math.round((programSessionsCompleted / currentLevel.min_sessions) * 100) : 0;
+  const pointProgress = currentLevel?.min_points ? Math.round((programPointsTotal / currentLevel.min_points) * 100) : 0;
 
   return (
     <div className="mx-auto w-full max-w-[390px] pb-8">
@@ -418,69 +504,177 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
           </p>
         </div>
 
-        {/* PROGRAM Section */}
-        <div className="relative mt-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-5 pb-5 pt-10">
-        <span className="absolute -top-6 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-900 dark:text-white shadow-sm">
-          {isAr ? 'البرنامج' : 'PROGRAM'}
-        </span>
+        {/* PROGRAMS Section - Slider */}
+        <div className="relative mt-3 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 px-3 pb-5 pt-10">
+          <span className="absolute -top-6 left-1/2 -translate-x-1/2 rounded-full border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-900 dark:text-white shadow-sm flex items-center gap-2">
+            {isAr ? 'البرامج' : 'PROGRAMS'}
+            {playerPrograms.length > 0 && (
+              <span className="bg-orange-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{playerPrograms.length}</span>
+            )}
+          </span>
         
-        {currentLevel ? (
-          <div className="space-y-4">
-            {/* Level Info */}
-            <div>
-              <p className="text-sm font-bold text-zinc-900 dark:text-white">{isAr ? `المستوى ${currentLevel.level_order}` : `LEVEL ${currentLevel.level_order}`}</p>
-              <p className="text-[10px] text-orange-500 uppercase tracking-wider">{isAr ? 'قيد التقدم' : 'IN PROGRESS'}</p>
-            </div>
+        {playerPrograms.length > 0 ? (
+          <div className="space-y-3">
+            {/* Programs Slider */}
+            {playerPrograms.length > 1 && (
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveProgramIndex(Math.max(0, activeProgramIndex - 1))}
+                  disabled={activeProgramIndex === 0}
+                  className="p-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 disabled:opacity-40"
+                >
+                  <ChevronLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                </button>
+                <div className="flex items-center gap-1.5">
+                  {playerPrograms.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveProgramIndex(idx)}
+                      className={`h-2 rounded-full transition-all ${
+                        idx === activeProgramIndex 
+                          ? 'w-6 bg-orange-500' 
+                          : 'w-2 bg-zinc-400 dark:bg-zinc-600 hover:bg-zinc-500'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveProgramIndex(Math.min(playerPrograms.length - 1, activeProgramIndex + 1))}
+                  disabled={activeProgramIndex === playerPrograms.length - 1}
+                  className="p-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 disabled:opacity-40"
+                >
+                  <ChevronRight className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                </button>
+              </div>
+            )}
 
-            {/* Stats Pills */}
-            <div className="flex items-center gap-2">
-              <span className="rounded-full border border-zinc-400 dark:border-zinc-600 px-3 py-1 text-[10px] text-zinc-700 dark:text-zinc-300">
-                {isAr ? 'حضور' : 'Attended'} : {sessionsCompleted}
-              </span>
-              <span className="rounded-full border border-zinc-400 dark:border-zinc-600 px-3 py-1 text-[10px] text-zinc-700 dark:text-zinc-300">
-                {isAr ? 'ملاحظات' : 'Notes'} : {notesCount}
-              </span>
-              <span className="rounded-full border border-zinc-400 dark:border-zinc-600 px-3 py-1 text-[10px] text-zinc-700 dark:text-zinc-300">
-                {isAr ? 'نقاط' : 'POINT'} : {pointsTotal}
-              </span>
-            </div>
-
-            {/* Level Card with Progress */}
-            <div className="flex gap-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-white to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 p-3">
-              <div className="h-20 w-20 rounded-xl overflow-hidden bg-zinc-300 dark:bg-zinc-700 flex-shrink-0">
-                {currentLevel.image_url ? (
-                  <img src={currentLevel.image_url} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-zinc-500 text-xs">
-                    {isAr ? 'صورة' : 'IMG'}
+            {/* Active Program Card */}
+            {activeProgram && (
+              <div className="relative">
+                {/* Program Header */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-12 w-12 rounded-xl overflow-hidden bg-zinc-300 dark:bg-zinc-700 flex-shrink-0">
+                    {activeProgram.program_image ? (
+                      <img src={activeProgram.program_image} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-zinc-500 text-[10px]">
+                        {(isAr ? activeProgram.program_name_ar : activeProgram.program_name)?.charAt(0) || 'P'}
+                      </div>
+                    )}
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-zinc-900 dark:text-white truncate">
+                        {isAr ? activeProgram.program_name_ar || activeProgram.program_name : activeProgram.program_name}
+                      </p>
+                      {activeProgram.is_primary && (
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      {isAr ? activeProgram.age_group_name_ar || activeProgram.age_group_name : activeProgram.age_group_name}
+                      {activeProgram.min_age && activeProgram.max_age && ` (${activeProgram.min_age}-${activeProgram.max_age})`}
+                    </p>
+                  </div>
+                  {canManagePlayer && (
+                    <div className="flex items-center gap-1">
+                      {!activeProgram.is_primary && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetPrimaryProgram(activeProgram.assignment_id)}
+                          className="p-1.5 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-500"
+                          title={isAr ? 'تعيين كرئيسي' : 'Set as primary'}
+                        >
+                          <Star className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveProgram(activeProgram.assignment_id)}
+                        disabled={removingProgram === activeProgram.assignment_id}
+                        className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-500/20 text-red-500"
+                        title={isAr ? 'إزالة' : 'Remove'}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Level Info */}
+                {currentLevel && (
+                  <>
+                    <div className="mb-2">
+                      <p className="text-sm font-bold text-zinc-900 dark:text-white">
+                        {isAr ? `المستوى ${currentLevel.level_order}` : `LEVEL ${currentLevel.level_order}`}
+                        <span className="text-xs font-normal text-zinc-500 ms-2">
+                          {isAr ? currentLevel.name_ar || currentLevel.name : currentLevel.name}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-orange-500 uppercase tracking-wider">{isAr ? 'قيد التقدم' : 'IN PROGRESS'}</p>
+                    </div>
+
+                    {/* Stats Pills */}
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <span className="rounded-full border border-zinc-400 dark:border-zinc-600 px-3 py-1 text-[10px] text-zinc-700 dark:text-zinc-300">
+                        {isAr ? 'حضور' : 'Attended'} : {programSessionsCompleted}
+                      </span>
+                      <span className="rounded-full border border-zinc-400 dark:border-zinc-600 px-3 py-1 text-[10px] text-zinc-700 dark:text-zinc-300">
+                        {isAr ? 'ملاحظات' : 'Notes'} : {programNotesCount}
+                      </span>
+                      <span className="rounded-full border border-zinc-400 dark:border-zinc-600 px-3 py-1 text-[10px] text-zinc-700 dark:text-zinc-300">
+                        {isAr ? 'نقاط' : 'POINT'} : {programPointsTotal}
+                      </span>
+                    </div>
+
+                    {/* Level Card with Progress */}
+                    <div className="flex gap-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-gradient-to-r from-white to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 p-3">
+                      <div className="h-20 w-20 rounded-xl overflow-hidden bg-zinc-300 dark:bg-zinc-700 flex-shrink-0">
+                        {currentLevel.image_url ? (
+                          <img src={currentLevel.image_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-zinc-500 text-xs">
+                            L{currentLevel.level_order}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{isAr ? 'التقدم' : 'PROGRESS'}</p>
+                          <p className="text-sm font-bold text-zinc-900 dark:text-white">{Math.min(totalProgress, 100)}%</p>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between text-[9px] text-zinc-500">
+                            <span>{isAr ? 'إجمالي الجلسات' : 'TOTAL SESSION'}</span>
+                            <span>{Math.min(sessionProgress, 100)}%</span>
+                          </div>
+                          <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-300 dark:bg-zinc-700 overflow-hidden">
+                            <div className="h-full rounded-full bg-orange-500" style={{ width: `${Math.min(sessionProgress, 100)}%` }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between text-[9px] text-zinc-500">
+                            <span>{isAr ? 'إجمالي النقاط' : 'TOTAL POINT'}</span>
+                            <span>{Math.min(pointProgress, 100)}%</span>
+                          </div>
+                          <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-300 dark:bg-zinc-700 overflow-hidden">
+                            <div className="h-full rounded-full bg-orange-500" style={{ width: `${Math.min(pointProgress, 100)}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {!currentLevel && (
+                  <p className="text-xs text-zinc-500 text-center py-2">
+                    {isAr ? 'لم يتم تعيين مستوى بعد.' : 'No level assigned yet.'}
+                  </p>
                 )}
               </div>
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{isAr ? 'التقدم' : 'PROGRESS'}</p>
-                  <p className="text-sm font-bold text-zinc-900 dark:text-white">{Math.min(totalProgress, 100)}%</p>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-[9px] text-zinc-500">
-                    <span>{isAr ? 'إجمالي الجلسات' : 'TOTAL SESSION'}</span>
-                    <span>{Math.min(sessionProgress, 100)}%</span>
-                  </div>
-                  <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-300 dark:bg-zinc-700 overflow-hidden">
-                    <div className="h-full rounded-full bg-orange-500" style={{ width: `${Math.min(sessionProgress, 100)}%` }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-[9px] text-zinc-500">
-                    <span>{isAr ? 'إجمالي النقاط' : 'TOTAL POINT'}</span>
-                    <span>{Math.min(pointProgress, 100)}%</span>
-                  </div>
-                  <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-300 dark:bg-zinc-700 overflow-hidden">
-                    <div className="h-full rounded-full bg-orange-500" style={{ width: `${Math.min(pointProgress, 100)}%` }} />
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* View Player Card Link */}
             <button
@@ -493,9 +687,21 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
             </button>
           </div>
         ) : (
-          <p className="text-xs text-zinc-500 text-center">
+          <p className="text-xs text-zinc-500 text-center py-4">
             {isAr ? 'لم يتم تعيين برنامج بعد.' : 'No program assigned yet.'}
           </p>
+        )}
+
+        {/* Add Program Button for Admins */}
+        {canManagePlayer && (
+          <button
+            type="button"
+            onClick={() => setShowAddProgramForm(true)}
+            className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl border-2 border-dashed border-zinc-400 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 text-sm hover:border-orange-500 hover:text-orange-500 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            {isAr ? 'إضافة برنامج' : 'Add Program'}
+          </button>
         )}
         </div>
 
@@ -643,6 +849,79 @@ export default function PlayerProfileContent({ userId, readOnly }: PlayerProfile
           {isAr ? 'اكتشف قدراتك الطبيعية' : 'DISCOVER NATURAL ABILITY'}
         </p>
       </div>
+
+      {/* Add Program Modal */}
+      {showAddProgramForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 m-4 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-white">
+                {isAr ? 'إضافة برنامج جديد' : 'Add New Program'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddProgramForm(false)}
+                className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800"
+              >
+                <X className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <select
+                value={assignmentForm.program_id}
+                onChange={(e) => setAssignmentForm({ program_id: e.target.value, age_group_id: '', level_id: '' })}
+                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white"
+              >
+                <option value="">{isAr ? 'اختر البرنامج' : 'Select program'}</option>
+                {programs.filter(p => !playerPrograms.find(pp => pp.program_id === p.id)).map((program) => (
+                  <option key={program.id} value={program.id}>{isAr ? program.name_ar || program.name : program.name}</option>
+                ))}
+              </select>
+              <select
+                value={assignmentForm.age_group_id}
+                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, age_group_id: e.target.value }))}
+                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white"
+                disabled={!assignmentForm.program_id}
+              >
+                <option value="">{isAr ? 'اختر الفئة' : 'Select age group'}</option>
+                {ageGroups.map((group) => (
+                  <option key={group.id} value={group.id}>{isAr ? group.name_ar || group.name : group.name} ({group.min_age}-{group.max_age})</option>
+                ))}
+              </select>
+              <select
+                value={assignmentForm.level_id}
+                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, level_id: e.target.value }))}
+                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-white"
+                disabled={!assignmentForm.program_id}
+              >
+                <option value="">{isAr ? 'اختر المستوى (اختياري)' : 'Select level (optional)'}</option>
+                {formLevels.filter(l => l.is_active).sort((a, b) => a.level_order - b.level_order).map((level) => (
+                  <option key={level.id} value={level.id}>
+                    {isAr ? `المستوى ${level.level_order}` : `Level ${level.level_order}`} - {isAr ? level.name_ar || level.name : level.name}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddProgramForm(false)}
+                  className="flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAssignProgram}
+                  disabled={assigning || !assignmentForm.program_id || !assignmentForm.age_group_id}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white py-2.5 text-sm font-semibold hover:from-orange-600 hover:to-amber-600 disabled:opacity-60"
+                >
+                  {assigning ? (isAr ? 'جاري الإضافة...' : 'Adding...') : (isAr ? 'إضافة البرنامج' : 'Add Program')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

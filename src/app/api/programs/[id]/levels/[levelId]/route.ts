@@ -71,7 +71,7 @@ export async function GET(
     }
 
     const { rows } = await pool.query(
-      `SELECT id, program_id, name, name_ar, description, image_url, level_order, min_sessions, min_points, is_active, created_at, updated_at
+      `SELECT id, program_id, name, name_ar, description, image_url, level_order, min_sessions, min_points, health_test_requirement, health_test_after_sessions, is_active, created_at, updated_at
        FROM program_levels
        WHERE id = $1`,
       [levelId]
@@ -117,7 +117,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, name_ar, description, image_url, level_order, min_sessions, min_points, is_active } = body;
+    const { name, name_ar, description, image_url, level_order, min_sessions, min_points, health_test_requirement, health_test_after_sessions, is_active } = body;
 
     // Check if new level_order conflicts with another level
     if (level_order !== undefined) {
@@ -142,11 +142,13 @@ export async function PUT(
            level_order = COALESCE($5, level_order),
            min_sessions = COALESCE($6, min_sessions),
            min_points = COALESCE($7, min_points),
-           is_active = COALESCE($8, is_active),
+           health_test_requirement = COALESCE($8, health_test_requirement),
+           health_test_after_sessions = $9,
+           is_active = COALESCE($10, is_active),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $9
-       RETURNING id, name, name_ar, description, image_url, level_order, min_sessions, min_points, is_active, updated_at`,
-      [name, name_ar, description, image_url, level_order, min_sessions, min_points, is_active, levelId]
+       WHERE id = $11
+       RETURNING id, name, name_ar, description, image_url, level_order, min_sessions, min_points, health_test_requirement, health_test_after_sessions, is_active, updated_at`,
+      [name, name_ar, description, image_url, level_order, min_sessions, min_points, health_test_requirement, health_test_after_sessions, is_active, levelId]
     );
 
     return NextResponse.json({

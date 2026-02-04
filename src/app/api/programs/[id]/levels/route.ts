@@ -68,7 +68,7 @@ export async function GET(
     }
 
     const { rows } = await pool.query(
-      `SELECT id, name, name_ar, description, image_url, level_order, min_sessions, min_points, is_active, created_at, updated_at
+      `SELECT id, name, name_ar, description, image_url, level_order, min_sessions, min_points, health_test_requirement, health_test_after_sessions, is_active, created_at, updated_at
        FROM program_levels
        WHERE program_id = $1
        ORDER BY level_order ASC`,
@@ -115,7 +115,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { name, name_ar, description, image_url, level_order, min_sessions = 0, min_points = 0, is_active = true } = body;
+    const { name, name_ar, description, image_url, level_order, min_sessions = 0, min_points = 0, health_test_requirement = 'none', health_test_after_sessions = null, is_active = true } = body;
 
     if (!name) {
       return NextResponse.json({ message: 'Level name is required' }, { status: 400 });
@@ -145,10 +145,10 @@ export async function POST(
     }
 
     const { rows } = await pool.query(
-      `INSERT INTO program_levels (program_id, name, name_ar, description, image_url, level_order, min_sessions, min_points, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING id, name, name_ar, description, image_url, level_order, min_sessions, min_points, is_active, created_at`,
-      [programId, name, name_ar || null, description || null, image_url || null, finalLevelOrder, min_sessions, min_points, is_active]
+      `INSERT INTO program_levels (program_id, name, name_ar, description, image_url, level_order, min_sessions, min_points, health_test_requirement, health_test_after_sessions, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       RETURNING id, name, name_ar, description, image_url, level_order, min_sessions, min_points, health_test_requirement, health_test_after_sessions, is_active, created_at`,
+      [programId, name, name_ar || null, description || null, image_url || null, finalLevelOrder, min_sessions, min_points, health_test_requirement, health_test_after_sessions, is_active]
     );
 
     return NextResponse.json({

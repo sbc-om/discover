@@ -168,6 +168,88 @@ export default function ActionDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Academy Hero Banner for Academy Managers */}
+      {actionData.role === 'academy_manager' && statsData.academy && (
+        <div className="relative -mx-4 -mt-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
+          {/* Background Image */}
+          <div className="relative h-64 sm:h-72 md:h-80">
+            {statsData.academy.logo_url ? (
+              <img
+                src={statsData.academy.logo_url}
+                alt={statsData.academy.name}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-600 via-amber-500 to-yellow-400" />
+            )}
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
+            
+            {/* Content */}
+            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8">
+              <div className="max-w-3xl">
+                {/* Status Badge */}
+                <div className="mb-3">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${
+                      statsData.academy.is_active
+                        ? 'bg-emerald-500/90 text-white'
+                        : 'bg-red-500/90 text-white'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${statsData.academy.is_active ? 'bg-white animate-pulse' : 'bg-white/60'}`} />
+                    {statsData.academy.is_active ? (isAr ? 'نشط' : 'Active') : (isAr ? 'غير نشط' : 'Inactive')}
+                  </span>
+                </div>
+                
+                {/* Academy Name */}
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+                  {isAr ? statsData.academy.name_ar || statsData.academy.name : statsData.academy.name}
+                </h1>
+                
+                {/* City */}
+                {statsData.academy.city && (
+                  <p className="text-lg sm:text-xl text-white/90 flex items-center gap-2">
+                    <Building2 className="w-5 h-5" />
+                    {statsData.academy.city}
+                  </p>
+                )}
+                
+                {/* Quick Stats Row */}
+                {statsData.stats && (
+                  <div className="flex flex-wrap gap-4 mt-4">
+                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                      <Users className="w-5 h-5 text-white/80" />
+                      <div>
+                        <p className="text-2xl font-bold text-white">{statsData.stats.players}</p>
+                        <p className="text-xs text-white/70">{isAr ? 'لاعب' : 'Players'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                      <Shield className="w-5 h-5 text-white/80" />
+                      <div>
+                        <p className="text-2xl font-bold text-white">{statsData.stats.coaches}</p>
+                        <p className="text-xs text-white/70">{isAr ? 'مدرب' : 'Coaches'}</p>
+                      </div>
+                    </div>
+                    {statsData.stats.programs !== undefined && (
+                      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                        <ClipboardList className="w-5 h-5 text-white/80" />
+                        <div>
+                          <p className="text-2xl font-bold text-white">{statsData.stats.programs}</p>
+                          <p className="text-xs text-white/70">{isAr ? 'برنامج' : 'Programs'}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
@@ -278,49 +360,6 @@ export default function ActionDashboard() {
                 onClick={() => handleActionClick('/dashboard/programs')}
               />
             )}
-          </div>
-        </DashboardWidget>
-      )}
-
-      {/* Academy Info for Academy Manager */}
-      {actionData.role === 'academy_manager' && statsData.academy && (
-        <DashboardWidget title={isAr ? 'أكاديميتي' : 'My Academy'}>
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <div className="relative h-32">
-              {statsData.academy.logo_url ? (
-                <img
-                  src={statsData.academy.logo_url}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover object-center"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-600 via-amber-500 to-amber-300" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
-              <div className="absolute inset-0 flex items-end">
-                <div className="w-full px-4 pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-lg font-bold text-white drop-shadow">
-                        {isAr ? statsData.academy.name_ar || statsData.academy.name : statsData.academy.name}
-                      </p>
-                      <p className="text-xs text-white/90">
-                        {statsData.academy.city || (isAr ? 'بدون مدينة' : 'No city')}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-[10px] px-2 py-1 rounded-full font-semibold backdrop-blur ${
-                        statsData.academy.is_active
-                          ? 'bg-emerald-500/90 text-white'
-                          : 'bg-white/90 text-zinc-700'
-                      }`}
-                    >
-                      {statsData.academy.is_active ? (isAr ? 'نشط' : 'Active') : (isAr ? 'متوقف' : 'Inactive')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </DashboardWidget>
       )}

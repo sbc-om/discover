@@ -68,6 +68,8 @@ interface Level {
   level_order: number;
   min_sessions: number;
   min_points: number;
+  health_test_requirement?: 'none' | 'before' | 'after' | 'both';
+  health_test_after_sessions?: number | null;
   is_active: boolean;
   created_at: string;
   rewards?: LevelReward[];
@@ -180,6 +182,8 @@ export default function ProgramsContent() {
     level_order: 1,
     min_sessions: 0,
     min_points: 0,
+    health_test_requirement: 'none' as 'none' | 'before' | 'after' | 'both',
+    health_test_after_sessions: null as number | null,
     is_active: true
   });
   const [levelRewards, setLevelRewards] = useState<LevelReward[]>([]);
@@ -511,6 +515,8 @@ export default function ProgramsContent() {
       level_order: nextOrder,
       min_sessions: 0,
       min_points: 0,
+      health_test_requirement: 'none' as 'none' | 'before' | 'after' | 'both',
+      health_test_after_sessions: null as number | null,
       is_active: true
     });
     setLevelImageFile(null);
@@ -532,6 +538,8 @@ export default function ProgramsContent() {
       level_order: level.level_order,
       min_sessions: level.min_sessions,
       min_points: level.min_points,
+      health_test_requirement: (level.health_test_requirement || 'none') as 'none' | 'before' | 'after' | 'both',
+      health_test_after_sessions: level.health_test_after_sessions ?? null,
       is_active: level.is_active
     });
     setLevelImageFile(null);
@@ -1160,6 +1168,98 @@ export default function ProgramsContent() {
                       className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                     />
                   </div>
+                </div>
+
+                {/* Health Test Requirements - Professional Section */}
+                <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-4 space-y-4">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h4 className="font-semibold text-sm">{t('Health Test Configuration', 'إعدادات الفحص الصحي')}</h4>
+                  </div>
+
+                  {/* Level-based Health Test */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                      {t('Level-based Requirement', 'متطلبات بناءً على المستوى')}
+                    </label>
+                    <select
+                      value={levelFormData.health_test_requirement}
+                      onChange={(e) => setLevelFormData({ ...levelFormData, health_test_requirement: e.target.value as 'none' | 'before' | 'after' | 'both' })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    >
+                      <option value="none">{t('Not Required', 'غير مطلوب')}</option>
+                      <option value="before">{t('Before Starting Level', 'قبل بدء المستوى')}</option>
+                      <option value="after">{t('After Completing Level', 'بعد إكمال المستوى')}</option>
+                      <option value="both">{t('Before & After Level', 'قبل وبعد المستوى')}</option>
+                    </select>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      {t('Health test will be required when player enters or completes this level.', 'سيكون الفحص الصحي مطلوباً عند دخول اللاعب أو إكماله لهذا المستوى.')}
+                    </p>
+                  </div>
+
+                  {/* Session-based Health Test */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                      {t('Session-based Requirement', 'متطلبات بناءً على الجلسات')}
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder={t('Number of sessions', 'عدد الجلسات')}
+                          value={levelFormData.health_test_after_sessions ?? ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setLevelFormData({ 
+                              ...levelFormData, 
+                              health_test_after_sessions: val === '' ? null : parseInt(val) 
+                            });
+                          }}
+                          className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setLevelFormData({ ...levelFormData, health_test_after_sessions: null })}
+                        className="px-3 py-2.5 rounded-xl text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                      >
+                        {t('Clear', 'مسح')}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      {t('Health test will be required after player completes this many sessions in this level. Leave empty to disable.', 'سيكون الفحص الصحي مطلوباً بعد إكمال اللاعب لهذا العدد من الجلسات في هذا المستوى. اتركه فارغاً للتعطيل.')}
+                    </p>
+                  </div>
+
+                  {/* Visual Summary */}
+                  {(levelFormData.health_test_requirement !== 'none' || levelFormData.health_test_after_sessions) && (
+                    <div className="mt-3 p-3 rounded-lg bg-white/60 dark:bg-zinc-800/60 border border-emerald-200 dark:border-emerald-800/30">
+                      <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-2">{t('Active Health Test Triggers:', 'مشغلات الفحص الصحي النشطة:')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(levelFormData.health_test_requirement === 'before' || levelFormData.health_test_requirement === 'both') && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" /></svg>
+                            {t('Before Level Start', 'قبل بدء المستوى')}
+                          </span>
+                        )}
+                        {(levelFormData.health_test_requirement === 'after' || levelFormData.health_test_requirement === 'both') && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                            {t('After Level Complete', 'بعد إكمال المستوى')}
+                          </span>
+                        )}
+                        {levelFormData.health_test_after_sessions && levelFormData.health_test_after_sessions > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>
+                            {t(`After ${levelFormData.health_test_after_sessions} Sessions`, `بعد ${levelFormData.health_test_after_sessions} جلسة`)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>

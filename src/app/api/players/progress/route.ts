@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSession } from '@/lib/session';
+import { processLevelHealthTestRequirements } from '@/lib/healthTestService';
 
 /**
  * Player Progress API
@@ -258,10 +259,11 @@ export async function POST(request: Request) {
 
     // Check level requirements to auto-mark as completed
     const levelResult = await client.query(
-      `SELECT min_sessions, min_points FROM program_levels WHERE id = $1`,
+      `SELECT min_sessions, min_points, health_test_requirement FROM program_levels WHERE id = $1`,
       [levelId]
     );
     
+    let healthTestRequests = {};
     if (levelResult.rows.length > 0) {
       const level = levelResult.rows[0];
       const meetsRequirements = 
@@ -276,6 +278,12 @@ export async function POST(request: Request) {
           [userId, levelId]
         );
         progress.level_completed = true;
+        
+        // Process after-level health test requirements when level is completed
+        const requirement = level.health_test_requirement || 'none';
+        if (requirement === 'after' || requirement === 'both') {
+          healthTestRequests = await processLevelHealthTestRequirements(userId, levelId, session.userId);
+        }
       }
     }
 
@@ -287,6 +295,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       progress,
       awardedRewards,
+      healthTestRequests,
       message: awardedRewards.length > 0 
         ? `Progress updated and ${awardedRewards.length} reward(s) earned!`
         : 'Progress updated successfully'
