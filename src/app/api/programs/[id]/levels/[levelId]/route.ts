@@ -33,6 +33,22 @@ async function checkLevelAccess(levelId: string, session: any) {
   return { level };
 }
 
+// Helper function to check granular permission
+async function hasGranularPermission(session: any, action: string): Promise<boolean> {
+  if (session.roleName === 'admin') return true;
+  
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) as count
+     FROM role_permissions rp
+     JOIN permissions p ON p.id = rp.permission_id
+     JOIN modules m ON m.id = p.module_id
+     WHERE rp.role_id = $1 AND m.name = 'programs' AND p.action = $2`,
+    [session.roleId, action]
+  );
+  
+  return parseInt(rows[0].count) > 0;
+}
+
 // GET single level
 export async function GET(
   request: Request,
@@ -80,6 +96,14 @@ export async function PUT(
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check for edit_level or update permission
+    const canEdit = await hasGranularPermission(session, 'edit_level') ||
+                    await hasGranularPermission(session, 'update');
+    
+    if (!canEdit) {
+      return NextResponse.json({ message: 'You do not have permission to edit levels' }, { status: 403 });
     }
 
     const { id: programId, levelId } = await params;
@@ -147,6 +171,14 @@ export async function DELETE(
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check for delete_level or delete permission
+    const canDelete = await hasGranularPermission(session, 'delete_level') ||
+                      await hasGranularPermission(session, 'delete');
+    
+    if (!canDelete) {
+      return NextResponse.json({ message: 'You do not have permission to delete levels' }, { status: 403 });
     }
 
     const { levelId } = await params;

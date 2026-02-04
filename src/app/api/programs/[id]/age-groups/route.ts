@@ -29,6 +29,22 @@ async function checkProgramAccess(programId: string, session: any) {
   return { program };
 }
 
+// Helper function to check granular permission
+async function hasGranularPermission(session: any, action: string): Promise<boolean> {
+  if (session.roleName === 'admin') return true;
+  
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) as count
+     FROM role_permissions rp
+     JOIN permissions p ON p.id = rp.permission_id
+     JOIN modules m ON m.id = p.module_id
+     WHERE rp.role_id = $1 AND m.name = 'programs' AND p.action = $2`,
+    [session.roleId, action]
+  );
+  
+  return parseInt(rows[0].count) > 0;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -75,6 +91,14 @@ export async function POST(
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check for create_age_group or create permission
+    const canCreate = await hasGranularPermission(session, 'create_age_group') ||
+                      await hasGranularPermission(session, 'create');
+    
+    if (!canCreate) {
+      return NextResponse.json({ message: 'You do not have permission to create age groups' }, { status: 403 });
     }
 
     const { id: programId } = await params;

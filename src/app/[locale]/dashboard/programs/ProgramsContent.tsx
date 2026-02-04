@@ -75,6 +75,22 @@ interface Academy {
   name_ar: string;
 }
 
+interface Permissions {
+  read?: boolean;
+  create?: boolean;
+  update?: boolean;
+  delete?: boolean;
+  create_program?: boolean;
+  edit_program?: boolean;
+  delete_program?: boolean;
+  create_level?: boolean;
+  edit_level?: boolean;
+  delete_level?: boolean;
+  create_age_group?: boolean;
+  edit_age_group?: boolean;
+  delete_age_group?: boolean;
+}
+
 export default function ProgramsContent() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
@@ -98,6 +114,8 @@ export default function ProgramsContent() {
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [editingLevel, setEditingLevel] = useState<Level | null>(null);
   const [editingAgeGroup, setEditingAgeGroup] = useState<AgeGroup | null>(null);
+  const [permissions, setPermissions] = useState<Permissions>({});
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'program' | 'level' | 'age_group'; item: Program | Level | AgeGroup; programId?: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -145,9 +163,13 @@ export default function ProgramsContent() {
   }
 
   useEffect(() => {
+    checkIsAdmin();
+    fetchPermissions();
+  }, []);
+
+  useEffect(() => {
     fetchPrograms();
     fetchAcademies();
-    checkIsAdmin();
   }, [page, limit, search, sortField, sortOrder]);
 
   const checkIsAdmin = async () => {
@@ -162,6 +184,31 @@ export default function ProgramsContent() {
       console.error('Error checking admin status:', error);
     }
   };
+
+  const fetchPermissions = async () => {
+    try {
+      const response = await fetch('/api/permissions/check?module=programs');
+      if (response.ok) {
+        const data = await response.json();
+        setPermissions(data.permissions || {});
+      }
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+    } finally {
+      setPermissionsLoaded(true);
+    }
+  };
+
+  // Permission helper functions - only return true if permissions are loaded
+  const canCreateProgram = () => permissionsLoaded && (isAdmin || permissions.create_program || permissions.create);
+  const canEditProgram = () => permissionsLoaded && (isAdmin || permissions.edit_program || permissions.update);
+  const canDeleteProgram = () => permissionsLoaded && (isAdmin || permissions.delete_program || permissions.delete);
+  const canCreateLevel = () => permissionsLoaded && (isAdmin || permissions.create_level || permissions.create);
+  const canEditLevel = () => permissionsLoaded && (isAdmin || permissions.edit_level || permissions.update);
+  const canDeleteLevel = () => permissionsLoaded && (isAdmin || permissions.delete_level || permissions.delete);
+  const canCreateAgeGroup = () => permissionsLoaded && (isAdmin || permissions.create_age_group || permissions.create);
+  const canEditAgeGroup = () => permissionsLoaded && (isAdmin || permissions.edit_age_group || permissions.update);
+  const canDeleteAgeGroup = () => permissionsLoaded && (isAdmin || permissions.delete_age_group || permissions.delete);
 
   const fetchPrograms = async () => {
     try {
@@ -592,20 +639,24 @@ export default function ProgramsContent() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={handleAddLevel}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
-            >
-              <Plus className="w-5 h-5" />
-              <span>{t('Add Level', 'إضافة مستوى')}</span>
-            </button>
-            <button
-              onClick={handleAddAgeGroup}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
-            >
-              <Plus className="w-5 h-5" />
-              <span>{t('Add Age Group', 'إضافة فئة عمرية')}</span>
-            </button>
+            {canCreateLevel() && (
+              <button
+                onClick={handleAddLevel}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+              >
+                <Plus className="w-5 h-5" />
+                <span>{t('Add Level', 'إضافة مستوى')}</span>
+              </button>
+            )}
+            {canCreateAgeGroup() && (
+              <button
+                onClick={handleAddAgeGroup}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+              >
+                <Plus className="w-5 h-5" />
+                <span>{t('Add Age Group', 'إضافة فئة عمرية')}</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -678,19 +729,23 @@ export default function ProgramsContent() {
 
                   {/* Actions */}
                   <div className="flex gap-2 mt-auto">
-                    <button
-                      onClick={() => handleEditLevel(level)}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      {t('Edit', 'تعديل')}
-                    </button>
-                    <button
-                      onClick={() => setDeleteTarget({ type: 'level', item: level, programId: selectedProgram.id })}
-                      className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {canEditLevel() && (
+                      <button
+                        onClick={() => handleEditLevel(level)}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        {t('Edit', 'تعديل')}
+                      </button>
+                    )}
+                    {canDeleteLevel() && (
+                      <button
+                        onClick={() => setDeleteTarget({ type: 'level', item: level, programId: selectedProgram.id })}
+                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -709,13 +764,15 @@ export default function ProgramsContent() {
               <p className="text-zinc-500 dark:text-zinc-400 mb-4">
                 {t('Create the first level for this program', 'أنشئ المستوى الأول لهذا البرنامج')}
               </p>
-              <button
-                onClick={handleAddLevel}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                {t('Add Level', 'إضافة مستوى')}
-              </button>
+              {canCreateLevel() && (
+                <button
+                  onClick={handleAddLevel}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  {t('Add Level', 'إضافة مستوى')}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -767,19 +824,23 @@ export default function ProgramsContent() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditAgeGroup(ageGroup)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        {t('Edit', 'تعديل')}
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget({ type: 'age_group', item: ageGroup, programId: selectedProgram.id })}
-                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canEditAgeGroup() && (
+                        <button
+                          onClick={() => handleEditAgeGroup(ageGroup)}
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          {t('Edit', 'تعديل')}
+                        </button>
+                      )}
+                      {canDeleteAgeGroup() && (
+                        <button
+                          onClick={() => setDeleteTarget({ type: 'age_group', item: ageGroup, programId: selectedProgram.id })}
+                          className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -797,13 +858,15 @@ export default function ProgramsContent() {
                 <p className="text-zinc-500 dark:text-zinc-400 mb-4">
                   {t('Create the first age group for this program', 'أنشئ الفئة العمرية الأولى لهذا البرنامج')}
                 </p>
-                <button
-                  onClick={handleAddAgeGroup}
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  {t('Add Age Group', 'إضافة فئة عمرية')}
-                </button>
+                {canCreateAgeGroup() && (
+                  <button
+                    onClick={handleAddAgeGroup}
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    {t('Add Age Group', 'إضافة فئة عمرية')}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1167,13 +1230,15 @@ export default function ProgramsContent() {
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           {t('Programs', 'البرامج')}
         </h1>
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          <span>{t('Add Program', 'إضافة برنامج')}</span>
-        </button>
+        {canCreateProgram() && (
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            <span>{t('Add Program', 'إضافة برنامج')}</span>
+          </button>
+        )}
       </div>
 
       {/* Search & Filters */}
@@ -1280,20 +1345,24 @@ export default function ProgramsContent() {
                         className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all"
                       >
                         <Target className="w-4 h-4" />
-                        {t('Levels', 'المستويات')}
+                        {t('Levels', 'المستویات')}
                       </button>
-                      <button
-                        onClick={() => handleEdit(program)}
-                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget({ type: 'program', item: program })}
-                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canEditProgram() && (
+                        <button
+                          onClick={() => handleEdit(program)}
+                          className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDeleteProgram() && (
+                        <button
+                          onClick={() => setDeleteTarget({ type: 'program', item: program })}
+                          className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </motion.div>
