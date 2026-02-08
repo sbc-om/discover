@@ -2684,6 +2684,39 @@ export default function ProgramsContent() {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
           />
         </div>
+        
+        {/* Academy Filter */}
+        {isAdmin && (
+          <div className="relative min-w-[200px]">
+            <select
+              value={academyFilter}
+              onChange={(e) => {
+                setAcademyFilter(e.target.value);
+                setPage(1);
+                // Update URL without full navigation
+                if (e.target.value) {
+                  window.history.pushState({}, '', `/${locale}/dashboard/programs?academyId=${e.target.value}`);
+                } else {
+                  window.history.pushState({}, '', `/${locale}/dashboard/programs`);
+                }
+              }}
+              className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm appearance-none cursor-pointer"
+            >
+              <option value="">{t('All Academies', 'جميع الأكاديميات')}</option>
+              {academies.map((academy) => (
+                <option key={academy.id} value={academy.id}>
+                  {isAr ? academy.name_ar || academy.name : academy.name}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+              <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        )}
+        
         <button
           onClick={() => handleSort('name')}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"

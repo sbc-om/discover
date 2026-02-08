@@ -67,7 +67,7 @@ export async function GET(
 
     // Get program levels
     const levelsResult = await pool.query(
-      `SELECT id, name, name_ar, description, image_url, level_order, min_sessions, min_points, is_active, created_at
+      `SELECT id, name, name_ar, description, image_url, level_order, min_sessions, min_points, health_test_requirement, health_test_after_sessions, is_active, created_at
        FROM program_levels
        WHERE program_id = $1
        ORDER BY level_order ASC`,
