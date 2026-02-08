@@ -2,10 +2,113 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Building2, CheckCircle2, ChevronDown, Clock, Loader2, XCircle } from 'lucide-react';
+import { Building2, CheckCircle2, ChevronDown, Clock, Loader2, XCircle, Zap, Wind, Scale, Activity, Target, Move3d, StretchHorizontal } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
 import DateTimePicker from '@/components/DateTimePicker';
+
+// Styled Range Slider Component
+interface RangeSliderProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  onChange: (value: number) => void;
+  icon?: React.ReactNode;
+  color?: 'orange' | 'emerald' | 'blue' | 'purple' | 'rose' | 'sky' | 'teal' | 'amber';
+  unit?: string;
+  showScale?: boolean;
+}
+
+const colorClasses = {
+  orange: 'bg-orange-500',
+  emerald: 'bg-emerald-500',
+  blue: 'bg-blue-500',
+  purple: 'bg-purple-500',
+  rose: 'bg-rose-500',
+  sky: 'bg-sky-500',
+  teal: 'bg-teal-500',
+  amber: 'bg-amber-500',
+};
+
+const RangeSlider = ({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  onChange,
+  icon,
+  color = 'orange',
+  unit = '',
+  showScale = true,
+}: RangeSliderProps) => {
+  const totalSteps = Math.floor((max - min) / step);
+  // Scale from min to max (0 to 10)
+  const scaleSteps = showScale && totalSteps <= 10 
+    ? Array.from({ length: totalSteps + 1 }, (_, i) => min + i * step)
+    : null;
+  
+  const percent = ((value - min) / (max - min)) * 100;
+  
+  return (
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4 space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className={`w-8 h-8 rounded-lg ${colorClasses[color]} flex items-center justify-center`}>
+            {icon && <span className="text-white">{icon}</span>}
+          </div>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
+        </div>
+        <div className={`w-8 h-8 rounded-full ${colorClasses[color]} flex items-center justify-center`}>
+          <span className="text-xs font-bold text-white">
+            {value}
+          </span>
+        </div>
+      </div>
+      
+      {/* Slider */}
+      <div className="relative h-2">
+        <div className="absolute inset-0 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+          <div 
+            className={`absolute inset-y-0 left-0 rounded-full ${colorClasses[color]} transition-all duration-150`}
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        />
+        {/* Thumb indicator - centered on the line */}
+        <div 
+          className={`absolute top-1/2 w-3 h-3 rounded-full ${colorClasses[color]} border-2 border-white dark:border-zinc-900 shadow-md transform -translate-x-1/2 -translate-y-1/2 transition-all duration-150 pointer-events-none`}
+          style={{ left: `${percent}%` }}
+        />
+      </div>
+      
+      {/* Scale numbers - 0 to 10 from left to right */}
+      {scaleSteps && (
+        <div className="flex justify-between">
+          {scaleSteps.map((num) => (
+            <span 
+              key={num}
+              className="text-xs font-medium text-zinc-400 dark:text-zinc-500"
+            >
+              {num}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface HealthTestItem {
   id: string;
@@ -526,10 +629,29 @@ export default function HealthTestsContent() {
                 </div>
 
             {test.status === 'pending' && (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                    {isAr ? 'تحديد الموعد' : 'Set schedule'}
+              <div className="mt-4 rounded-2xl border border-orange-200 dark:border-orange-900/50 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-900/20 dark:via-amber-900/20 dark:to-yellow-900/20 p-4 space-y-4">
+                {/* Header */}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
+                      {isAr ? 'جدولة الفحص الصحي' : 'Schedule Health Test'}
+                    </h4>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {isAr ? 'حدد موعد الفحص للاعب' : 'Set appointment date for player'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Date & Time Picker */}
+                <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-orange-100 dark:border-orange-900/30 shadow-sm">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                    <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {isAr ? 'التاريخ والوقت' : 'Date & Time'}
                   </label>
                   <DateTimePicker
                     value={scheduleById[test.id] || ''}
@@ -539,11 +661,36 @@ export default function HealthTestsContent() {
                     mode="datetime"
                     locale={locale}
                     placeholder={isAr ? 'اختر التاريخ والوقت' : 'Select date & time'}
+                    minDate={new Date().toISOString().split('T')[0]}
+                    className="w-full"
                   />
+                  {scheduleById[test.id] && (
+                    <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      <span className="text-xs text-emerald-700 dark:text-emerald-400">
+                        {isAr ? 'الموعد المحدد: ' : 'Scheduled: '}
+                        <span className="font-semibold">
+                          {new Date(scheduleById[test.id]).toLocaleString(isAr ? 'ar' : 'en', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                    {isAr ? 'ملاحظات' : 'Notes'}
+
+                {/* Notes */}
+                <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-orange-100 dark:border-orange-900/30 shadow-sm">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                    <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    {isAr ? 'ملاحظات (اختياري)' : 'Notes (optional)'}
                   </label>
                   <textarea
                     rows={2}
@@ -551,10 +698,13 @@ export default function HealthTestsContent() {
                     onChange={(event) =>
                       setNotesById((prev) => ({ ...prev, [test.id]: event.target.value }))
                     }
-                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm"
+                    placeholder={isAr ? 'أضف ملاحظات حول الموعد...' : 'Add notes about the appointment...'}
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-sm placeholder:text-zinc-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
                   />
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() =>
@@ -564,10 +714,15 @@ export default function HealthTestsContent() {
                         review_notes: notesById[test.id],
                       })
                     }
-                    disabled={savingId === test.id}
-                    className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:from-orange-600 hover:to-amber-600 hover:shadow-md disabled:opacity-60"
+                    disabled={savingId === test.id || !scheduleById[test.id]}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-3 text-sm font-bold shadow-lg shadow-emerald-500/25 hover:from-emerald-600 hover:to-teal-600 hover:shadow-xl hover:shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
-                    {isAr ? 'قبول' : 'Approve'}
+                    {savingId === test.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4" />
+                    )}
+                    {isAr ? 'قبول وجدولة' : 'Approve & Schedule'}
                   </button>
                   <button
                     type="button"
@@ -578,118 +733,158 @@ export default function HealthTestsContent() {
                       })
                     }
                     disabled={savingId === test.id}
-                    className="rounded-xl bg-red-600 text-white px-4 py-2 text-sm font-semibold shadow-sm hover:bg-red-700 hover:shadow-md disabled:opacity-60"
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-red-600 dark:text-red-400 border border-zinc-200 dark:border-zinc-700 px-5 py-3 text-sm font-bold hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800 disabled:opacity-50 transition-all"
                   >
+                    <XCircle className="h-4 w-4" />
                     {isAr ? 'رفض' : 'Reject'}
                   </button>
                 </div>
+
+                {/* Helper Text */}
+                {!scheduleById[test.id] && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 mt-1">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {isAr ? 'يرجى تحديد موعد للقبول' : 'Please set a schedule to approve'}
+                  </p>
+                )}
               </div>
             )}
 
             {test.status === 'approved' && result && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
                   {isAr ? 'تسجيل النتائج' : 'Record results'}
                 </h4>
+                
+                {/* Physical Measurements */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-zinc-500">
-                      <span>{isAr ? 'الطول (cm)' : 'Height (cm)'}</span>
-                      <span className="text-zinc-800 dark:text-zinc-100 font-semibold">{result.height || 0}</span>
+                  {/* Height - using number input for precision */}
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                          <Activity className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          {isAr ? 'الطول' : 'Height'}
+                        </span>
+                      </div>
+                      <div className="px-3 py-1 rounded-full bg-emerald-500/15">
+                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                          {result.height || 0} cm
+                        </span>
+                      </div>
                     </div>
                     <input
-                      type="range"
+                      type="number"
                       min={120}
                       max={220}
-                      step={1}
-                      value={result.height || 0}
-                      onChange={(event) =>
+                      value={result.height || ''}
+                      placeholder="170"
+                      onChange={(e) =>
                         setResultsById((prev) => ({
                           ...prev,
-                          [test.id]: { ...prev[test.id], height: event.target.value },
+                          [test.id]: { ...prev[test.id], height: e.target.value },
                         }))
                       }
-                      list={`height-marks-${test.id}`}
-                      className="w-full accent-emerald-500"
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm px-3 py-2 text-center font-medium"
                     />
-                    <datalist id={`height-marks-${test.id}`}>
-                      <option value="120" />
-                      <option value="150" />
-                      <option value="180" />
-                      <option value="210" />
-                      <option value="220" />
-                    </datalist>
                   </div>
-                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-zinc-500">
-                      <span>{isAr ? 'الوزن (kg)' : 'Weight (kg)'}</span>
-                      <span className="text-zinc-800 dark:text-zinc-100 font-semibold">{result.weight || 0}</span>
+
+                  {/* Weight - using number input for precision */}
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                          <Scale className="w-4 h-4 text-blue-500" />
+                        </div>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          {isAr ? 'الوزن' : 'Weight'}
+                        </span>
+                      </div>
+                      <div className="px-3 py-1 rounded-full bg-blue-500/15">
+                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                          {result.weight || 0} kg
+                        </span>
+                      </div>
                     </div>
                     <input
-                      type="range"
+                      type="number"
                       min={30}
-                      max={140}
-                      step={1}
-                      value={result.weight || 0}
-                      onChange={(event) =>
+                      max={150}
+                      value={result.weight || ''}
+                      placeholder="65"
+                      onChange={(e) =>
                         setResultsById((prev) => ({
                           ...prev,
-                          [test.id]: { ...prev[test.id], weight: event.target.value },
+                          [test.id]: { ...prev[test.id], weight: e.target.value },
                         }))
                       }
-                      list={`weight-marks-${test.id}`}
-                      className="w-full accent-emerald-500"
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm px-3 py-2 text-center font-medium"
                     />
-                    <datalist id={`weight-marks-${test.id}`}>
-                      <option value="40" />
-                      <option value="60" />
-                      <option value="80" />
-                      <option value="100" />
-                      <option value="120" />
-                    </datalist>
                   </div>
-                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-zinc-500">
-                      <span>{isAr ? 'النبض (bpm)' : 'Heart rate (bpm)'}</span>
-                      <span className="text-zinc-800 dark:text-zinc-100 font-semibold">{result.heart_rate || 0}</span>
+
+                  {/* Heart Rate - using number input */}
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-rose-500/15 flex items-center justify-center">
+                          <Activity className="w-4 h-4 text-rose-500" />
+                        </div>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          {isAr ? 'النبض' : 'Heart Rate'}
+                        </span>
+                      </div>
+                      <div className="px-3 py-1 rounded-full bg-rose-500/15">
+                        <span className="text-sm font-bold text-rose-600 dark:text-rose-400">
+                          {result.heart_rate || 0} bpm
+                        </span>
+                      </div>
                     </div>
                     <input
-                      type="range"
+                      type="number"
                       min={50}
                       max={200}
-                      step={1}
-                      value={result.heart_rate || 0}
-                      onChange={(event) =>
+                      value={result.heart_rate || ''}
+                      placeholder="72"
+                      onChange={(e) =>
                         setResultsById((prev) => ({
                           ...prev,
-                          [test.id]: { ...prev[test.id], heart_rate: event.target.value },
+                          [test.id]: { ...prev[test.id], heart_rate: e.target.value },
                         }))
                       }
-                      list={`heart-marks-${test.id}`}
-                      className="w-full accent-emerald-500"
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm px-3 py-2 text-center font-medium"
                     />
-                    <datalist id={`heart-marks-${test.id}`}>
-                      <option value="60" />
-                      <option value="90" />
-                      <option value="120" />
-                      <option value="150" />
-                      <option value="180" />
-                    </datalist>
                   </div>
-                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-zinc-500">
-                      <span>{isAr ? 'ضغط الدم' : 'Blood pressure'}</span>
-                      <span className="text-zinc-800 dark:text-zinc-100 font-semibold">{result.blood_pressure || '-'}</span>
+
+                  {/* Blood Pressure - dropdown */}
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center">
+                          <Activity className="w-4 h-4 text-purple-500" />
+                        </div>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          {isAr ? 'ضغط الدم' : 'Blood Pressure'}
+                        </span>
+                      </div>
+                      <div className="px-3 py-1 rounded-full bg-purple-500/15">
+                        <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                          {result.blood_pressure || '-'}
+                        </span>
+                      </div>
                     </div>
                     <select
                       value={result.blood_pressure}
-                      onChange={(event) =>
+                      onChange={(e) =>
                         setResultsById((prev) => ({
                           ...prev,
-                          [test.id]: { ...prev[test.id], blood_pressure: event.target.value },
+                          [test.id]: { ...prev[test.id], blood_pressure: e.target.value },
                         }))
                       }
-                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm px-3 py-2"
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm px-3 py-2 text-center font-medium"
                     >
                       <option value="">{isAr ? 'اختر' : 'Select'}</option>
                       <option value="90/60">90/60</option>
@@ -701,48 +896,107 @@ export default function HealthTestsContent() {
                     </select>
                   </div>
                 </div>
+
+                {/* Performance Scores - styled sliders */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[
-                    { key: 'speed_score', label: isAr ? 'سرعة' : 'Speed' },
-                    { key: 'agility_score', label: isAr ? 'رشاقة' : 'Agility' },
-                    { key: 'balance_score', label: isAr ? 'توازن' : 'Balance' },
-                    { key: 'power_score', label: isAr ? 'قوة' : 'Power' },
-                    { key: 'reaction_score', label: isAr ? 'رد الفعل' : 'Reaction' },
-                    { key: 'coordination_score', label: isAr ? 'تناسق' : 'Coordination' },
-                    { key: 'flexibility_score', label: isAr ? 'مرونة' : 'Flexibility' },
-                  ].map((item) => (
-                    <div key={item.key} className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 space-y-2">
-                      <div className="flex items-center justify-between text-xs text-zinc-500">
-                        <span>{item.label}</span>
-                        <span className="text-zinc-800 dark:text-zinc-100 font-semibold">
-                          {result[item.key as keyof ResultForm] || 0}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={10}
-                        step={1}
-                        value={result[item.key as keyof ResultForm] || 0}
-                        onChange={(event) =>
-                          setResultsById((prev) => ({
-                            ...prev,
-                            [test.id]: { ...prev[test.id], [item.key]: event.target.value },
-                          }))
-                        }
-                        list={`${item.key}-marks-${test.id}`}
-                        className="w-full accent-blue-500"
-                      />
-                      <datalist id={`${item.key}-marks-${test.id}`}>
-                        <option value="0" />
-                        <option value="2" />
-                        <option value="4" />
-                        <option value="6" />
-                        <option value="8" />
-                        <option value="10" />
-                      </datalist>
-                    </div>
-                  ))}
+                  <RangeSlider
+                    label={isAr ? 'سرعة' : 'Speed'}
+                    value={Number(result.speed_score) || 0}
+                    min={0}
+                    max={10}
+                    onChange={(val) =>
+                      setResultsById((prev) => ({
+                        ...prev,
+                        [test.id]: { ...prev[test.id], speed_score: String(val) },
+                      }))
+                    }
+                    icon={<Zap className="w-4 h-4" />}
+                    color="orange"
+                  />
+                  <RangeSlider
+                    label={isAr ? 'رشاقة' : 'Agility'}
+                    value={Number(result.agility_score) || 0}
+                    min={0}
+                    max={10}
+                    onChange={(val) =>
+                      setResultsById((prev) => ({
+                        ...prev,
+                        [test.id]: { ...prev[test.id], agility_score: String(val) },
+                      }))
+                    }
+                    icon={<Wind className="w-4 h-4" />}
+                    color="amber"
+                  />
+                  <RangeSlider
+                    label={isAr ? 'توازن' : 'Balance'}
+                    value={Number(result.balance_score) || 0}
+                    min={0}
+                    max={10}
+                    onChange={(val) =>
+                      setResultsById((prev) => ({
+                        ...prev,
+                        [test.id]: { ...prev[test.id], balance_score: String(val) },
+                      }))
+                    }
+                    icon={<Scale className="w-4 h-4" />}
+                    color="purple"
+                  />
+                  <RangeSlider
+                    label={isAr ? 'قوة' : 'Power'}
+                    value={Number(result.power_score) || 0}
+                    min={0}
+                    max={10}
+                    onChange={(val) =>
+                      setResultsById((prev) => ({
+                        ...prev,
+                        [test.id]: { ...prev[test.id], power_score: String(val) },
+                      }))
+                    }
+                    icon={<Activity className="w-4 h-4" />}
+                    color="rose"
+                  />
+                  <RangeSlider
+                    label={isAr ? 'رد الفعل' : 'Reaction'}
+                    value={Number(result.reaction_score) || 0}
+                    min={0}
+                    max={10}
+                    onChange={(val) =>
+                      setResultsById((prev) => ({
+                        ...prev,
+                        [test.id]: { ...prev[test.id], reaction_score: String(val) },
+                      }))
+                    }
+                    icon={<Target className="w-4 h-4" />}
+                    color="sky"
+                  />
+                  <RangeSlider
+                    label={isAr ? 'تناسق' : 'Coordination'}
+                    value={Number(result.coordination_score) || 0}
+                    min={0}
+                    max={10}
+                    onChange={(val) =>
+                      setResultsById((prev) => ({
+                        ...prev,
+                        [test.id]: { ...prev[test.id], coordination_score: String(val) },
+                      }))
+                    }
+                    icon={<Move3d className="w-4 h-4" />}
+                    color="teal"
+                  />
+                  <RangeSlider
+                    label={isAr ? 'مرونة' : 'Flexibility'}
+                    value={Number(result.flexibility_score) || 0}
+                    min={0}
+                    max={10}
+                    onChange={(val) =>
+                      setResultsById((prev) => ({
+                        ...prev,
+                        [test.id]: { ...prev[test.id], flexibility_score: String(val) },
+                      }))
+                    }
+                    icon={<StretchHorizontal className="w-4 h-4" />}
+                    color="emerald"
+                  />
                 </div>
                 <textarea
                   rows={3}

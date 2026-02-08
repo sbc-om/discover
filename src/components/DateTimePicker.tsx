@@ -67,13 +67,17 @@ export default function DateTimePicker({
     if (isOpen && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const dropdownHeight = 320;
+      const dropdownWidth = 280;
       const spaceBelow = window.innerHeight - rect.bottom;
       const openAbove = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
 
+      // Center the dropdown under the input if input is wider
+      const leftOffset = rect.width > dropdownWidth ? (rect.width - dropdownWidth) / 2 : 0;
+
       setDropdownStyle({
         position: 'fixed',
-        left: rect.left,
-        width: Math.max(rect.width, 280),
+        left: rect.left + leftOffset,
+        width: dropdownWidth,
         ...(openAbove ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
       });
     }
