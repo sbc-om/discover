@@ -14,6 +14,39 @@ ALTER TABLE player_programs ADD COLUMN IF NOT EXISTS level_id UUID REFERENCES pr
 CREATE INDEX IF NOT EXISTS idx_player_programs_level_id ON player_programs(level_id);
 
 -- =============================================================================
+-- Patch: 2026-02-04-add-level-health-test-requirements.sql
+-- =============================================================================
+-- Add health test requirement fields to program_levels table
+ALTER TABLE program_levels
+ADD COLUMN IF NOT EXISTS health_test_requirement VARCHAR(20) DEFAULT 'none';
+
+-- Create table to track health test requests associated with level assignments
+CREATE TABLE IF NOT EXISTS level_health_test_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    level_id UUID NOT NULL REFERENCES program_levels(id) ON DELETE CASCADE,
+    health_test_id UUID REFERENCES health_tests(id) ON DELETE SET NULL,
+    request_type VARCHAR(20) NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, level_id, request_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_level_health_test_requests_user_id ON level_health_test_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_level_health_test_requests_level_id ON level_health_test_requests(level_id);
+CREATE INDEX IF NOT EXISTS idx_level_health_test_requests_status ON level_health_test_requests(status);
+
+-- =============================================================================
+-- Patch: 2026-01-26-add-player-level-assignment.sql (continued)
+-- =============================================================================
+-- Add level_id column to player_programs table for manual level assignment
+ALTER TABLE player_programs ADD COLUMN IF NOT EXISTS level_id UUID REFERENCES program_levels(id) ON DELETE SET NULL;
+
+-- Create index for level_id lookups
+CREATE INDEX IF NOT EXISTS idx_player_programs_level_id ON player_programs(level_id);
+
+-- =============================================================================
 -- Patch: 2026-02-04-add-dynamic-health-test-fields.sql
 -- =============================================================================
 -- Dynamic Health Test Fields System for Programs
