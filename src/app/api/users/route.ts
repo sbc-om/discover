@@ -15,6 +15,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const roleFilter = searchParams.get('role') || '';
     const specialFilter = searchParams.get('filter') || '';
+    const academyIdFilter = searchParams.get('academyId') || '';
     const sortBy = searchParams.get('sortBy') || 'created_at';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const offset = (page - 1) * limit;
@@ -97,6 +98,13 @@ export async function GET(request: Request) {
     if (roleFilter) {
       query += ` AND r.name = $${paramIndex}`;
       params.push(roleFilter);
+      paramIndex++;
+    }
+
+    // Academy filter (only for admin)
+    if (academyIdFilter && session.roleName === 'admin') {
+      query += ` AND u.academy_id = $${paramIndex}`;
+      params.push(academyIdFilter);
       paramIndex++;
     }
 

@@ -582,7 +582,7 @@ export default function AcademiesContent() {
                   <div className="flex items-center gap-2 mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                     {/* View Details Button */}
                     <button
-                      onClick={() => router.push(`/${locale}/dashboard/programs?academyId=${academy.id}`)}
+                      onClick={() => router.push(`/${locale}/dashboard/academies/${academy.id}`)}
                       className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                       title={isAr ? 'عرض التفاصيل' : 'View Details'}
                     >

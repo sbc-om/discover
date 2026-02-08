@@ -92,6 +92,7 @@ export default function UsersContent() {
   const searchParams = useSearchParams();
   const filterParam = searchParams.get('filter');
   const roleParam = searchParams.get('role');
+  const academyIdParam = searchParams.get('academyId');
   
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -111,6 +112,7 @@ export default function UsersContent() {
   const [specialFilter, setSpecialFilter] = useState<string | null>(() => 
     filterParam || null
   );
+  const [academyFilter, setAcademyFilter] = useState(() => academyIdParam || '');
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [currentAcademyId, setCurrentAcademyId] = useState<string | null>(null);
   const [currentAcademyName, setCurrentAcademyName] = useState<string | null>(null);
@@ -143,6 +145,7 @@ export default function UsersContent() {
   useEffect(() => {
     const newRoleFilter = roleParam && ['admin', 'academy_manager', 'coach', 'player'].includes(roleParam) ? roleParam : '';
     const newSpecialFilter = filterParam || null;
+    const newAcademyFilter = academyIdParam || '';
     
     if (newRoleFilter !== roleFilter) {
       setRoleFilter(newRoleFilter);
@@ -150,13 +153,16 @@ export default function UsersContent() {
     if (newSpecialFilter !== specialFilter) {
       setSpecialFilter(newSpecialFilter);
     }
-  }, [filterParam, roleParam]);
+    if (newAcademyFilter !== academyFilter) {
+      setAcademyFilter(newAcademyFilter);
+    }
+  }, [filterParam, roleParam, academyIdParam]);
 
   useEffect(() => {
     fetchUsers();
     fetchRoles();
     fetchAcademies();
-  }, [page, limit, search, roleFilter, sortField, sortOrder, specialFilter]);
+  }, [page, limit, search, roleFilter, sortField, sortOrder, specialFilter, academyFilter]);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -186,7 +192,8 @@ export default function UsersContent() {
         sortOrder: sortOrder,
         ...(search && { search }),
         ...(roleFilter && { role: roleFilter }),
-        ...(specialFilter && { filter: specialFilter })
+        ...(specialFilter && { filter: specialFilter }),
+        ...(academyFilter && { academyId: academyFilter })
       });
 
       const response = await fetch(`/api/users?${params}`);
@@ -476,8 +483,32 @@ export default function UsersContent() {
     ? users.filter((user) => user.role_name === 'player' && user.completed_level_order)
     : [];
 
+  // Get filtered academy name
+  const filteredAcademy = academyFilter ? academies.find(a => a.id === academyFilter) : null;
+
   return (
     <div className="space-y-6">
+      {/* Academy Filter Banner */}
+      {academyFilter && filteredAcademy && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            {isAr 
+              ? `🔍 عرض مستخدمي أكاديمية: ${filteredAcademy.name_ar || filteredAcademy.name}`
+              : `🔍 Showing users of academy: ${filteredAcademy.name}`}
+          </p>
+          <button
+            onClick={() => {
+              setAcademyFilter('');
+              window.history.pushState({}, '', `/${locale}/dashboard/users`);
+            }}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+          >
+            {isAr ? 'إزالة الفلتر' : 'Clear Filter'}
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

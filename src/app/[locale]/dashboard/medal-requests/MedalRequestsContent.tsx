@@ -23,6 +23,7 @@ interface MedalRequest {
   first_name: string;
   last_name: string;
   avatar_url?: string | null;
+  academy_id?: string | null;
   academy_name?: string | null;
   academy_name_ar?: string | null;
 }
@@ -52,6 +53,7 @@ export default function MedalRequestsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const statusParam = searchParams.get('status');
+  const academyIdParam = searchParams.get('academyId');
 
   const [roleName, setRoleName] = useState<string>('');
   const [requests, setRequests] = useState<MedalRequest[]>([]);
@@ -64,6 +66,7 @@ export default function MedalRequestsContent() {
       : 'all'
   );
   const [academyFilter, setAcademyFilter] = useState<string>('all');
+  const [academyIdFilter, setAcademyIdFilter] = useState(() => academyIdParam || '');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
   const [updateForm, setUpdateForm] = useState({
@@ -85,6 +88,9 @@ export default function MedalRequestsContent() {
     if (statusFilter !== 'all') {
       params.append('status', statusFilter);
     }
+    if (academyIdFilter) {
+      params.append('academyId', academyIdFilter);
+    }
     const url = params.toString() ? `/api/medal-requests?${params}` : '/api/medal-requests';
     const response = await fetch(url);
     const data = await response.json();
@@ -99,7 +105,11 @@ export default function MedalRequestsContent() {
     if (newFilter !== statusFilter) {
       setStatusFilter(newFilter);
     }
-  }, [statusParam]);
+    const newAcademyFilter = academyIdParam || '';
+    if (newAcademyFilter !== academyIdFilter) {
+      setAcademyIdFilter(newAcademyFilter);
+    }
+  }, [statusParam, academyIdParam]);
 
   useEffect(() => {
     const boot = async () => {
@@ -109,7 +119,7 @@ export default function MedalRequestsContent() {
       setLoading(false);
     };
     boot();
-  }, [statusFilter]);
+  }, [statusFilter, academyIdFilter]);
 
   const filteredRequests = useMemo(() => {
     let filtered = requests;
@@ -200,6 +210,11 @@ export default function MedalRequestsContent() {
     return flow[current] || null;
   };
 
+  // Get filtered academy info from requests
+  const filteredAcademyInfo = academyIdFilter && requests.length > 0 
+    ? requests.find(r => r.academy_id === academyIdFilter)
+    : null;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -210,6 +225,27 @@ export default function MedalRequestsContent() {
 
   return (
     <div className="space-y-4 md:space-y-6">
+      {/* Academy Filter Banner */}
+      {academyIdFilter && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            {isAr 
+              ? `🔍 عرض طلبات أكاديمية: ${filteredAcademyInfo?.academy_name_ar || filteredAcademyInfo?.academy_name || academyIdFilter}`
+              : `🔍 Showing requests of academy: ${filteredAcademyInfo?.academy_name || academyIdFilter}`}
+          </p>
+          <button
+            onClick={() => {
+              setAcademyIdFilter('');
+              window.history.pushState({}, '', `/${locale}/dashboard/medal-requests`);
+            }}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+          >
+            {isAr ? 'إزالة الفلتر' : 'Clear Filter'}
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>

@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     const session = await requireRole(['admin', 'academy_manager']);
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
+    const academyIdFilter = searchParams.get('academyId');
 
     let query = `
       SELECT 
@@ -37,6 +38,13 @@ export async function GET(request: Request) {
     if (status) {
       query += ` AND mr.status = $${index}`;
       params.push(status);
+      index += 1;
+    }
+
+    // Academy filter (only for admin)
+    if (academyIdFilter && session.roleName === 'admin') {
+      query += ` AND u.academy_id = $${index}`;
+      params.push(academyIdFilter);
       index += 1;
     }
 

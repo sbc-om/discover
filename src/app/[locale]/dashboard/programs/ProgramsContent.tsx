@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import ModalPortal from '@/components/ModalPortal';
@@ -162,6 +163,8 @@ interface Permissions {
 export default function ProgramsContent() {
   const { locale } = useLocale();
   const isAr = locale === 'ar';
+  const searchParams = useSearchParams();
+  const academyIdParam = searchParams.get('academyId');
   
   // Translation helper
   const t = (en: string, ar: string) => isAr ? ar : en;
@@ -174,6 +177,7 @@ export default function ProgramsContent() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState('');
+  const [academyFilter, setAcademyFilter] = useState(() => academyIdParam || '');
   const [sortField, setSortField] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showModal, setShowModal] = useState(false);
@@ -291,6 +295,14 @@ export default function ProgramsContent() {
   const [savingAcademyAssignment, setSavingAcademyAssignment] = useState(false);
   const [removingAcademy, setRemovingAcademy] = useState<string | null>(null);
 
+  // Sync academyFilter with URL param
+  useEffect(() => {
+    const newFilter = academyIdParam || '';
+    if (newFilter !== academyFilter) {
+      setAcademyFilter(newFilter);
+    }
+  }, [academyIdParam]);
+
   useEffect(() => {
     checkIsAdmin();
     fetchPermissions();
@@ -299,7 +311,7 @@ export default function ProgramsContent() {
   useEffect(() => {
     fetchPrograms();
     fetchAcademies();
-  }, [page, limit, search, sortField, sortOrder]);
+  }, [page, limit, search, sortField, sortOrder, academyFilter]);
 
   const checkIsAdmin = async () => {
     try {
@@ -592,7 +604,8 @@ export default function ProgramsContent() {
         limit: limit.toString(),
         sortBy: sortField,
         sortOrder: sortOrder,
-        ...(search && { search })
+        ...(search && { search }),
+        ...(academyFilter && { academy_id: academyFilter })
       });
 
       const response = await fetch(`/api/programs?${params}`);
@@ -2616,9 +2629,33 @@ export default function ProgramsContent() {
     );
   }
 
+  // Get filtered academy name
+  const filteredAcademy = academyFilter ? academies.find(a => a.id === academyFilter) : null;
+
   // Render programs list
   return (
     <div className="space-y-6">
+      {/* Academy Filter Banner */}
+      {academyFilter && filteredAcademy && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+            <Search className="w-4 h-4" />
+            {isAr 
+              ? `🔍 عرض برامج أكاديمية: ${filteredAcademy.name_ar || filteredAcademy.name}`
+              : `🔍 Showing programs of academy: ${filteredAcademy.name}`}
+          </p>
+          <button
+            onClick={() => {
+              setAcademyFilter('');
+              window.history.pushState({}, '', `/${locale}/dashboard/programs`);
+            }}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+          >
+            {isAr ? 'إزالة الفلتر' : 'Clear Filter'}
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
