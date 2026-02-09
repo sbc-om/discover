@@ -68,53 +68,53 @@ export default function LoginForm({ locale }: LoginFormProps) {
         {redirecting && <FullPageLoader text={isAr ? 'جاري تسجيل الدخول...' : 'Signing in...'} />}
       </AnimatePresence>
 
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 relative">
+      <div className="min-h-dvh flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 relative">
         {/* Simple Static Background */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-0 -left-40 w-80 h-80 bg-orange-300/20 dark:bg-orange-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 -right-40 w-80 h-80 bg-amber-300/20 dark:bg-amber-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-0 -left-40 w-60 sm:w-80 h-60 sm:h-80 bg-orange-300/20 dark:bg-orange-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 -right-40 w-60 sm:w-80 h-60 sm:h-80 bg-amber-300/20 dark:bg-amber-500/10 rounded-full blur-3xl" />
         </div>
         
         <TopNavbar locale={locale as 'en' | 'ar'} />
         
         {/* Main Content */}
-        <div className="flex-1 flex items-center justify-center p-6 pt-24 pb-12 relative z-10">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 pt-20 pb-6 sm:pt-24 sm:pb-12 relative z-10">
           <div 
             className={`w-full max-w-md transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           >
             {/* Card */}
             <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-2xl shadow-xl border border-zinc-200/50 dark:border-zinc-800 overflow-hidden">
               {/* Header */}
-              <div className="p-8 text-center border-b border-zinc-100 dark:border-zinc-800">
-                <div className="relative w-16 h-16 mx-auto mb-4">
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shadow-sm">
+              <div className="px-5 py-5 sm:p-8 text-center border-b border-zinc-100 dark:border-zinc-800">
+                <div className="relative w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shadow-sm">
                     <img
                       src="/logo/icon-black.png"
                       alt="DNA"
-                      className="w-10 h-10 object-contain dark:hidden"
+                      className="w-8 h-8 sm:w-10 sm:h-10 object-contain dark:hidden"
                     />
                     <img
                       src="/logo/icon-white.png"
                       alt="DNA"
-                      className="w-10 h-10 object-contain hidden dark:block"
+                      className="w-8 h-8 sm:w-10 sm:h-10 object-contain hidden dark:block"
                     />
                   </div>
                 </div>
 
-                <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">
                   {isAr ? 'تسجيل الدخول' : 'Welcome Back'}
                 </h1>
-                <p className="text-zinc-500 dark:text-zinc-400 text-sm">
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm">
                   {isAr ? 'مرحباً بك في Discover' : 'Sign in to continue to Discover'}
                 </p>
               </div>
 
               {/* Form */}
-              <div className="p-8">
-                <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="px-5 py-5 sm:p-8">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
                   {/* Email Field */}
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 sm:mb-2">
                       {isAr ? 'البريد الإلكتروني' : 'Email Address'}
                     </label>
                     <div className="relative">
@@ -128,7 +128,9 @@ export default function LoginForm({ locale }: LoginFormProps) {
                         onFocus={() => setFocusedField('email')}
                         onBlur={() => setFocusedField(null)}
                         required
-                        className={`w-full ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 border-2 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 transition-all duration-200 placeholder:text-zinc-400 ${
+                        autoComplete="email"
+                        inputMode="email"
+                        className={`w-full ${isAr ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 border-2 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-base transition-all duration-200 placeholder:text-zinc-400 ${
                           focusedField === 'email'
                             ? 'border-orange-500 ring-2 ring-orange-500/20'
                             : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
@@ -140,7 +142,7 @@ export default function LoginForm({ locale }: LoginFormProps) {
 
                   {/* Password Field */}
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 sm:mb-2">
                       {isAr ? 'كلمة المرور' : 'Password'}
                     </label>
                     <div className="relative">
@@ -154,7 +156,8 @@ export default function LoginForm({ locale }: LoginFormProps) {
                         onFocus={() => setFocusedField('password')}
                         onBlur={() => setFocusedField(null)}
                         required
-                        className={`w-full ${isAr ? 'pr-11 pl-11' : 'pl-11 pr-11'} py-3 border-2 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 transition-all duration-200 placeholder:text-zinc-400 ${
+                        autoComplete="current-password"
+                        className={`w-full ${isAr ? 'pr-11 pl-11' : 'pl-11 pr-11'} py-3 border-2 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-base transition-all duration-200 placeholder:text-zinc-400 ${
                           focusedField === 'password'
                             ? 'border-orange-500 ring-2 ring-orange-500/20'
                             : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
@@ -164,7 +167,7 @@ export default function LoginForm({ locale }: LoginFormProps) {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className={`absolute ${isAr ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors`}
+                        className={`absolute ${isAr ? 'left-1' : 'right-1'} top-1/2 -translate-y-1/2 p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors rounded-lg active:bg-zinc-100 dark:active:bg-zinc-700`}
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -185,7 +188,7 @@ export default function LoginForm({ locale }: LoginFormProps) {
                   <button
                     type="submit"
                     disabled={loading || redirecting}
-                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-3.5 rounded-xl font-semibold text-base transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70 flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-3.5 rounded-xl font-semibold text-base transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70 active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
                   >
                     {loading ? (
                       <>
@@ -202,8 +205,8 @@ export default function LoginForm({ locale }: LoginFormProps) {
                 </form>
 
                 {/* Decorative bottom */}
-                <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-                  <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                  <p className="text-center text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
                     {isAr ? 'منصة إدارة الأكاديميات الرياضية' : 'Sports Academy Management Platform'}
                   </p>
                 </div>
@@ -211,7 +214,7 @@ export default function LoginForm({ locale }: LoginFormProps) {
             </div>
 
             {/* Help text */}
-            <p className="text-center text-sm text-zinc-500 dark:text-zinc-400 mt-6">
+            <p className="text-center text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-4 sm:mt-6 pb-2">
               {isAr ? 'تحتاج مساعدة؟ تواصل مع الدعم الفني' : 'Need help? Contact support'}
             </p>
           </div>

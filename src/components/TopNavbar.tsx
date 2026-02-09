@@ -72,7 +72,7 @@ export default function TopNavbar({ locale }: TopNavbarProps) {
         dir={isAr ? 'rtl' : 'ltr'} 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled 
-            ? 'bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl shadow-sm border-b border-zinc-200/50 dark:border-zinc-800/50' 
+            ? 'bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.06)]' 
             : 'bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md'
         }`}
       >

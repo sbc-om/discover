@@ -527,12 +527,10 @@ export default async function RootLayout({
         <style dangerouslySetInnerHTML={{ __html: customStyles }} />
       </head>
       <body
-        className="antialiased bg-background text-foreground h-screen overflow-hidden"
+        className="antialiased bg-background text-foreground min-h-dvh"
       >
         <ThemeProvider>
-          <ScrollArea className="h-screen w-screen">
-            {children}
-          </ScrollArea>
+          {children}
         </ThemeProvider>
       </body>
     </html>
