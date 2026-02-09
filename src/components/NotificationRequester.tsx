@@ -55,13 +55,31 @@ export default function NotificationRequester() {
   }, []);
 
   const registerAndSubscribe = async (publicKey: string) => {
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    const existing = await registration.pushManager.getSubscription();
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
 
-    const subscription = existing || await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey)
-    });
+      // Wait for the service worker to become active before subscribing
+      if (!registration.active) {
+        await new Promise<void>((resolve) => {
+          const sw = registration.installing || registration.waiting;
+          if (!sw) { resolve(); return; }
+          sw.addEventListener('statechange', function handler() {
+            if (sw.state === 'activated' || sw.state === 'activating') {
+              sw.removeEventListener('statechange', handler);
+              resolve();
+            }
+          });
+        });
+        // Give the newly-activated SW a moment to settle
+        await new Promise((r) => setTimeout(r, 100));
+      }
+
+      const existing = await registration.pushManager.getSubscription();
+
+      const subscription = existing || await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
 
     await fetch('/api/push/subscribe', {
       method: 'POST',
@@ -71,6 +89,9 @@ export default function NotificationRequester() {
         userAgent: navigator.userAgent
       })
     });
+    } catch (err) {
+      console.warn('Push subscription failed:', err);
+    }
   };
 
   if (!supported) return null;
