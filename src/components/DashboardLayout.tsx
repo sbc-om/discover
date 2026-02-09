@@ -25,7 +25,7 @@ export default function DashboardLayout({
     <div dir={isRTL ? 'rtl' : 'ltr'} className="h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 flex flex-col">
       <DashboardHeader locale={locale} userName={userName} />
       <ScrollArea className="flex-1">
-        <main className="min-h-full p-6 pb-30">
+        <main className="min-h-full px-3 py-4 sm:px-6 sm:py-6 pb-28 sm:pb-30">
           <div className="container mx-auto max-w-7xl">
             <NotificationRequester />
             {children}

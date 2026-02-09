@@ -17,10 +17,10 @@ export default function DashboardHeader({ locale, userName }: DashboardHeaderPro
   return (
     <header 
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="bg-white/90 dark:bg-zinc-950/90 border-b border-zinc-200/70 dark:border-zinc-800/80 px-6 py-4 flex items-center justify-between"
+      className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200/50 dark:border-zinc-800/50 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between"
     >
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-2xl overflow-hidden flex items-center justify-center">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl overflow-hidden flex items-center justify-center">
           <Image 
             src="/logo/icon-black.png"
             alt="DNA"
@@ -37,30 +37,30 @@ export default function DashboardHeader({ locale, userName }: DashboardHeaderPro
           />
         </div>
         <div className="hidden sm:block">
-          <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
+          <p className="text-[9px] uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500 leading-none mb-0.5">
             {isAr ? 'اكتشف قدرتك الطبيعية' : 'Discover Natural Ability'}
           </p>
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
             DNA
           </h2>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <LocaleSwitcher />
         <ThemeToggle />
 
-        {/* Logout Button */}
+        {/* Logout Button - icon only on mobile */}
         <button
           onClick={async () => {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = `/${locale}/login`;
           }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors active:scale-95"
           aria-label={isAr ? 'تسجيل الخروج' : 'Logout'}
         >
           <LogOut className="w-4 h-4" />
-          <span className="text-sm font-medium">{isAr ? 'خروج' : 'Logout'}</span>
+          <span className="text-xs font-medium hidden sm:inline">{isAr ? 'خروج' : 'Logout'}</span>
         </button>
       </div>
     </header>

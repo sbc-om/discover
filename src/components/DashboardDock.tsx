@@ -88,13 +88,13 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
         paddingRight: 'env(safe-area-inset-right)',
       }}
     >
-      <div className="px-4 pb-4 pt-2 max-w-full">
-        <div className="relative rounded-[28px] border-2 border-zinc-900/15 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-zinc-900/10 dark:shadow-none px-3 py-3 w-fit max-w-full">
-          <div className="flex items-center gap-2">
+      <div className="px-2 sm:px-4 pb-3 sm:pb-4 pt-1.5 sm:pt-2 max-w-full">
+        <div className="relative rounded-[22px] sm:rounded-[28px] border-2 border-zinc-900/15 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shadow-2xl shadow-zinc-900/10 dark:shadow-none px-2 sm:px-3 py-2 sm:py-3 w-fit max-w-full">
+          <div className="flex items-center gap-1 sm:gap-2">
             <button
               type="button"
               onClick={scrollPrev}
-              className="h-9 w-9 shrink-0 rounded-full border-2 border-zinc-900/20 dark:border-white/10 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5 hover:border-orange-500/50 hover:bg-orange-50 dark:hover:bg-zinc-800 shadow-sm"
+              className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-full border border-zinc-900/15 dark:border-white/10 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5 hover:border-orange-500/50 hover:bg-orange-50 dark:hover:bg-zinc-800 shadow-sm active:scale-95"
               aria-label={
                 isRTL
                   ? (isAr ? 'تمرير لليمين' : 'Scroll right')
@@ -116,13 +116,13 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
                       key={item.name}
                       href={itemPath}
                       aria-current={isActive ? 'page' : undefined}
-                      className="group relative flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium no-underline hover:no-underline"
+                      className="group relative flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium no-underline hover:no-underline"
                       style={{ textDecoration: 'none' }}
                     >
                       {isActive && (
                         <div className="absolute inset-0 rounded-full bg-zinc-900 dark:bg-white" />
                       )}
-                      <span className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+                      <span className={`relative z-10 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full transition-colors ${
                         isActive
                           ? 'bg-white/15 text-white dark:bg-zinc-900/10 dark:text-zinc-900'
                           : 'bg-zinc-900/5 text-zinc-900 dark:bg-white/10 dark:text-white group-hover:bg-orange-500 group-hover:text-white'
@@ -145,7 +145,7 @@ export default function DashboardDock({ locale, accessibleMenuItems = [] }: Dash
             <button
               type="button"
               onClick={scrollNext}
-              className="h-9 w-9 shrink-0 rounded-full border-2 border-zinc-900/20 dark:border-white/10 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5 hover:border-orange-500/50 hover:bg-orange-50 dark:hover:bg-zinc-800 shadow-sm"
+              className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-full border border-zinc-900/15 dark:border-white/10 bg-white dark:bg-zinc-900/70 text-zinc-900 dark:text-zinc-200 flex items-center justify-center transition hover:-translate-y-0.5 hover:border-orange-500/50 hover:bg-orange-50 dark:hover:bg-zinc-800 shadow-sm active:scale-95"
               aria-label={
                 isRTL
                   ? (isAr ? 'تمرير لليسار' : 'Scroll left')
