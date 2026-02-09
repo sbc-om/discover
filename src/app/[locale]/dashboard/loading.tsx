@@ -1,40 +1,41 @@
-'use client';
-
-import { 
-  DashboardLayoutSkeleton, 
-  StatsCardSkeleton, 
-  ContentCardSkeleton 
-} from '@/components/DashboardSkeleton';
-import { SkeletonLoader } from '@/components/LogoLoader';
+import {
+  DashboardShell,
+  PageHeaderSkeleton,
+  StatsCardSkeleton,
+  Skeleton,
+  SkeletonCard,
+} from '@/components/Skeleton';
 
 export default function DashboardLoading() {
   return (
-    <DashboardLayoutSkeleton>
+    <DashboardShell>
       <div className="space-y-6">
-        {/* Page Title */}
-        <div>
-          <SkeletonLoader variant="text" width={200} className="h-8 mb-2" />
-          <SkeletonLoader variant="text" width={300} className="h-4" />
-        </div>
+        <PageHeaderSkeleton hasButton={false} />
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+          {[0, 1, 2, 3].map((i) => (
             <StatsCardSkeleton key={i} />
           ))}
         </div>
 
-        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <ContentCardSkeleton />
-            <ContentCardSkeleton />
+          <div className="lg:col-span-2">
+            <SkeletonCard>
+              <Skeleton width="60%" height={20} rounded="md" className="mb-4" />
+              <Skeleton height={120} rounded="xl" className="mb-4" />
+              <Skeleton width="80%" height={16} rounded="md" />
+            </SkeletonCard>
           </div>
-          <div className="space-y-6">
-            <ContentCardSkeleton />
-          </div>
+          <SkeletonCard>
+            <Skeleton width="50%" height={20} rounded="md" className="mb-4" />
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} height={16} rounded="md" />
+              ))}
+            </div>
+          </SkeletonCard>
         </div>
       </div>
-    </DashboardLayoutSkeleton>
+    </DashboardShell>
   );
 }

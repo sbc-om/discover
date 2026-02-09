@@ -1,29 +1,28 @@
-export default function Loading() {
+import { Skeleton } from '@/components/Skeleton';
+
+export default function AcademyDetailLoading() {
   return (
-    <div className="animate-pulse space-y-6">
-      {/* Back button skeleton */}
-      <div className="h-10 w-48 bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
-      
-      {/* Header card skeleton */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div className="h-32 bg-zinc-200 dark:bg-zinc-800" />
+    <div className="space-y-6">
+      <Skeleton width={192} height={40} rounded="lg" />
+
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 overflow-hidden">
+        <Skeleton height={128} rounded="sm" className="rounded-b-none" />
         <div className="px-6 pb-6">
           <div className="relative -mt-16 mb-4">
-            <div className="w-32 h-32 rounded-2xl bg-zinc-200 dark:bg-zinc-800 border-4 border-white dark:border-zinc-900" />
+            <Skeleton width={128} height={128} rounded="2xl" className="border-4 border-white dark:border-zinc-900" />
           </div>
-          <div className="h-8 w-64 bg-zinc-200 dark:bg-zinc-800 rounded-lg mb-2" />
-          <div className="h-6 w-48 bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
+          <Skeleton width={256} height={32} rounded="lg" className="mb-2" />
+          <Skeleton width={192} height={24} rounded="lg" />
         </div>
       </div>
-      
-      {/* Details grid skeleton */}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6">
-            <div className="h-6 w-32 bg-zinc-200 dark:bg-zinc-800 rounded-lg mb-4" />
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-6">
+            <Skeleton width={128} height={24} rounded="lg" className="mb-4" />
             <div className="space-y-3">
-              <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-800 rounded" />
-              <div className="h-4 w-3/4 bg-zinc-200 dark:bg-zinc-800 rounded" />
+              <Skeleton height={16} rounded="md" />
+              <Skeleton width="75%" height={16} rounded="md" />
             </div>
           </div>
         ))}

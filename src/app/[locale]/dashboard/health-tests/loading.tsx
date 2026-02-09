@@ -1,36 +1,31 @@
-'use client';
-
-import { 
-  DashboardLayoutSkeleton, 
+import {
+  DashboardShell,
   PageHeaderSkeleton,
-  TableSkeletonCompact,
-  StatsCardSkeleton
-} from '@/components/DashboardSkeleton';
-import { SkeletonLoader } from '@/components/LogoLoader';
+  StatsCardSkeleton,
+  TableSkeleton,
+  Skeleton,
+} from '@/components/Skeleton';
 
 export default function HealthTestsLoading() {
   return (
-    <DashboardLayoutSkeleton>
+    <DashboardShell>
       <div className="space-y-6">
-        <PageHeaderSkeleton hasButton={true} />
+        <PageHeaderSkeleton />
 
-        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          <SkeletonLoader variant="rectangular" width={200} height={42} className="rounded-xl" />
-          <SkeletonLoader variant="rectangular" width={150} height={42} className="rounded-xl" />
-          <SkeletonLoader variant="rectangular" width={180} height={42} className="rounded-xl" />
+          <Skeleton width={200} height={42} rounded="xl" />
+          <Skeleton width={150} height={42} rounded="xl" />
+          <Skeleton width={180} height={42} rounded="xl" />
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+          {[0, 1, 2, 3].map((i) => (
             <StatsCardSkeleton key={i} />
           ))}
         </div>
 
-        {/* Table */}
-        <TableSkeletonCompact rows={8} columns={6} />
+        <TableSkeleton rows={8} columns={6} />
       </div>
-    </DashboardLayoutSkeleton>
+    </DashboardShell>
   );
 }

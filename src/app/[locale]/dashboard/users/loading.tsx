@@ -1,27 +1,23 @@
-'use client';
-
-import { 
-  DashboardLayoutSkeleton, 
+import {
+  DashboardShell,
   PageHeaderSkeleton,
-  TableSkeletonCompact
-} from '@/components/DashboardSkeleton';
-import { SkeletonLoader } from '@/components/LogoLoader';
+  TableSkeleton,
+  Skeleton,
+} from '@/components/Skeleton';
 
 export default function UsersLoading() {
   return (
-    <DashboardLayoutSkeleton>
+    <DashboardShell>
       <div className="space-y-6">
-        <PageHeaderSkeleton hasButton={true} />
+        <PageHeaderSkeleton />
 
-        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          <SkeletonLoader variant="rectangular" width={220} height={42} className="rounded-xl" />
-          <SkeletonLoader variant="rectangular" width={160} height={42} className="rounded-xl" />
+          <Skeleton width={220} height={42} rounded="xl" />
+          <Skeleton width={160} height={42} rounded="xl" />
         </div>
 
-        {/* Table */}
-        <TableSkeletonCompact rows={10} columns={5} />
+        <TableSkeleton rows={10} columns={5} />
       </div>
-    </DashboardLayoutSkeleton>
+    </DashboardShell>
   );
 }

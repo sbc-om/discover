@@ -1,44 +1,36 @@
-'use client';
-
-import { 
-  DashboardLayoutSkeleton, 
-  PageHeaderSkeleton
-} from '@/components/DashboardSkeleton';
-import { SkeletonLoader } from '@/components/LogoLoader';
+import {
+  DashboardShell,
+  PageHeaderSkeleton,
+  Skeleton,
+} from '@/components/Skeleton';
 
 export default function AcademiesLoading() {
   return (
-    <DashboardLayoutSkeleton>
+    <DashboardShell>
       <div className="space-y-6">
-        <PageHeaderSkeleton hasButton={true} />
+        <PageHeaderSkeleton />
 
-        {/* Filter */}
-        <div className="flex items-center gap-3">
-          <SkeletonLoader variant="rectangular" width={250} height={42} className="rounded-xl" />
-        </div>
+        <Skeleton width={250} height={42} rounded="xl" />
 
-        {/* Academy Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
-              <SkeletonLoader variant="rectangular" className="w-full h-40" />
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-zinc-800/80">
+              <Skeleton height={160} rounded="sm" className="rounded-b-none" />
               <div className="p-5">
                 <div className="flex items-center gap-3 mb-4">
-                  <SkeletonLoader variant="circular" width={48} height={48} />
+                  <Skeleton width={48} height={48} rounded="full" />
                   <div className="flex-1">
-                    <SkeletonLoader variant="text" width="70%" className="h-5 mb-2" />
-                    <SkeletonLoader variant="text" width="50%" className="h-3" />
+                    <Skeleton width="70%" height={20} rounded="md" className="mb-2" />
+                    <Skeleton width="50%" height={12} rounded="md" />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <SkeletonLoader variant="text" width="90%" className="h-4" />
-                  <SkeletonLoader variant="text" width="70%" className="h-4" />
-                </div>
+                <Skeleton width="90%" height={16} rounded="md" className="mb-2" />
+                <Skeleton width="70%" height={16} rounded="md" />
               </div>
             </div>
           ))}
         </div>
       </div>
-    </DashboardLayoutSkeleton>
+    </DashboardShell>
   );
 }

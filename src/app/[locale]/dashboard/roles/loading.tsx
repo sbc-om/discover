@@ -1,43 +1,35 @@
-'use client';
-
-import { 
-  DashboardLayoutSkeleton, 
-  PageHeaderSkeleton
-} from '@/components/DashboardSkeleton';
-import { SkeletonLoader } from '@/components/LogoLoader';
+import {
+  DashboardShell,
+  PageHeaderSkeleton,
+  Skeleton,
+} from '@/components/Skeleton';
 
 export default function RolesLoading() {
   return (
-    <DashboardLayoutSkeleton>
+    <DashboardShell>
       <div className="space-y-6">
-        <PageHeaderSkeleton hasButton={true} />
+        <PageHeaderSkeleton />
 
-        {/* Role Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <SkeletonLoader variant="circular" width={48} height={48} />
-                  <div>
-                    <SkeletonLoader variant="text" width={100} className="h-5 mb-1" />
-                    <SkeletonLoader variant="text" width={70} className="h-3" />
-                  </div>
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200/80 dark:border-zinc-800/80">
+              <div className="flex items-center gap-3 mb-4">
+                <Skeleton width={48} height={48} rounded="full" />
+                <div className="flex-1">
+                  <Skeleton width="60%" height={20} rounded="md" className="mb-1" />
+                  <Skeleton width="40%" height={12} rounded="md" />
                 </div>
               </div>
-              <SkeletonLoader variant="text" width="90%" className="h-4 mb-4" />
-              <div className="space-y-2 mb-4">
-                <SkeletonLoader variant="text" width={80} className="h-3" />
-                <div className="flex flex-wrap gap-1">
-                  {[1, 2, 3].map((j) => (
-                    <SkeletonLoader key={j} variant="rectangular" width={70} height={24} className="rounded-full" />
-                  ))}
-                </div>
+              <Skeleton width="90%" height={16} rounded="md" className="mb-3" />
+              <div className="flex flex-wrap gap-1">
+                {[0, 1, 2].map((j) => (
+                  <Skeleton key={j} width={70} height={24} rounded="full" />
+                ))}
               </div>
             </div>
           ))}
         </div>
       </div>
-    </DashboardLayoutSkeleton>
+    </DashboardShell>
   );
 }

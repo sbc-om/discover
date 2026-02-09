@@ -1,35 +1,28 @@
-'use client';
-
-import { 
-  DashboardLayoutSkeleton, 
-  PageHeaderSkeleton
-} from '@/components/DashboardSkeleton';
-import { SkeletonLoader } from '@/components/LogoLoader';
+import {
+  DashboardShell,
+  PageHeaderSkeleton,
+  Skeleton,
+} from '@/components/Skeleton';
 
 export default function PlayerCardLoading() {
   return (
-    <DashboardLayoutSkeleton>
+    <DashboardShell>
       <div className="space-y-6">
-        <PageHeaderSkeleton hasButton={true} />
+        <PageHeaderSkeleton />
 
-        {/* Card Preview */}
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Preview Card */}
           <div className="flex-1 flex justify-center">
-            <div className="w-80 h-[480px] rounded-2xl overflow-hidden">
-              <SkeletonLoader variant="rectangular" className="w-full h-full" />
-            </div>
+            <Skeleton width={320} height={480} rounded="2xl" />
           </div>
 
-          {/* Settings Panel */}
-          <div className="w-full lg:w-96 space-y-4">
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800">
-              <SkeletonLoader variant="text" width={120} className="h-6 mb-6" />
+          <div className="w-full lg:w-96">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200/80 dark:border-zinc-800/80">
+              <Skeleton width={120} height={24} rounded="lg" className="mb-6" />
               <div className="space-y-4">
-                {[1, 2, 3, 4].map((i) => (
+                {[0, 1, 2, 3].map((i) => (
                   <div key={i} className="space-y-2">
-                    <SkeletonLoader variant="text" width={80} className="h-4" />
-                    <SkeletonLoader variant="rectangular" height={44} className="rounded-xl w-full" />
+                    <Skeleton width={80} height={16} rounded="md" />
+                    <Skeleton height={44} rounded="xl" />
                   </div>
                 ))}
               </div>
@@ -37,6 +30,6 @@ export default function PlayerCardLoading() {
           </div>
         </div>
       </div>
-    </DashboardLayoutSkeleton>
+    </DashboardShell>
   );
 }
