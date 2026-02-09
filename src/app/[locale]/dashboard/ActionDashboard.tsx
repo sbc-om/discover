@@ -14,13 +14,9 @@ import {
   UserX,
   MessageCircle,
   Settings,
-  Layers,
   Activity,
   Bell,
   Mail,
-  ChevronRight,
-  CreditCard,
-  TrendingUp,
 } from 'lucide-react';
 import useLocale from '@/hooks/useLocale';
 import { useToast } from '@/components/ToastProvider';
@@ -385,66 +381,18 @@ export default function ActionDashboard() {
         )}
       </DashboardWidget>
 
-      {/* Pending Items Highlights */}
-      {statsData.stats && (statsData.stats.pendingHealthTests > 0 || statsData.stats.pendingMedalRequests > 0) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-          {statsData.stats.pendingHealthTests > 0 && (
-            <button
-              onClick={() => handleActionClick('/dashboard/health-tests')}
-              className="flex items-center gap-3 p-3 sm:p-4 rounded-xl border border-amber-200/80 dark:border-amber-800/40 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 hover:shadow-md transition-all group active:scale-[0.99]"
-            >
-              <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                <Activity className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                  {isAr ? 'فحوصات معلقة' : 'Pending Health Tests'}
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-300">
-                  {statsData.stats.pendingHealthTests}
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-amber-400 group-hover:translate-x-0.5 transition-transform rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-            </button>
-          )}
-          {statsData.stats.pendingMedalRequests > 0 && (
-            <button
-              onClick={() => handleActionClick('/dashboard/medal-requests')}
-              className="flex items-center gap-3 p-3 sm:p-4 rounded-xl border border-purple-200/80 dark:border-purple-800/40 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 hover:shadow-md transition-all group active:scale-[0.99]"
-            >
-              <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                <Award className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">
-                  {isAr ? 'طلبات ميداليات معلقة' : 'Pending Medal Requests'}
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-purple-700 dark:text-purple-300">
-                  {statsData.stats.pendingMedalRequests}
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-purple-400 group-hover:translate-x-0.5 transition-transform rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Quick Management - Admin Tools Grid */}
       <DashboardWidget title={isAr ? 'الإدارة السريعة' : 'Quick Management'}>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-2.5">
           {([
             ...(actionData.role === 'admin' ? [
-              { icon: Building2, label: isAr ? 'الأكاديميات' : 'Academies', labelSub: isAr ? 'إدارة الأكاديميات' : 'Manage academies', route: '/dashboard/academies', color: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/20' },
-              { icon: Users, label: isAr ? 'المستخدمين' : 'Users', labelSub: isAr ? 'إدارة المستخدمين' : 'Manage users', route: '/dashboard/users', color: 'from-violet-500 to-purple-500', bg: 'bg-violet-50 dark:bg-violet-950/20' },
               { icon: Shield, label: isAr ? 'الأدوار' : 'Roles', labelSub: isAr ? 'الأدوار والصلاحيات' : 'Roles & permissions', route: '/dashboard/roles', color: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-50 dark:bg-emerald-950/20' },
-              { icon: Layers, label: isAr ? 'البرامج' : 'Programs', labelSub: isAr ? 'إدارة البرامج' : 'Manage programs', route: '/dashboard/programs', color: 'from-orange-500 to-amber-500', bg: 'bg-orange-50 dark:bg-orange-950/20' },
             ] : []),
             { icon: Activity, label: isAr ? 'الفحوصات' : 'Health Tests', labelSub: isAr ? 'الفحوصات الصحية' : 'Health assessments', route: '/dashboard/health-tests', color: 'from-rose-500 to-pink-500', bg: 'bg-rose-50 dark:bg-rose-950/20' },
             { icon: Award, label: isAr ? 'الميداليات' : 'Medals', labelSub: isAr ? 'طلبات الميداليات' : 'Medal requests', route: '/dashboard/medal-requests', color: 'from-amber-500 to-yellow-500', bg: 'bg-amber-50 dark:bg-amber-950/20' },
             { icon: MessageCircle, label: isAr ? 'الرسائل' : 'Messages', labelSub: isAr ? 'رسائل النظام' : 'System messages', route: '/dashboard/messages', color: 'from-sky-500 to-blue-500', bg: 'bg-sky-50 dark:bg-sky-950/20' },
             { icon: Mail, label: isAr ? 'واتساب' : 'WhatsApp', labelSub: isAr ? 'رسائل واتساب' : 'WhatsApp messages', route: '/dashboard/whatsapp', color: 'from-green-500 to-emerald-500', bg: 'bg-green-50 dark:bg-green-950/20' },
             { icon: Bell, label: isAr ? 'الإشعارات' : 'Notifications', labelSub: isAr ? 'إدارة الإشعارات' : 'Manage alerts', route: '/dashboard/notifications', color: 'from-indigo-500 to-violet-500', bg: 'bg-indigo-50 dark:bg-indigo-950/20' },
-            { icon: CreditCard, label: isAr ? 'بطاقة اللاعب' : 'Player Card', labelSub: isAr ? 'بطاقات اللاعبين' : 'Player cards', route: '/dashboard/users', color: 'from-teal-500 to-cyan-500', bg: 'bg-teal-50 dark:bg-teal-950/20' },
             { icon: Settings, label: isAr ? 'الإعدادات' : 'Settings', labelSub: isAr ? 'إعدادات النظام' : 'System settings', route: '/dashboard/settings', color: 'from-zinc-500 to-slate-500', bg: 'bg-zinc-100 dark:bg-zinc-800/40' },
           ] as { icon: LucideIcon; label: string; labelSub: string; route: string; color: string; bg: string }[]).map((item) => (
             <button
@@ -468,28 +416,7 @@ export default function ActionDashboard() {
         </div>
       </DashboardWidget>
 
-      {/* System Overview - Admin Only */}
-      {actionData.role === 'admin' && statsData.stats && (
-        <DashboardWidget title={isAr ? 'نظرة عامة على النظام' : 'System Overview'}>
-          <div className="grid grid-cols-3 gap-px bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden">
-            <div className="bg-white dark:bg-zinc-900 p-3 sm:p-4 flex flex-col items-center text-center">
-              <TrendingUp className="h-5 w-5 text-emerald-500 mb-1.5" />
-              <p className="text-lg sm:text-2xl font-bold text-zinc-900 dark:text-white">{statsData.stats.academies || 0}</p>
-              <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">{isAr ? 'أكاديمية' : 'Academies'}</p>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 p-3 sm:p-4 flex flex-col items-center text-center">
-              <Users className="h-5 w-5 text-blue-500 mb-1.5" />
-              <p className="text-lg sm:text-2xl font-bold text-zinc-900 dark:text-white">{statsData.stats.users || 0}</p>
-              <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">{isAr ? 'مستخدم' : 'Users'}</p>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 p-3 sm:p-4 flex flex-col items-center text-center">
-              <Shield className="h-5 w-5 text-orange-500 mb-1.5" />
-              <p className="text-lg sm:text-2xl font-bold text-zinc-900 dark:text-white">{statsData.stats.coaches}</p>
-              <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">{isAr ? 'مدرب' : 'Coaches'}</p>
-            </div>
-          </div>
-        </DashboardWidget>
-      )}
+
     </div>
   );
 }

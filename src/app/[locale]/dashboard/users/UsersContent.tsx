@@ -510,10 +510,10 @@ export default function UsersContent() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">{isAr ? 'المستخدمون' : 'Users'}</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">{isAr ? 'المستخدمون' : 'Users'}</h1>
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
             {isAr ? `إجمالي ${total} مستخدم` : `${total} total users`}
           </p>
         </div>
@@ -549,23 +549,23 @@ export default function UsersContent() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400`} />
           <input
             type="text"
             placeholder={isAr ? 'ابحث عن المستخدمين...' : 'Search users...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+            className={`w-full ${isAr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all`}
           />
         </div>
-        <div className="relative sm:w-56">
-          <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+        <div className="relative sm:w-48">
+          <Shield className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400`} />
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="w-full pl-10 pr-9 py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all hover:border-zinc-300 dark:hover:border-zinc-700"
+            className={`w-full ${isAr ? 'pr-10 pl-9' : 'pl-10 pr-9'} py-2.5 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer transition-all hover:border-zinc-300 dark:hover:border-zinc-700`}
           >
             <option value="" className="bg-white dark:bg-zinc-900">{isAr ? '🎯 كل الأدوار' : '🎯 All Roles'}</option>
             {roles.map((role) => (
@@ -742,6 +742,7 @@ export default function UsersContent() {
                       </div>
                     </th>
                     <th className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{isAr ? 'الدور' : 'Role'}</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{isAr ? 'التقدم' : 'Progress'}</th>
                     <th 
                       className="text-left px-6 py-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:text-orange-500 transition-colors group"
                       onClick={() => handleSort('is_active')}
@@ -785,26 +786,6 @@ export default function UsersContent() {
                               <p className="font-medium text-zinc-900 dark:text-white text-sm truncate">
                                 {user.first_name} {user.last_name}
                               </p>
-                              {user.role_name === 'player' && (
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {!user.has_health_test && (
-                                    <span 
-                                      className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-100 dark:bg-amber-900/30"
-                                      title={isAr ? 'لم يتم التقييم' : 'Not assessed'}
-                                    >
-                                      <AlertTriangle className="w-3 h-3 text-amber-700 dark:text-amber-400" />
-                                    </span>
-                                  )}
-                                  {!user.has_program_assignment && (
-                                    <span 
-                                      className="inline-flex items-center justify-center w-5 h-5 rounded bg-red-100 dark:bg-red-900/30"
-                                      title={isAr ? 'غير مسجل في برنامج' : 'Not assigned to program'}
-                                    >
-                                      <AlertTriangle className="w-3 h-3 text-red-700 dark:text-red-400" />
-                                    </span>
-                                  )}
-                                </div>
-                              )}
                             </div>
                             {user.email_verified && (
                               <p className="text-[10px] text-orange-600 dark:text-orange-400 flex items-center gap-0.5 mt-0.5">
@@ -834,6 +815,49 @@ export default function UsersContent() {
                           <Shield className="w-3 h-3" />
                             {isAr ? user.name_ar || user.name_en || user.role_name : user.name_en || user.role_name}
                         </span>
+                      </td>
+                      {/* Player Progress */}
+                      <td className="px-6 py-3">
+                        {user.role_name === 'player' ? (
+                          user.completed_level_order ? (
+                            <div className="min-w-[120px]">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 truncate max-w-[80px]">
+                                  {isAr
+                                    ? (user.completed_level_name_ar || user.completed_level_name || `مستوى ${user.completed_level_order}`)
+                                    : (user.completed_level_name || `Level ${user.completed_level_order}`)}
+                                </span>
+                                <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
+                                  Lv.{user.completed_level_order}
+                                </span>
+                              </div>
+                              <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500"
+                                  style={{ width: `${Math.min(user.completed_level_order * 20, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              {!user.has_health_test && (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-100 dark:bg-amber-900/30" title={isAr ? 'لم يتم التقييم' : 'Not assessed'}>
+                                  <AlertTriangle className="w-3 h-3 text-amber-700 dark:text-amber-400" />
+                                </span>
+                              )}
+                              {!user.has_program_assignment && (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-red-100 dark:bg-red-900/30" title={isAr ? 'بدون برنامج' : 'No program'}>
+                                  <AlertTriangle className="w-3 h-3 text-red-700 dark:text-red-400" />
+                                </span>
+                              )}
+                              {user.has_program_assignment && user.has_health_test && (
+                                <span className="text-[10px] text-zinc-400">{isAr ? 'جديد' : 'New'}</span>
+                              )}
+                            </div>
+                          )
+                        ) : (
+                          <span className="text-xs text-zinc-300 dark:text-zinc-700">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-3">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -894,72 +918,130 @@ export default function UsersContent() {
                   key={user.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="p-4 flex items-center gap-3"
+                  className="p-3 sm:p-4 space-y-2.5"
                 >
-                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getRoleColor(user.role_name)} flex items-center justify-center text-white font-semibold overflow-hidden shrink-0 shadow-sm`}>
-                    {user.avatar_url ? (
-                      <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span>{user.first_name.charAt(0)}{user.last_name.charAt(0)}</span>
+                  {/* Top row: Avatar + Info + Actions */}
+                  <div className="flex items-start gap-3">
+                    <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${getRoleColor(user.role_name)} flex items-center justify-center text-white font-semibold text-sm overflow-hidden shrink-0 shadow-sm`}>
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{user.first_name.charAt(0)}{user.last_name.charAt(0)}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-semibold text-zinc-900 dark:text-white text-sm truncate">
+                          {user.first_name} {user.last_name}
+                        </p>
+                        {user.email_verified && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${getRoleBadgeColor(user.role_name)}`}>
+                          <Shield className="w-2.5 h-2.5" />
+                          {isAr ? user.name_ar || user.name_en || user.role_name : user.name_en || user.role_name}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          user.is_active
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                        }`}>
+                          {user.is_active ? (isAr ? 'نشط' : 'Active') : (isAr ? 'غير نشط' : 'Inactive')}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      {user.role_name === 'player' && (
+                        <Link
+                          href={`/${locale}/dashboard/players/${user.id}`}
+                          className="p-1.5 text-zinc-400 hover:text-emerald-600 rounded-lg transition-colors active:scale-95"
+                        >
+                          <User className="w-4 h-4" />
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => handleEdit(user)}
+                        className="p-1.5 text-zinc-400 hover:text-orange-500 rounded-lg transition-colors active:scale-95"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDeleteTarget(user);
+                          setDeleteError(null);
+                        }}
+                        className="p-1.5 text-zinc-400 hover:text-red-500 rounded-lg transition-colors active:scale-95"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Contact row */}
+                  <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 ps-14">
+                    <span className="flex items-center gap-1 truncate">
+                      <Mail className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{user.email}</span>
+                    </span>
+                    {user.phone && (
+                      <span className="flex items-center gap-1 shrink-0">
+                        <Phone className="w-3 h-3" />
+                        {user.phone}
+                      </span>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-zinc-900 dark:text-white text-sm truncate">
-                        {user.first_name} {user.last_name}
-                      </p>
-                      <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getRoleBadgeColor(user.role_name)}`}>
-                        {isAr ? user.name_ar || user.name_en || user.role_name : user.name_en || user.role_name}
-                      </span>
-                      {user.role_name === 'player' && (
-                        <div className="flex items-center gap-1 shrink-0">
+
+                  {/* Player Progress Bar */}
+                  {user.role_name === 'player' && (
+                    <div className="ps-14">
+                      {user.completed_level_order ? (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-400">
+                              {isAr
+                                ? (user.completed_level_name_ar || user.completed_level_name || `المستوى ${user.completed_level_order}`)
+                                : (user.completed_level_name || `Level ${user.completed_level_order}`)}
+                            </span>
+                            <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
+                              {isAr ? `مستوى ${user.completed_level_order}` : `Lv.${user.completed_level_order}`}
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(user.completed_level_order * 20, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
                           {!user.has_health_test && (
-                            <span 
-                              className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-100 dark:bg-amber-900/30"
-                              title={isAr ? 'لم يتم التقييم' : 'Not assessed'}
-                            >
-                              <AlertTriangle className="w-3 h-3 text-amber-700 dark:text-amber-400" />
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">
+                              <AlertTriangle className="w-2.5 h-2.5" />
+                              {isAr ? 'لم يتم التقييم' : 'Not assessed'}
                             </span>
                           )}
                           {!user.has_program_assignment && (
-                            <span 
-                              className="inline-flex items-center justify-center w-5 h-5 rounded bg-red-100 dark:bg-red-900/30"
-                              title={isAr ? 'غير مسجل در برنامج' : 'Not assigned to program'}
-                            >
-                              <AlertTriangle className="w-3 h-3 text-red-700 dark:text-red-400" />
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium">
+                              <AlertTriangle className="w-2.5 h-2.5" />
+                              {isAr ? 'بدون برنامج' : 'No program'}
                             </span>
+                          )}
+                          {user.has_program_assignment && user.has_health_test && (
+                            <div className="space-y-1 flex-1">
+                              <span className="text-[10px] text-zinc-400">{isAr ? 'لم يكمل أي مستوى بعد' : 'No level completed yet'}</span>
+                              <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                <div className="h-full bg-zinc-300 dark:bg-zinc-700 rounded-full" style={{ width: '5%' }} />
+                              </div>
+                            </div>
                           )}
                         </div>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {user.role_name === 'player' && (
-                      <Link
-                        href={`/${locale}/dashboard/players/${user.id}`}
-                        title={isAr ? 'عرض ملف اللاعب' : 'View player profile'}
-                        className="p-2 text-zinc-500 hover:text-emerald-600 rounded-lg transition-colors"
-                      >
-                        <User className="w-4 h-4" />
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => handleEdit(user)}
-                      className="p-2 text-zinc-500 hover:text-orange-500 rounded-lg transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDeleteTarget(user);
-                        setDeleteError(null);
-                      }}
-                      className="p-2 text-zinc-500 hover:text-red-500 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  )}
                 </motion.div>
               ))}
             </div>
